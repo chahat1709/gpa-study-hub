@@ -80,10 +80,10 @@ const PlannerInterface: React.FC = () => {
 
         {/* Header & Input */}
         <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-white tracking-tight">My Planner</h1>
+          <h1 className="text-2xl font-bold font-display text-white tracking-tight">My Planner</h1>
 
           <form onSubmit={handleAddTask} className="relative group">
-            <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-cyan-400 transition-colors">
+            <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-stitch-cyan transition-colors">
               <Plus className="w-5 h-5" />
             </div>
             <input
@@ -91,7 +91,7 @@ const PlannerInterface: React.FC = () => {
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder="Add a new task..."
-              className="w-full pl-12 pr-4 py-3 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_0_15px_rgba(34,211,238,0.05)] text-sm outline-none focus:ring-2 focus:ring-cyan-400/30 focus:border-cyan-400 transition-all font-medium text-white placeholder:text-slate-400"
+              className="w-full pl-12 pr-4 py-3 bg-[rgba(15,23,42,0.6)] backdrop-blur-[30px] border border-white/10 rounded-[16px] shadow-[0_0_15px_rgba(47,217,244,0.05)] text-sm outline-none focus:ring-2 focus:ring-stitch-cyan/30 focus:border-stitch-cyan transition-all font-medium text-white placeholder:text-slate-400"
             />
           </form>
         </div>
@@ -101,7 +101,7 @@ const PlannerInterface: React.FC = () => {
           <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 pl-1">Tasks</h3>
           {tasks.length === 0 && (
             <div className="text-center py-10 text-slate-400">
-              <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-40 text-cyan-400" />
+              <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-40 text-stitch-cyan" />
               <p className="text-sm">No tasks yet. Enjoy your day!</p>
             </div>
           )}
@@ -109,29 +109,29 @@ const PlannerInterface: React.FC = () => {
           {tasks.map((task) => (
             <div
               key={task.id}
-              className={`group flex items-center gap-4 p-4 rounded-xl transition-all border ${task.completed ? 'border-white/5 opacity-60 bg-white/5' : 'glass-card bg-slate-900/40 backdrop-blur-xl border-white/10 hover:border-cyan-400/40 shadow-[0_0_15px_rgba(34,211,238,0.05)] hover:shadow-[0_0_15px_rgba(34,211,238,0.15)] text-white'
+              className={`group flex items-center gap-4 p-4 rounded-[16px] transition-all border ${task.completed ? 'border-white/5 opacity-60 bg-white/5' : 'glass-card bg-white/5 border-white/10 hover:border-stitch-cyan/40 shadow-[0_0_15px_rgba(47,217,244,0.05)] hover:shadow-[0_0_15px_rgba(47,217,244,0.15)] text-white'
                 }`}
             >
               <button
                 onClick={() => toggleTask(task.id)}
-                className={`min-h-[44px] min-w-[44px] p-2 rounded-full border flex items-center justify-center transition-all ${task.completed ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 border-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30' : 'bg-white/5 border-white/20 hover:border-cyan-400 text-transparent hover:shadow-[0_0_10px_rgba(34,211,238,0.3)]'
+                className={`min-h-[44px] min-w-[44px] p-2 rounded-full border flex items-center justify-center transition-all ${task.completed ? 'bg-stitch-cyan border-stitch-cyan text-slate-950 shadow-[0_0_15px_rgba(47,217,244,0.3)]' : 'bg-white/5 border-white/20 hover:border-stitch-cyan text-transparent hover:shadow-[0_0_10px_rgba(47,217,244,0.3)]'
                   }`}
               >
                 {task.completed ? <Check className="w-4 h-4 font-bold" /> : <div className="w-3.5 h-3.5 rounded-full" />}
               </button>
 
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold truncate ${task.completed ? 'text-slate-400 line-through font-medium' : 'text-white'}`}>
+                <p className={`text-sm font-bold font-display truncate ${task.completed ? 'text-slate-400 line-through font-medium' : 'text-white'}`}>
                   {task.title}
                 </p>
                 {!task.completed && (
                   <div className="flex items-center gap-3 mt-1">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase border ${task.priority === 'high' ? 'text-rose-400 bg-rose-500/20 border-rose-500/30' : 'text-cyan-300 bg-cyan-500/10 border-cyan-500/30'
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase border ${task.priority === 'high' ? 'text-rose-400 bg-rose-500/20 border-rose-500/30' : 'text-stitch-cyan bg-stitch-cyan/10 border-stitch-cyan/30'
                       }`}>
                       {task.priority}
                     </span>
                     <span className="flex items-center gap-1 text-[11px] text-slate-400">
-                      <Calendar className="w-3 h-3 text-cyan-400/50" /> {task.dueDate}
+                      <Calendar className="w-3 h-3 text-stitch-cyan/50" /> {task.dueDate}
                     </span>
                   </div>
                 )}

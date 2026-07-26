@@ -9,15 +9,10 @@ import {
   hasPermission, requireRole,
 } from '../services/rbacAuthService';
 import type { Permission } from '../services/rbacAuthService';
-import { compressImage, validateImageFile, getBase64Size } from '../utils/imageCompression';
-import { checkServerHealth, signup as apiSignup, login as apiLogin, facultySignup as apiFacultySignup, facultyLogin as apiFacultyLogin, adminLogin as apiAdminLogin, changePin as apiChangePin, updateProfile as apiUpdateProfile } from '../services/apiClient';
+import { compressImage, validateImageFile } from '../utils/imageCompression';
+import { signup as apiSignup, login as apiLogin, facultySignup as apiFacultySignup, facultyLogin as apiFacultyLogin, adminLogin as apiAdminLogin, changePin as apiChangePin, updateProfile as apiUpdateProfile, checkServerHealth, clearAuthToken } from '../services/apiClient';
 
 const SESSION_KEY = 'gpa_rbac_session_v1';
-const SERVER_CONNECTED_KEY = 'gpa_hub_server_connected';
-
-function isServerConnected(): boolean {
-  return localStorage.getItem(SERVER_CONNECTED_KEY) === 'true';
-}
 
 function apiUserToUser(apiUser: any): User {
   return {
@@ -37,26 +32,21 @@ function apiUserToUser(apiUser: any): User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  serverOnline: boolean;
 
-  // Student
   studentRegister: (name: string, enrollmentNumber: string, pin: string, branch: string, semester: string, section: string, university?: string) => Promise<void>;
   studentLogin: (enrollmentNumber: string, pin: string) => Promise<void>;
   changePin: (enrollmentNumber: string, oldPin: string, newPin: string) => Promise<void>;
 
-  // Faculty
   facultyRegister: (name: string, email: string, password: string, branch: string, university?: string) => Promise<void>;
   facultyLogin: (email: string, password: string) => Promise<void>;
 
-  // Admin
   adminLogin: (code: string) => Promise<void>;
 
-  // Profile
   uploadProfilePicture: (file: File) => Promise<void>;
 
-  // Auth
   logout: () => void;
 
-  // RBAC helpers exposed to UI
   can: (permission: Permission) => boolean;
   isRole: (...roles: UserRole[]) => boolean;
 }
@@ -66,11 +56,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [serverOnline, setServerOnline] = useState(false);
 
-  // Restore session on app start
   useEffect(() => {
     const session = getSession();
     setUser(session);
+    checkServerHealth().then(ok => setServerOnline(ok));
     setIsLoading(false);
   }, []);
 
@@ -79,76 +70,79 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem(SESSION_KEY, JSON.stringify(u));
   };
 
-  // ── Student ──────────────────────────────────────────────────────────────────
+  // ─── Student Auth (Server-first with Offline Fallback) ──────────────────────
   const studentRegister = async (
     name: string, enrollmentNumber: string, pin: string,
     branch: string, semester: string, section: string, university?: string
   ) => {
-    if (isServerConnected()) {
+    try {
       const res = await apiSignup({ name, enrollmentNumber, pin, branch, semester, section, university: university || 'GTU' });
       const u = apiUserToUser(res.user);
       saveSession(u);
-    } else {
-      const u = await registerStudent({ name, enrollmentNumber, pin, branch, semester, section, university });
-      setUser(u);
+    } catch {
+      // Fallback to offline RBAC
+      const u = await registerStudent({ name, enrollmentNumber, pin, branch, semester, section, university: university || 'GTU' });
+      saveSession(u);
     }
   };
 
   const studentLogin = async (enrollmentNumber: string, pin: string) => {
-    if (isServerConnected()) {
+    try {
       const res = await apiLogin(enrollmentNumber, pin);
       const u = apiUserToUser(res.user);
       saveSession(u);
-    } else {
+    } catch {
+      // Fallback to offline RBAC
       const u = await loginStudent(enrollmentNumber, pin);
-      setUser(u);
+      saveSession(u);
     }
   };
 
   const changePin = async (enrollmentNumber: string, oldPin: string, newPin: string) => {
-    if (isServerConnected() && user) {
-      await apiChangePin(user.id, oldPin, newPin);
-    } else {
-      await changePinService(enrollmentNumber, oldPin, newPin);
+    if (user) {
+      try {
+        await apiChangePin(user.id, oldPin, newPin);
+      } catch {
+        await changePinService(enrollmentNumber, oldPin, newPin);
+      }
     }
   };
 
-  // ── Faculty ──────────────────────────────────────────────────────────────────
+  // ─── Faculty Auth (Server-first with Offline Fallback) ─────────────────────
   const facultyRegister = async (name: string, email: string, password: string, branch: string, university?: string) => {
-    if (isServerConnected()) {
+    try {
       const res = await apiFacultySignup({ name, email, password, branch });
       const u = apiUserToUser(res.user);
       saveSession(u);
-    } else {
-      const u = await registerFacultyLocal({ name, email, password, branch, university });
-      setUser(u);
+    } catch {
+      const u = await registerFacultyLocal({ name, email, password, branch, university: university || 'GTU' });
+      saveSession(u);
     }
   };
 
   const facultyLogin = async (email: string, password: string) => {
-    if (isServerConnected()) {
+    try {
       const res = await apiFacultyLogin(email, password);
       const u = apiUserToUser(res.user);
       saveSession(u);
-    } else {
+    } catch {
       const u = await loginFacultyLocal(email, password);
-      setUser(u);
+      saveSession(u);
     }
   };
 
-  // ── Admin ────────────────────────────────────────────────────────────────────
+  // ─── Admin Auth ─────────────────────────────────────────────────────────────
   const adminLogin = async (code: string) => {
-    if (isServerConnected()) {
+    try {
       const res = await apiAdminLogin(code);
       const u = apiUserToUser(res.user);
       saveSession(u);
-    } else {
+    } catch {
       const u = await loginAdmin(code);
-      setUser(u);
+      saveSession(u);
     }
   };
 
-  // ── Profile ──────────────────────────────────────────────────────────────────
   const uploadProfilePicture = async (file: File) => {
     if (!user) return;
 
@@ -164,40 +158,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       outputFormat: 'image/jpeg'
     });
 
-    if (isServerConnected()) {
+    try {
       const res = await apiUpdateProfile(user.id, compressedBase64);
       const u = apiUserToUser(res.user);
       u.photoURL = compressedBase64;
       saveSession(u);
-    } else {
-      const updated = { ...user, photoURL: compressedBase64 };
-      setUser(updated);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
-
-      try {
-        const db: Record<string, any> = JSON.parse(localStorage.getItem('gpa_rbac_users_v1') || '{}');
-        if (db[user.id]) {
-          db[user.id].photoURL = compressedBase64;
-          localStorage.setItem('gpa_rbac_users_v1', JSON.stringify(db));
-        }
-      } catch { /* ignore */ }
+    } catch {
+      // Offline: just update session
+      const u = { ...user, photoURL: compressedBase64 };
+      saveSession(u);
     }
   };
 
-
-  // ── Logout ───────────────────────────────────────────────────────────────────
   const logout = () => {
     clearSession();
+    clearAuthToken();
     setUser(null);
   };
 
-  // ── RBAC helpers ─────────────────────────────────────────────────────────────
   const can = (permission: Permission) => hasPermission(user, permission);
   const isRole = (...roles: UserRole[]) => requireRole(user, roles);
 
   return (
     <AuthContext.Provider value={{
-      user, isLoading,
+      user, isLoading, serverOnline,
       studentRegister, studentLogin, changePin,
       facultyRegister, facultyLogin,
       adminLogin,

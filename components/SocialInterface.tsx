@@ -109,15 +109,15 @@ const SocialInterface: React.FC = () => {
     <div className="h-full flex flex-col lg:flex-row bg-slate-900/60 backdrop-blur-xl relative overflow-hidden text-white">
 
       {/* Sidebar - Clean Corporate */}
-      <div className={`${activeChatId ? 'hidden lg:flex' : 'flex'} w-full lg:w-[350px] bg-slate-900/40 border-r border-white/10 flex-col shrink-0 h-full overflow-hidden`}>
+      <div className={`${activeChatId ? 'hidden lg:flex' : 'flex'} w-full lg:w-[350px] bg-[rgba(15,23,42,0.6)] border-r border-white/10 flex-col shrink-0 h-full overflow-hidden`}>
         <div className="p-6 bg-white/5 border-b border-white/10">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-xl text-white tracking-tight">Campus Link</h2>
-            <button onClick={() => setShowAddModal(true)} className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-bold rounded-xl hover:from-cyan-400 hover:to-blue-400 transition-colors shadow-lg shadow-cyan-500/30 active:scale-95"><Plus className="w-5 h-5" /></button>
+            <h2 className="font-bold font-display text-xl text-white tracking-tight">Campus Link</h2>
+            <button onClick={() => setShowAddModal(true)} className="stitch-btn p-3 min-h-[44px] min-w-[44px] flex items-center justify-center font-bold rounded-[12px] text-white transition-colors shadow-lg active:scale-95"><Plus className="w-5 h-5" /></button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-            <input type="text" placeholder="Search Directory..." className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-cyan-400/30 transition-all font-medium text-white placeholder:text-slate-400" aria-label="Search directory" />
+            <input type="text" placeholder="Search Directory..." className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-sm outline-none focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-medium text-white placeholder:text-slate-400" aria-label="Search directory" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto no-scrollbar py-2">
@@ -125,14 +125,14 @@ const SocialInterface: React.FC = () => {
             <div
               key={chat.id}
               onClick={() => setActiveChatId(chat.id)}
-              className={`p-4 mx-3 my-1 rounded-2xl flex gap-4 cursor-pointer transition-all border ${activeChatId === chat.id ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_15px_rgba(34,211,238,0.15)]' : 'hover:bg-white/10 border-transparent text-slate-200'}`}
+              className={`p-4 mx-3 my-1 rounded-2xl flex gap-4 cursor-pointer transition-all border ${activeChatId === chat.id ? 'bg-stitch-primary-container/30 border-stitch-primary text-white shadow-[0_0_15px_rgba(67,56,202,0.3)]' : 'hover:bg-white/10 border-transparent text-slate-200'}`}
             >
               <div className="w-12 h-12 bg-white/10 text-slate-200 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm border border-white/10">
-                {chat.isGroup ? <Users className={`w-6 h-6 ${activeChatId === chat.id ? 'text-cyan-300' : 'text-slate-400'}`} /> : getInitials(getOtherParticipantName(chat) || 'U')}
+                {chat.isGroup ? <Users className={`w-6 h-6 ${activeChatId === chat.id ? 'text-stitch-primary' : 'text-slate-400'}`} /> : getInitials(getOtherParticipantName(chat) || 'U')}
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-center">
                 <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="font-bold text-white truncate text-sm tracking-tight">{getOtherParticipantName(chat)}</h3>
+                  <h3 className="font-bold font-display text-white truncate text-sm tracking-tight">{getOtherParticipantName(chat)}</h3>
                   <span className="text-[11px] text-slate-400 font-bold">
                     {new Date(chat.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -152,12 +152,12 @@ const SocialInterface: React.FC = () => {
           <div className="h-16 border-b border-white/10 flex justify-between items-center px-6 shrink-0 bg-slate-950/80 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <button onClick={() => setActiveChatId(null)} className="p-3 -ml-2 text-slate-300 lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-6 h-6" /></button>
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center text-slate-950 shrink-0 font-bold text-sm shadow-[0_0_10px_rgba(34,211,238,0.3)]">
+              <div className="w-10 h-10 bg-gradient-to-br from-stitch-primary to-stitch-secondary rounded-lg flex items-center justify-center text-slate-950 shrink-0 font-bold text-sm shadow-[0_0_10px_rgba(195,192,255,0.3)]">
                 {activeChat.isGroup ? <Users className="w-5 h-5" /> : getInitials(getOtherParticipantName(activeChat) || 'U')}
               </div>
               <div>
-                <h2 className="font-bold text-white leading-none text-sm tracking-tight">{getOtherParticipantName(activeChat)}</h2>
-                <p className="text-[11px] font-bold text-cyan-400 mt-1 uppercase tracking-widest">Identified Link</p>
+                <h2 className="font-bold font-display text-white leading-none text-sm tracking-tight">{getOtherParticipantName(activeChat)}</h2>
+                <p className="text-[11px] font-bold text-stitch-cyan mt-1 uppercase tracking-widest">Identified Link</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -169,7 +169,7 @@ const SocialInterface: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-transparent no-scrollbar">
             <div className="flex justify-center mb-6">
               <div className="bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl text-[10px] text-slate-300 font-bold flex items-center gap-2 shadow-sm uppercase tracking-widest">
-                <AlertCircle className="w-3.5 h-3.5 text-cyan-400" /> Campus Conduct Code Applied
+                <AlertCircle className="w-3.5 h-3.5 text-stitch-cyan" /> Campus Conduct Code Applied
               </div>
             </div>
             {activeMessages.map((msg) => {
@@ -180,8 +180,8 @@ const SocialInterface: React.FC = () => {
 
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-                  <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 shadow-sm border ${isMe ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-slate-950 border-cyan-400 rounded-br-none shadow-[0_0_15px_rgba(34,211,238,0.2)] font-medium' : isAI ? 'bg-slate-950 text-white border-slate-800 rounded-bl-none' : 'glass-card bg-slate-900/40 text-white border-white/10 rounded-bl-none'}`}>
-                    {!isMe && <p className={`text-[11px] font-bold uppercase tracking-widest mb-1.5 ${isAI ? 'text-cyan-400' : 'text-slate-300'}`}>{msg.senderName}</p>}
+                  <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 shadow-sm border ${isMe ? 'bg-stitch-primary-container text-white border-stitch-primary rounded-br-none shadow-[0_0_15px_rgba(67,56,202,0.2)] font-medium' : isAI ? 'bg-slate-950 text-white border-slate-800 rounded-bl-none' : 'glass-card bg-[rgba(15,23,42,0.6)] text-white border-white/10 rounded-bl-none'}`}>
+                    {!isMe && <p className={`text-[11px] font-bold uppercase tracking-widest mb-1.5 ${isAI ? 'text-stitch-cyan' : 'text-slate-300'}`}>{msg.senderName}</p>}
                     <EncryptedMessage content={msg.content} chatId={activeChatId!} isMe={isMe} isEncrypted={msg.isEncrypted} isAI={isAI} />
                     <div className={`mt-2.5 flex items-center gap-1.5 opacity-60 ${isMe ? 'justify-end text-slate-900' : 'justify-start'}`}>
                       <span className="text-[10px] font-bold tracking-widest">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -196,7 +196,7 @@ const SocialInterface: React.FC = () => {
 
           <div className="p-4 bg-slate-950/80 backdrop-blur-xl border-t border-white/10">
             <div className="flex items-center gap-3 max-w-4xl mx-auto">
-              <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl flex items-center px-5 transition-all focus-within:ring-2 focus-within:ring-cyan-400/30 focus-within:bg-white/10">
+              <div className="flex-1 bg-white/5 border border-white/10 rounded-[16px] flex items-center px-5 transition-all focus-within:ring-2 focus-within:ring-stitch-cyan/30 focus-within:bg-white/10">
                 <textarea
                   rows={1}
                   value={input}
@@ -209,7 +209,7 @@ const SocialInterface: React.FC = () => {
                 <button
                   onClick={handleSend}
                   disabled={!input.trim()}
-                  className="p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-bold rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-30 hover:from-cyan-400 hover:to-blue-400 shadow-cyan-500/30"
+                  className="stitch-btn p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center font-bold rounded-xl transition-all active:scale-95 disabled:opacity-30 text-white"
                   aria-label="Send message"
                 >
                   <Send className="w-5 h-5" />
@@ -220,9 +220,9 @@ const SocialInterface: React.FC = () => {
         </div>
       ) : (
         <div className="flex-1 hidden lg:flex flex-col items-center justify-center text-slate-300 bg-transparent">
-          <div className="w-20 h-20 glass-card bg-slate-900/40 rounded-3xl shadow-[0_0_30px_rgba(34,211,238,0.1)] flex items-center justify-center mb-6 border border-cyan-400/20"><MessageSquare className="w-10 h-10 text-cyan-400" /></div>
-          <p className="font-bold text-slate-300 uppercase tracking-widest text-[10px]">Campus Communications Online</p>
-          <button onClick={() => setShowAddModal(true)} className="mt-8 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 px-10 py-4 min-h-[44px] rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(34,211,238,0.25)] transition-all active:scale-95 flex items-center justify-center">
+          <div className="w-20 h-20 glass-card bg-white/5 rounded-[24px] shadow-[0_0_30px_rgba(47,217,244,0.1)] flex items-center justify-center mb-6 border border-stitch-cyan/20"><MessageSquare className="w-10 h-10 text-stitch-cyan" /></div>
+          <p className="font-bold font-display text-slate-300 uppercase tracking-widest text-[10px]">Campus Communications Online</p>
+          <button onClick={() => setShowAddModal(true)} className="stitch-btn mt-8 px-10 py-4 min-h-[44px] rounded-[16px] font-bold uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(67,56,202,0.25)] transition-all active:scale-95 flex items-center justify-center text-white">
             Initiate Connection
           </button>
         </div>
@@ -240,16 +240,16 @@ const SocialInterface: React.FC = () => {
               <div className="space-y-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                  <input type="text" autoFocus placeholder="Search Personnel..." value={userSearchQuery} onChange={(e) => setUserSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl outline-none font-bold text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-400/30 transition-all" />
+                  <input type="text" autoFocus placeholder="Search Personnel..." value={userSearchQuery} onChange={(e) => setUserSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl outline-none font-bold text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-stitch-cyan/30 transition-all" />
                 </div>
                 <div className="space-y-2 max-h-[350px] overflow-y-auto no-scrollbar py-2">
-                  {isSearching ? <div className="flex justify-center py-12"><Loader2 className="animate-spin text-cyan-400 w-8 h-8" /></div> : searchResults.map(u => (
-                    <div key={u.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-cyan-400/50 hover:bg-cyan-500/10 transition-all group cursor-pointer">
+                  {isSearching ? <div className="flex justify-center py-12"><Loader2 className="animate-spin text-stitch-cyan w-8 h-8" /></div> : searchResults.map(u => (
+                    <div key={u.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-stitch-cyan/50 hover:bg-stitch-cyan/10 transition-all group cursor-pointer">
                       <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 bg-white/10 border border-white/10 rounded-xl flex items-center justify-center text-slate-200 font-bold text-xs group-hover:bg-gradient-to-br group-hover:from-cyan-500 group-hover:to-blue-500 group-hover:text-slate-950 group-hover:border-transparent transition-all">{getInitials(u.name)}</div>
-                        <span className="font-bold text-white text-sm tracking-tight">{u.name}</span>
+                        <div className="w-11 h-11 bg-white/10 border border-white/10 rounded-xl flex items-center justify-center text-slate-200 font-bold text-xs group-hover:bg-stitch-cyan group-hover:text-slate-950 group-hover:border-transparent transition-all">{getInitials(u.name)}</div>
+                        <span className="font-bold font-display text-white text-sm tracking-tight">{u.name}</span>
                       </div>
-                      <button onClick={() => handleStartChat(u)} className="bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 px-5 py-2.5 min-h-[44px] flex items-center justify-center rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-cyan-500/30 hover:from-cyan-400 hover:to-blue-400 transition-all active:scale-95">Link</button>
+                      <button onClick={() => handleStartChat(u)} className="stitch-btn text-white px-5 py-2.5 min-h-[44px] flex items-center justify-center rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95">Link</button>
                     </div>
                   ))}
                   {searchResults.length === 0 && !isSearching && userSearchQuery && (

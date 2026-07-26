@@ -83,10 +83,10 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => onNavigate?.(AppMode.PLANNER)} className="px-4 py-2.5 min-h-[44px] bg-white/10 backdrop-blur-md border border-white/15 text-slate-200 rounded-xl text-xs font-semibold hover:bg-white/20 transition-all flex items-center justify-center">
+          <button onClick={() => onNavigate?.(AppMode.PLANNER)} className="px-4 py-2.5 min-h-[44px] bg-white/5 backdrop-blur-md border border-white/15 text-slate-200 rounded-[12px] text-xs font-bold hover:bg-white/10 transition-all flex items-center justify-center active:scale-95">
             Planner
           </button>
-          <button onClick={() => onNavigate?.(AppMode.PROFILE)} className="px-4 py-2.5 min-h-[44px] bg-indigo-600/80 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center">
+          <button onClick={() => onNavigate?.(AppMode.PROFILE)} className="stitch-btn px-4 py-2.5 min-h-[44px] text-white rounded-[12px] text-xs font-bold transition-all flex items-center justify-center">
             My Profile
           </button>
         </div>
@@ -95,17 +95,17 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
       {/* 3D EXAM HUB HERO BANNER */}
       <div 
         onClick={() => onNavigate?.(AppMode.EXAM_HUB)}
-        className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl border border-indigo-500/30 shadow-2xl shadow-indigo-950/50 cursor-pointer transform hover:scale-[1.01] transition-all duration-300 flex justify-between items-center relative overflow-hidden group"
+        className="glass-card bg-gradient-to-r from-stitch-navy/80 to-stitch-midnight/80 text-white p-6 border border-stitch-primary-container/30 cursor-pointer transform transition-all duration-300 flex justify-between items-center relative overflow-hidden group"
       >
-        <div className="absolute -right-8 -top-8 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform"></div>
+        <div className="absolute -right-8 -top-8 w-40 h-40 bg-stitch-primary-container/20 rounded-full blur-[30px] pointer-events-none group-hover:scale-125 transition-transform"></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-indigo-300 text-xs font-bold w-fit mb-2">
-            <GraduationCap className="w-4 h-4 text-indigo-400" /> GTU Examinations Portal
+          <div className="flex items-center gap-2 px-3 py-1 bg-stitch-primary-container/20 border border-stitch-primary-container/30 rounded-full text-stitch-secondary text-xs font-bold w-fit mb-2">
+            <GraduationCap className="w-4 h-4 text-stitch-primary" /> GTU Examinations Portal
           </div>
-          <h2 className="text-xl font-black text-white">Examinations & Quiz Hub</h2>
+          <h2 className="text-xl font-display font-black text-white">Examinations & Quiz Hub</h2>
           <p className="text-slate-300 text-xs mt-1">Timed AI Mock Tests • GTU Solution Keys • AI Written Answer Grader</p>
         </div>
-        <div className="bg-indigo-600 group-hover:bg-indigo-500 text-white p-3.5 min-h-[44px] min-w-[44px] rounded-2xl shadow-lg flex items-center justify-center shrink-0 z-10 transition-colors">
+        <div className="bg-stitch-primary-container group-hover:bg-stitch-primary-container/80 text-white p-3.5 min-h-[44px] min-w-[44px] rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.2),_0_0_15px_rgba(67,56,202,0.3)] flex items-center justify-center shrink-0 z-10 transition-colors">
           <ArrowRight className="w-5 h-5" />
         </div>
       </div>
@@ -114,10 +114,10 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
         {/* Left Column: Stats & Tools */}
         <div className="space-y-6">
           {/* Attendance Card */}
-          <div className="glass-card bg-slate-900/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 relative overflow-hidden group hover:shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all">
+          <div className="glass-card bg-white/5 p-6 border border-white/10 relative overflow-hidden group hover:shadow-[0_0_20px_rgba(47,217,244,0.1)] transition-all">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="font-semibold text-white">Attendance</h3>
+                <h3 className="font-bold font-display text-white">Attendance</h3>
                 <p className="text-xs text-slate-400 mt-1">Aggregate Performance</p>
               </div>
               <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${safeOverall < 75 ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`}>
@@ -126,15 +126,15 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
             </div>
 
             <div className="flex items-end gap-2 mb-4">
-              <span className="text-5xl font-bold text-white tracking-tight">{safeOverall}%</span>
-              <span className="text-sm text-slate-400 mb-1.5 font-medium">present</span>
+              <span className="text-5xl font-display font-black text-white tracking-tight">{safeOverall}%</span>
+              <span className="text-sm text-slate-400 mb-1.5 font-bold">present</span>
             </div>
 
             <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden mb-4">
-              <div className={`h-full rounded-full transition-all duration-1000 ${safeOverall < 75 ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]'}`} style={{ width: `${safeOverall}%` }}></div>
+              <div className={`h-full rounded-full transition-all duration-1000 ${safeOverall < 75 ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-stitch-tertiary shadow-[0_0_15px_rgba(47,217,244,0.5)]'}`} style={{ width: `${safeOverall}%` }}></div>
             </div>
 
-            <button onClick={() => onNavigate?.(AppMode.ATTENDANCE)} className="w-full flex items-center justify-between text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors min-h-[44px]">
+            <button onClick={() => onNavigate?.(AppMode.ATTENDANCE)} className="w-full flex items-center justify-between text-xs font-bold text-stitch-cyan hover:text-stitch-cyan/80 transition-colors min-h-[44px]">
               <span>View Attendance Details</span>
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -142,32 +142,31 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
 
           {/* Quick Access Tools Grid */}
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => onNavigate?.(AppMode.TUTOR)} className="glass-card bg-slate-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/10 hover:border-cyan-400/40 transition-all text-left group hover:shadow-[0_0_15px_rgba(34,211,238,0.15)]">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 text-cyan-400 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-inner">
+            <button onClick={() => onNavigate?.(AppMode.TUTOR)} className="glass-card bg-white/5 p-5 border border-white/10 hover:border-stitch-cyan/40 transition-all text-left group hover:shadow-[0_0_15px_rgba(47,217,244,0.15)] active:scale-95">
+              <div className="w-10 h-10 bg-stitch-cyan/20 text-stitch-cyan rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-[inset_0_0_10px_rgba(47,217,244,0.3)]">
                 <GraduationCap className="w-5 h-5" />
               </div>
-              <h4 className="font-semibold text-white text-sm">AI Tutor</h4>
+              <h4 className="font-bold text-white text-sm">AI Tutor</h4>
               <p className="text-xs text-slate-400 mt-0.5">Instant help</p>
             </button>
-
-            <button onClick={() => onNavigate?.(AppMode.HOMEWORK)} className="glass-card bg-slate-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/10 hover:border-amber-400/40 transition-all text-left group hover:shadow-[0_0_15px_rgba(251,191,36,0.15)]">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-400 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-inner">
-                <ShieldCheck className="w-5 h-5" />
+            <button onClick={() => onNavigate?.(AppMode.HOMEWORK)} className="glass-card bg-white/5 p-5 border border-white/10 hover:border-amber-400/40 transition-all text-left group hover:shadow-[0_0_15px_rgba(251,191,36,0.15)] active:scale-95">
+              <div className="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-[inset_0_0_10px_rgba(251,191,36,0.3)]">
+                <Box className="w-5 h-5" />
               </div>
-              <h4 className="font-semibold text-white text-sm">Scanner</h4>
-              <p className="text-xs text-slate-400 mt-0.5">AI problem solver</p>
+              <h4 className="font-bold text-white text-sm">Assignments</h4>
+              <p className="text-xs text-slate-400 mt-0.5">2 Pending</p>
             </button>
           </div>
         </div>
 
         {/* Right Column: Notices List */}
-        <div className="lg:col-span-2 glass-card bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col overflow-hidden h-[500px] max-h-[calc(100vh-280px)] lg:max-h-[500px]">
-          <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/5 backdrop-blur-md sticky top-0 z-10">
+        <div className="lg:col-span-2 glass-card bg-white/5 backdrop-blur-[30px] rounded-[24px] border border-white/10 flex flex-col overflow-hidden h-[500px] max-h-[calc(100vh-280px)] lg:max-h-[500px]">
+          <div className="p-5 border-b border-white/10 flex justify-between items-center bg-[rgba(15,23,42,0.6)] backdrop-blur-md sticky top-0 z-10">
             <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-cyan-400" />
-              <h3 className="font-bold text-white text-sm">Official Notices</h3>
+              <Bell className="w-4 h-4 text-stitch-cyan" />
+              <h3 className="font-bold text-white text-sm font-display">Official Notices</h3>
             </div>
-            <span className="text-xs font-bold text-cyan-300 bg-cyan-500/20 border border-cyan-400/30 px-2.5 py-1 rounded-full shadow-inner">{notices.length} Active</span>
+            <span className="text-xs font-bold text-stitch-cyan bg-stitch-cyan/20 border border-stitch-cyan/30 px-2.5 py-1 rounded-full shadow-inner">{notices.length} Active</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-0 no-scrollbar">
@@ -177,13 +176,13 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
                   <div key={notice.id} className="p-5 hover:bg-white/5 transition-colors group">
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${notice.priority === 'high' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
-                        'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                        'bg-stitch-primary/10 text-stitch-primary border-stitch-primary/30'
                         }`}>
                         {notice.priority} Priority
                       </span>
                       <span className="text-xs text-slate-400 font-mono">{new Date(notice.date).toLocaleDateString()}</span>
                     </div>
-                    <h4 className="font-bold text-white text-sm mb-1 group-hover:text-cyan-300 transition-colors">{notice.title}</h4>
+                    <h4 className="font-bold font-display text-white text-sm mb-1 group-hover:text-stitch-cyan transition-colors">{notice.title}</h4>
                     <p className="text-xs text-slate-300 leading-relaxed">{notice.content}</p>
                     <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
                       <span>By {notice.author}</span>
@@ -208,7 +207,7 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
   return (
     <div className="h-full flex flex-col" style={{ background: 'transparent' }}>
       {/* Sub-Header Tabs */}
-      <div className="shrink-0 border-b border-white/10 bg-slate-900/40 backdrop-blur-xl">
+      <div className="shrink-0 border-b border-white/10 bg-[rgba(15,23,42,0.8)] backdrop-blur-[30px]">
         <div className="flex px-6 gap-6" role="tablist">
           {[
             { id: 'DASHBOARD', label: 'Dashboard' },
@@ -221,7 +220,7 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`py-3 min-h-[44px] flex items-center text-xs font-bold border-b-2 transition-colors ${activeTab === tab.id
-                ? 'border-cyan-400 text-cyan-400'
+                ? 'border-stitch-cyan text-stitch-cyan'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
             >
@@ -238,19 +237,19 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
           <div role="tabpanel" className="p-6 md:p-8 max-w-4xl mx-auto">
             <div className="grid gap-4">
               {faculty.map(contact => (
-                <div key={contact.id} className="glass-card bg-slate-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-cyan-400/40 hover:shadow-[0_0_15px_rgba(34,211,238,0.15)] transition-all group">
-                  <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-400/30 rounded-full flex items-center justify-center font-bold text-cyan-300 text-lg group-hover:from-cyan-500/30 group-hover:to-blue-500/30 transition-colors shadow-inner">
+                <div key={contact.id} className="glass-card bg-white/5 p-5 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-stitch-cyan/40 hover:shadow-[0_0_15px_rgba(47,217,244,0.15)] transition-all group">
+                  <div className="w-12 h-12 bg-gradient-to-br from-stitch-cyan/20 to-stitch-primary/20 border border-stitch-cyan/30 rounded-full flex items-center justify-center font-bold font-display text-stitch-cyan text-lg group-hover:from-stitch-cyan/30 group-hover:to-stitch-primary/30 transition-colors shadow-inner">
                     {contact.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-white text-sm">{contact.name}</h4>
+                    <h4 className="font-bold font-display text-white text-sm">{contact.name}</h4>
                     <p className="text-xs text-slate-400">{contact.designation} • {contact.department}</p>
                     <div className="flex gap-4 mt-2 text-xs text-slate-400">
                       <span className="flex items-center gap-1"><Mail className="w-3 h-3 text-slate-400" /> {contact.email}</span>
                       <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-slate-400" /> {contact.phone}</span>
                     </div>
                   </div>
-                  <button onClick={() => handleInitiateChat(contact)} className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 px-4 py-2.5 min-h-[44px] flex items-center justify-center rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-500/25 active:scale-95">
+                  <button onClick={() => handleInitiateChat(contact)} className="stitch-btn px-4 py-2.5 min-h-[44px] flex items-center justify-center rounded-[12px] text-xs font-bold transition-all">
                     Message
                   </button>
                 </div>
@@ -261,10 +260,10 @@ const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
 
         {activeTab === 'INFO' && (
           <div role="tabpanel" className="p-12 max-w-xl mx-auto text-center">
-            <div className="w-16 h-16 glass-card bg-slate-900/40 backdrop-blur-xl border border-cyan-400/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(34,211,238,0.15)]">
-              <Building2 className="w-8 h-8 text-cyan-400" />
+            <div className="w-16 h-16 glass-card bg-white/5 border border-stitch-cyan/20 rounded-[20px] flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(47,217,244,0.15)]">
+              <Building2 className="w-8 h-8 text-stitch-cyan" />
             </div>
-            <h3 className="font-bold text-white text-lg mb-2">Secure Campus Node</h3>
+            <h3 className="font-bold font-display text-white text-lg mb-2">Secure Campus Node</h3>
             <p className="text-xs text-slate-400 leading-relaxed mb-6">
               Authorized access only. Connected to the central University Matrix.
               <br />System version 2.4.0 (Stable).

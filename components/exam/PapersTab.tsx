@@ -56,15 +56,15 @@ export const PapersTab: React.FC = () => {
           <div key={paper.id} className="glass-card p-5 rounded-2xl border border-white/10 text-white shadow-2xl flex flex-col justify-between gap-4">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="px-2.5 py-0.5 bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 font-bold text-[10px] rounded-md uppercase">{paper.subject}</span>
+                <span className="px-2.5 py-0.5 bg-stitch-primary/20 border border-stitch-primary/30 text-stitch-primary font-bold text-[10px] rounded-md uppercase">{paper.subject}</span>
                 <span className="text-slate-400 text-xs font-medium">{paper.year}</span>
               </div>
-              <h4 className="text-sm font-bold text-white">{paper.title}</h4>
+              <h4 className="text-sm font-bold font-display text-white">{paper.title}</h4>
               <p className="text-xs text-slate-400 font-mono mt-1">Paper Code: {paper.code}</p>
             </div>
             <div className="flex items-center gap-2 pt-2 border-t border-white/10">
               <button onClick={() => handleLoadSolutionKey(paper.title, paper.subject)}
-                className="flex-1 py-3 min-h-[44px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-indigo-600/30">
+                className="stitch-btn flex-1 py-3 min-h-[44px] text-white rounded-[12px] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
                 <Sparkles className="w-3.5 h-3.5" /> AI Solution Key
               </button>
             </div>
@@ -75,13 +75,13 @@ export const PapersTab: React.FC = () => {
       {(isSolutionLoading || activeSolutionKey) && (
         <div className="glass-card p-6 rounded-3xl border border-white/10 text-white shadow-2xl animate-fade-in space-y-4">
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
-            <h4 className="text-sm font-bold text-indigo-300 flex items-center gap-2">
-              <BrainCircuit className="w-4 h-4 text-indigo-400" /> GTU Verified Solution Guide
+            <h4 className="text-sm font-bold font-display text-stitch-cyan flex items-center gap-2">
+              <BrainCircuit className="w-4 h-4 text-stitch-cyan" /> GTU Verified Solution Guide
             </h4>
             <button onClick={() => setActiveSolutionKey(null)} className="text-xs font-bold text-slate-400 hover:text-white p-3 min-h-[44px] min-w-[44px] flex items-center justify-center">Close</button>
           </div>
           {isSolutionLoading ? (
-            <div className="flex items-center justify-center py-8 text-indigo-400 gap-2 text-xs font-bold">
+            <div className="flex items-center justify-center py-8 text-stitch-cyan gap-2 text-xs font-bold">
               <Loader2 className="w-5 h-5 animate-spin" /> Generating Step-by-Step GTU Solution...
             </div>
           ) : (

@@ -105,8 +105,8 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
       <div role="tabpanel" className="flex flex-col gap-6 animate-fade-in">
         <div className="glass-card p-6 lg:p-8 rounded-3xl border border-white/10 text-white shadow-2xl flex flex-col gap-6">
           <div>
-            <h2 className="text-lg font-black text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-400" /> Dynamic GTU AI Quiz Generator
+            <h2 className="text-lg font-black font-display text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-stitch-primary" /> Dynamic GTU AI Quiz Generator
             </h2>
             <p className="text-slate-300 text-xs mt-1">Select your engineering subject and unit syllabus to generate a timed mock test.</p>
           </div>
@@ -114,20 +114,20 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
             <div>
               <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-2">Subject</label>
               <select value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)}
-                className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none text-white">
+                className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-sm font-medium focus:ring-2 focus:ring-stitch-primary outline-none text-white">
                 {subjects.map(s => <option key={s} value={s} className="bg-slate-900 text-white">{s}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-2">Syllabus Unit</label>
               <select value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}
-                className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none text-white">
+                className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-sm font-medium focus:ring-2 focus:ring-stitch-primary outline-none text-white">
                 {units.map(u => <option key={u} value={u} className="bg-slate-900 text-white">{u}</option>)}
               </select>
             </div>
           </div>
           <button onClick={handleStartQuiz} disabled={isGenerating}
-            className="w-full py-4 min-h-[44px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50">
+            className="stitch-btn w-full py-4 min-h-[44px] text-white rounded-2xl font-black font-display text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50">
             {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
             {isGenerating ? 'Generating GTU Questions...' : 'Start Timed Mock Quiz'}
           </button>
@@ -141,10 +141,10 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
       <div className="glass-card rounded-3xl border border-white/10 text-white shadow-2xl flex flex-col overflow-hidden">
         <div className="p-4 lg:p-6 bg-slate-950/80 text-white flex justify-between items-center border-b border-white/10">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 block">{activeQuiz.subject}</span>
-            <h3 className="text-base font-bold text-white">{activeQuiz.title}</h3>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-stitch-primary block">{activeQuiz.subject}</span>
+            <h3 className="text-base font-bold font-display text-white">{activeQuiz.title}</h3>
           </div>
-          <div className={`px-4 py-2 rounded-xl text-sm font-mono font-black flex items-center gap-2 ${timeRemaining < 60 ? 'bg-red-500 text-white animate-pulse' : 'bg-white/10 text-emerald-400'}`}>
+          <div className={`px-4 py-2 rounded-xl text-sm font-mono font-black flex items-center gap-2 ${timeRemaining < 60 ? 'bg-red-500 text-white animate-pulse' : 'bg-white/10 text-stitch-cyan'}`}>
             <Clock className="w-4 h-4" /> {formatTime(timeRemaining)}
           </div>
         </div>
@@ -156,7 +156,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
               <span>Progress: {Math.round(((currentQIndex + 1) / activeQuiz.questions.length) * 100)}%</span>
             </div>
             <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-              <div className="bg-indigo-500 h-full transition-all duration-300"
+              <div className="bg-stitch-primary h-full transition-all duration-300"
                 style={{ width: `${((currentQIndex + 1) / activeQuiz.questions.length) * 100}%` }}></div>
             </div>
             <h4 className="text-base lg:text-lg font-bold text-white leading-relaxed">
@@ -167,9 +167,9 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
                 const isSelected = userAnswers[currentQIndex] === oIdx;
                 return (
                   <button key={oIdx} onClick={() => handleSelectOption(currentQIndex, oIdx)}
-                    className={`w-full min-h-[44px] text-left p-4 rounded-2xl border text-sm font-medium flex items-center justify-between transition-all ${isSelected ? 'bg-indigo-600/30 border-indigo-500 text-white shadow-lg shadow-indigo-600/20' : 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'}`}>
+                    className={`w-full min-h-[44px] text-left p-4 rounded-[16px] border text-sm font-medium flex items-center justify-between transition-all ${isSelected ? 'bg-stitch-primary-container/30 border-stitch-primary text-white shadow-[0_0_15px_rgba(67,56,202,0.2)]' : 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'}`}>
                     <span>{opt}</span>
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-indigo-400 bg-indigo-500 text-white' : 'border-white/30'}`}>
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-stitch-primary bg-stitch-primary text-white' : 'border-white/30'}`}>
                       {isSelected && <Check className="w-3 h-3" />}
                     </div>
                   </button>
@@ -181,20 +181,20 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
                 className="px-5 py-2.5 min-h-[44px] bg-white/10 text-slate-200 rounded-xl text-xs font-bold disabled:opacity-40 hover:bg-white/20">Previous</button>
               {currentQIndex < activeQuiz.questions.length - 1 ? (
                 <button onClick={() => setCurrentQIndex(prev => prev + 1)}
-                  className="px-6 py-2.5 min-h-[44px] bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-500 shadow-lg shadow-indigo-600/30">Next Question</button>
+                  className="stitch-btn px-6 py-2.5 min-h-[44px] text-white rounded-[12px] text-xs font-bold">Next Question</button>
               ) : (
                 <button onClick={handleQuizSubmit}
-                  className="px-6 py-2.5 min-h-[44px] bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 shadow-lg shadow-emerald-600/30">Submit Test</button>
+                  className="stitch-btn px-6 py-2.5 min-h-[44px] text-white rounded-[12px] text-xs font-bold">Submit Test</button>
               )}
             </div>
           </div>
         ) : (
           <div className="p-6 lg:p-8 flex flex-col gap-6 animate-fade-in">
-            <div className="text-center bg-white/5 p-6 rounded-3xl border border-white/10">
-              <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-indigo-500/30">
+            <div className="text-center bg-white/5 p-6 rounded-[24px] border border-white/10">
+              <div className="w-16 h-16 bg-stitch-primary/20 text-stitch-primary rounded-full flex items-center justify-center mx-auto mb-3 border border-stitch-primary/30">
                 <Award className="w-8 h-8" />
               </div>
-              <h3 className="text-2xl font-black text-white">{quizScore?.percentage}% Score</h3>
+              <h3 className="text-2xl font-black font-display text-white">{quizScore?.percentage}% Score</h3>
               <p className="text-xs text-slate-300 mt-1">You answered {quizScore?.score} out of {quizScore?.totalQuestions} correctly.</p>
             </div>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">Detailed Solution Key</h4>
@@ -207,14 +207,14 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-bold text-white">{idx + 1}. {q.question}</span>
                       {isCorrect ? (
-                        <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 rounded-md flex items-center gap-1 shrink-0"><CheckCircle2 className="w-3 h-3" /> Correct</span>
+                        <span className="px-2 py-0.5 bg-stitch-cyan/20 text-stitch-cyan font-bold border border-stitch-cyan/30 rounded-md flex items-center gap-1 shrink-0"><CheckCircle2 className="w-3 h-3" /> Correct</span>
                       ) : (
                         <span className="px-2 py-0.5 bg-red-500/20 text-red-400 font-bold border border-red-500/30 rounded-md flex items-center gap-1 shrink-0"><XCircle className="w-3 h-3" /> Wrong</span>
                       )}
                     </div>
-                    <p className="text-slate-300">Your Answer: <strong className={isCorrect ? 'text-emerald-400' : 'text-red-400'}>{userAns !== undefined ? q.options[userAns] : 'Not Answered'}</strong></p>
-                    <p className="text-emerald-400 font-medium">Correct Answer: <strong>{q.options[q.correctAnswer]}</strong></p>
-                    <div className="p-3 bg-indigo-950/40 border border-indigo-500/20 rounded-xl text-slate-200 leading-relaxed">
+                    <p className="text-slate-300">Your Answer: <strong className={isCorrect ? 'text-stitch-cyan' : 'text-red-400'}>{userAns !== undefined ? q.options[userAns] : 'Not Answered'}</strong></p>
+                    <p className="text-stitch-cyan font-medium">Correct Answer: <strong>{q.options[q.correctAnswer]}</strong></p>
+                    <div className="p-3 bg-[rgba(15,23,42,0.8)] border border-stitch-primary/20 rounded-xl text-slate-200 leading-relaxed">
                       AI Explanation: {q.explanation}
                     </div>
                   </div>
@@ -222,7 +222,7 @@ export const QuizTab: React.FC<QuizTabProps> = ({ subjects, units }) => {
               })}
             </div>
             <button onClick={() => setActiveQuiz(null)}
-              className="w-full py-3.5 min-h-[44px] bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-600/30">
+              className="stitch-btn w-full py-3.5 min-h-[44px] text-white font-bold text-xs uppercase tracking-wider rounded-[12px]">
               Back to Quiz Selector
             </button>
           </div>

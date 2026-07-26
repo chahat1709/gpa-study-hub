@@ -4,7 +4,7 @@ import { useToast } from './ToastProvider';
 import {
   User as UserIcon, Camera, Loader2,
   LogOut, Key, Eye, EyeOff,
-  Shield, Globe, Cpu, Server, CheckCircle, XCircle, RefreshCw
+  Shield, Globe, Cpu
 } from 'lucide-react';
 import {
   AIProvider, PROVIDERS,
@@ -13,7 +13,6 @@ import {
   getZenApiKey, setZenApiKey,
   getCustomConfig, setCustomConfig,
 } from '../services/aiProviderService';
-import { getStoredServerIp, setServerIp, checkServerHealth } from '../services/apiClient';
 
 const ProfileInterface: React.FC = () => {
   const { user, uploadProfilePicture, logout } = useAuth();
@@ -30,22 +29,6 @@ const ProfileInterface: React.FC = () => {
   const [customModel, setCustomModelState] = useState('');
   const [showKey, setShowKey] = useState(false);
 
-  // Server Config State
-  const [serverIp, setServerIpState] = useState(getStoredServerIp());
-  const [serverStatus, setServerStatus] = useState<'idle' | 'checking' | 'connected' | 'error'>('idle');
-
-  const checkServer = async () => {
-    setServerStatus('checking');
-    const ok = await checkServerHealth();
-    setServerStatus(ok ? 'connected' : 'error');
-  };
-
-  const handleSaveServerIp = () => {
-    setServerIp(serverIp.trim());
-    checkServer();
-    success("Server IP updated");
-  };
-
   useEffect(() => {
     setProviderState(getSelectedProvider());
     setGeminiKeyState(getGeminiApiKey());
@@ -54,8 +37,6 @@ const ProfileInterface: React.FC = () => {
     setCustomUrlState(custom.url);
     setCustomKeyState(custom.key);
     setCustomModelState(custom.model);
-    setServerIpState(getStoredServerIp());
-    checkServer();
   }, []);
 
   const handleProviderChange = (p: AIProvider) => {
@@ -304,49 +285,6 @@ const ProfileInterface: React.FC = () => {
                   Sync from Project IDX
                 </button>
               )}
-            </div>
-          </div>
-
-          {/* Account Actions */}
-          <div className="glass-card bg-slate-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/10 flex flex-col justify-between shadow-[0_0_20px_rgba(34,211,238,0.05)]">
-            <div className="flex items-center gap-3 mb-6">
-               <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-300">
-                 <Shield className="w-5 h-5" />
-               </div>
-               <div>
-                 <h3 className="font-semibold text-white text-sm">Campus Server</h3>
-                 <p className="text-xs text-slate-400">Connect to your college PC database</p>
-               </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 text-xs text-slate-300">
-                <span>Connection Status</span>
-                {serverStatus === 'connected' && <span className="text-emerald-400 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Online</span>}
-                {serverStatus === 'error' && <span className="text-rose-400 font-bold flex items-center gap-1"><XCircle className="w-3 h-3" /> Offline</span>}
-                {serverStatus === 'checking' && <span className="text-amber-400 font-bold flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> Checking...</span>}
-                {serverStatus === 'idle' && <span className="text-slate-500 font-bold">Unknown</span>}
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">College PC IP Address</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={serverIp}
-                    onChange={e => setServerIpState(e.target.value)}
-                    className="flex-1 px-3 py-2.5 text-sm font-mono rounded-xl focus:ring-2 focus:ring-cyan-500/40 border border-white/10 bg-white/5 text-white"
-                    placeholder="192.168.1.100"
-                  />
-                  <button
-                    onClick={handleSaveServerIp}
-                    className="px-3 py-2.5 min-h-[44px] bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 rounded-xl text-xs font-bold transition-all flex items-center justify-center active:scale-95 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
-                  >
-                    Save
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1">Find IP: Open CMD → type ipconfig</p>
-              </div>
             </div>
           </div>
 

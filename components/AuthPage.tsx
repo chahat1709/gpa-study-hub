@@ -126,7 +126,7 @@ export const AuthPage: React.FC = () => {
   const FeatIcon = Feat.icon;
 
   return (
-    <div className="min-h-screen w-full flex relative overflow-hidden bg-[#050810]">
+    <div className="min-h-screen w-full flex relative overflow-hidden bg-transparent">
       {/* Background orbs from index.css */}
       <div className="glow-orb glow-orb-1" />
       <div className="glow-orb glow-orb-2" />
@@ -136,23 +136,23 @@ export const AuthPage: React.FC = () => {
       <div className="flex-1 flex flex-col lg:flex-row relative z-10 w-full h-full">
         
         {/* Left panel — desktop hero */}
-        <div className="hidden lg:flex w-[45%] flex-col justify-between p-12 relative overflow-hidden border-r border-white/10 bg-slate-900/40 backdrop-blur-3xl">
+        <div className="hidden lg:flex w-[45%] flex-col justify-between p-12 relative overflow-hidden border-r border-white/10 bg-[rgba(15,23,42,0.6)] backdrop-blur-[40px]">
           {/* Logo */}
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br from-cyan-400 to-emerald-500 shadow-cyan-500/20">
-              <GraduationCap className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br from-stitch-primary to-stitch-secondary shadow-stitch-primary-container/20">
+              <GraduationCap className="w-8 h-8 text-stitch-navy" />
             </div>
             <div>
-              <div className="text-3xl font-black text-white tracking-tight">GPA Study Hub</div>
-              <div className="text-sm font-mono text-cyan-400 mt-1">GTU Diploma Platform</div>
+              <div className="text-3xl font-display font-black text-white tracking-tight">GPA Study Hub</div>
+              <div className="text-sm font-mono text-stitch-cyan mt-1">GTU Diploma Platform</div>
             </div>
           </div>
 
           {/* Hero text */}
           <div className="space-y-8">
-            <h1 className="text-6xl font-black text-white leading-[1.1] tracking-tight">
+            <h1 className="text-6xl font-display font-black text-white leading-[1.1] tracking-tight">
               Secure.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-stitch-primary to-stitch-cyan">
                 Role-Based.
               </span><br />
               Powerful.
@@ -163,8 +163,8 @@ export const AuthPage: React.FC = () => {
 
             <div className="space-y-4">
               {[
-                { role: 'STUDENT', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', icon: User, desc: 'Exams, Library, AI Tutor, Planner' },
-                { role: 'FACULTY', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: Building2, desc: 'Attendance, Notices, Resources' },
+                { role: 'STUDENT', color: 'text-stitch-cyan', bg: 'bg-stitch-cyan/10', border: 'border-stitch-cyan/20', icon: User, desc: 'Exams, Library, AI Tutor, Planner' },
+                { role: 'FACULTY', color: 'text-stitch-primary', bg: 'bg-stitch-primary-container/20', border: 'border-stitch-primary-container/30', icon: Building2, desc: 'Attendance, Notices, Resources' },
                 { role: 'GTU ADMIN', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: Shield, desc: 'Full System Access & Config' },
               ].map(r => {
                 const RIcon = r.icon;
@@ -189,10 +189,10 @@ export const AuthPage: React.FC = () => {
               <FeatIcon className="w-6 h-6" style={{ color: Feat.color }} />
             </div>
             <div className="flex-1">
-              <div className="font-bold text-white text-lg">{Feat.label}</div>
+              <div className="font-bold font-display text-white text-lg">{Feat.label}</div>
               <div className="flex gap-2 mt-3">
                 {features.map((_, i) => (
-                  <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === fi ? 'w-8 bg-cyan-400' : 'w-2 bg-white/20'}`} style={{ backgroundColor: i === fi ? Feat.color : undefined }} />
+                  <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === fi ? 'w-8 bg-stitch-cyan' : 'w-2 bg-white/20'}`} style={{ backgroundColor: i === fi ? Feat.color : undefined }} />
                 ))}
               </div>
             </div>
@@ -204,12 +204,12 @@ export const AuthPage: React.FC = () => {
           
           {/* Mobile Header */}
           <div className="lg:hidden flex flex-col items-center gap-3 mb-8 text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br from-cyan-400 to-emerald-500 shadow-cyan-500/20">
-              <GraduationCap className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br from-stitch-primary to-stitch-secondary shadow-stitch-primary-container/20">
+              <GraduationCap className="w-8 h-8 text-stitch-navy" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tight">GPA Study Hub</h1>
-              <p className="text-sm font-mono text-cyan-400 mt-1">GTU Diploma</p>
+              <h1 className="text-2xl font-display font-black text-white tracking-tight">GPA Study Hub</h1>
+              <p className="text-sm font-mono text-stitch-cyan mt-1">GTU Diploma</p>
             </div>
           </div>
 
@@ -217,10 +217,10 @@ export const AuthPage: React.FC = () => {
           <div className="glass-card w-full max-w-[400px] p-8 card-3d">
             
             {/* Elegant Segmented Control */}
-            <div className="flex p-1.5 bg-slate-900/60 rounded-2xl mb-8 border border-white/5 shadow-inner">
+            <div className="flex p-1.5 bg-[rgba(15,23,42,0.8)] rounded-2xl mb-8 border border-white/5 shadow-inner">
               {([
-                { id: 'STUDENT', label: 'Student', color: 'text-cyan-400', activeBg: 'bg-cyan-500/20' },
-                { id: 'FACULTY', label: 'Faculty', color: 'text-purple-400', activeBg: 'bg-purple-500/20' },
+                { id: 'STUDENT', label: 'Student', color: 'text-stitch-cyan', activeBg: 'bg-stitch-cyan/20' },
+                { id: 'FACULTY', label: 'Faculty', color: 'text-stitch-primary', activeBg: 'bg-stitch-primary-container/30' },
                 { id: 'ADMIN', label: 'Admin', color: 'text-amber-400', activeBg: 'bg-amber-500/20' },
               ] as const).map(t => (
                 <button
@@ -239,7 +239,7 @@ export const AuthPage: React.FC = () => {
                 <div className="flex gap-2 mb-6" role="tablist">
                   {(['LOGIN', 'REGISTER'] as StudentView[]).map(v => (
                     <button key={v} onClick={() => setStuView(v)}
-                      className={`flex-1 flex items-center justify-center gap-2 text-xs py-3 rounded-xl font-bold transition-all ${stuView === v ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400 border' : 'bg-white/5 border-white/10 text-slate-400 border'}`}>
+                      className={`flex-1 flex items-center justify-center gap-2 text-xs py-3 rounded-xl font-bold transition-all ${stuView === v ? 'bg-stitch-cyan/20 border-stitch-cyan/30 text-stitch-cyan border' : 'bg-white/5 border-white/10 text-slate-400 border'}`}>
                       {v === 'LOGIN' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
                       {v === 'LOGIN' ? 'Login' : 'Register'}
                     </button>
@@ -255,7 +255,7 @@ export const AuthPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest flex items-center gap-2">
-                        <Fingerprint className="w-4 h-4 text-cyan-400" />
+                        <Fingerprint className="w-4 h-4 text-stitch-cyan" />
                         4-Digit PIN
                       </label>
                       <div className="flex gap-4 justify-center">
@@ -265,16 +265,16 @@ export const AuthPage: React.FC = () => {
                              onChange={e => handlePinDigit(i, e.target.value)}
                              onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) pinRefs.current[i - 1]?.focus(); }}
                              className="w-[60px] h-[68px] text-center text-3xl font-black rounded-2xl outline-none transition-all duration-300 focus:scale-105"
-                             style={{ ...inputStyle, border: d ? '2px solid rgba(34,211,238,0.8)' : '1px solid rgba(255,255,255,0.12)', color: '#22d3ee' }}
+                             style={{ ...inputStyle, border: d ? '2px solid var(--stitch-cyan)' : '1px solid rgba(255,255,255,0.12)', color: 'var(--stitch-cyan)' }}
                            />
                         ))}
                       </div>
                     </div>
-                    <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 text-slate-950 mt-4 btn-3d" style={btnPrimary('#22d3ee', '#10b981', 'rgba(34,211,238,0.4)')}>
+                    <button type="submit" disabled={isLoading} className="stitch-btn w-full py-4 font-black text-sm flex items-center justify-center gap-2">
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><KeyRound className="w-4 h-4" /> Enter Campus</>}
                     </button>
                     <p className="text-center text-xs text-slate-500 pt-2">
-                      <button type="button" onClick={() => setStuView('REGISTER')} className="text-cyan-400 font-bold hover:text-cyan-300 transition-colors">Register</button>
+                      <button type="button" onClick={() => setStuView('REGISTER')} className="text-stitch-cyan font-bold hover:text-stitch-cyan/80 transition-colors">Register</button>
                       {' · '}
                       <button type="button" onClick={() => setShowForgotPin(true)} className="text-amber-400 font-bold hover:text-amber-300 transition-colors">Forgot PIN?</button>
                     </p>
@@ -349,7 +349,7 @@ export const AuthPage: React.FC = () => {
                 <div className="flex gap-2 mb-6" role="tablist">
                   {(['LOGIN', 'REGISTER'] as FacultyView[]).map(v => (
                     <button key={v} onClick={() => setFacView(v)}
-                      className={`flex-1 flex items-center justify-center gap-2 text-xs py-3 rounded-xl font-bold transition-all ${facView === v ? 'bg-purple-500/20 border-purple-500/30 text-purple-400 border' : 'bg-white/5 border-white/10 text-slate-400 border'}`}>
+                      className={`flex-1 flex items-center justify-center gap-2 text-xs py-3 rounded-xl font-bold transition-all ${facView === v ? 'bg-stitch-primary-container/30 border-stitch-primary-container/50 text-stitch-primary border' : 'bg-white/5 border-white/10 text-slate-400 border'}`}>
                       {v === 'LOGIN' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
                       {v === 'LOGIN' ? 'Login' : 'Register'}
                     </button>
@@ -370,7 +370,7 @@ export const AuthPage: React.FC = () => {
                     <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Password</label>
                     <div className="relative">
                       <input type={showPw ? 'text' : 'password'} required value={facPassword} onChange={e => setFacPassword(e.target.value)} className={`${inputCls} pr-12`} style={inputStyle} placeholder={facView === 'LOGIN' ? '••••••••' : 'Min 6 characters'} />
-                      <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-400 transition-colors">
+                      <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-stitch-primary transition-colors">
                         {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
@@ -383,7 +383,7 @@ export const AuthPage: React.FC = () => {
                       </select>
                     </div>
                   )}
-                  <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 text-white mt-4 btn-3d" style={btnPrimary('#c084fc', '#7e22ce', 'rgba(168,85,247,0.4)')}>
+                  <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 text-white mt-4 btn-3d" style={btnPrimary('#a855f7', '#7e22ce', 'rgba(168,85,247,0.4)')}>
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{facView === 'LOGIN' ? 'Access Dashboard' : 'Create Faculty Account'}</>}
                   </button>
                 </form>

@@ -1,36 +1,126 @@
-const SERVER_IP_KEY = 'GPA_HUB_SERVER_IP';
-const SERVER_IP_DEFAULT = '192.168.1.1';
-const SERVER_PORT = 3000;
+/**
+ * API Client — GPA Study Hub
+ * 
+ * Architecture:
+ *  - Backend (Express + SQLite) runs on college PC in server room
+ *  - Cloudflare Tunnel exposes server to internet (free, secure)
+ *  - App connects via tunnel URL — works from any network
+ * 
+ * Setup:
+ *  1. College PC runs server + cloudflare tunnel
+ *  2. Tunnel shows a public URL (e.g., https://xyz.trycloudflare.com)
+ *  3. Set that URL in VITE_API_URL env, OR
+ *  4. Students open app → auto-detects server on local network
+ */
 
+const API_URL_KEY = 'GPA_HUB_API_URL';
+const AUTH_TOKEN_KEY = 'GPA_HUB_AUTH_TOKEN';
+const DEFAULT_API_URL = import.meta.env.VITE_API_URL || '';
+
+// ── Token Management ───────────────────────────────────────────────────────────
+export function getAuthToken(): string | null {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function setAuthToken(token: string): void {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function clearAuthToken(): void {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
+// ── Server URL ─────────────────────────────────────────────────────────────────
 function getServerUrl(): string {
-  const ip = localStorage.getItem(SERVER_IP_KEY) || SERVER_IP_DEFAULT;
-  return `http://${ip}:${SERVER_PORT}`;
+  const stored = localStorage.getItem(API_URL_KEY);
+  if (stored) return stored;
+  return DEFAULT_API_URL;
 }
 
-export function getStoredServerIp(): string {
-  return localStorage.getItem(SERVER_IP_KEY) || SERVER_IP_DEFAULT;
+export function getApiUrl(): string {
+  return getServerUrl();
 }
 
-export function setServerIp(ip: string): void {
-  localStorage.setItem(SERVER_IP_KEY, ip);
+export function setApiUrl(url: string): void {
+  localStorage.setItem(API_URL_KEY, url.replace(/\/$/, ''));
 }
 
+export function clearApiUrl(): void {
+  localStorage.removeItem(API_URL_KEY);
+}
+
+// ── Core API Fetch ─────────────────────────────────────────────────────────────
 async function api<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${getServerUrl()}${path}`;
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Server request failed');
+  const baseUrl = getServerUrl();
+  
+  if (!baseUrl) {
+    const localUrl = await autoDetectServer();
+    if (!localUrl) {
+      throw new Error('Cannot find GPA Study Hub server. Make sure your college server is running.');
+    }
+    return apiFetch<T>(localUrl + path, options);
   }
-  return data as T;
+
+  return apiFetch<T>(baseUrl + path, options);
 }
 
+async function apiFetch<T = unknown>(url: string, options: RequestInit = {}): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const token = getAuthToken();
+
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> || {}),
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers,
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || `Server error (${res.status})`);
+    }
+    return data as T;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ── Auto-detect server on local network ────────────────────────────────────────
+async function autoDetectServer(): Promise<string | null> {
+  const commonHosts = [
+    window.location.hostname,
+    '192.168.1.1',
+    '192.168.0.1',
+    '10.0.0.1',
+    '10.10.1.1',
+    '172.16.0.1',
+  ].filter(Boolean);
+
+  for (const host of commonHosts) {
+    try {
+      const res = await fetch(`http://${host}:3000/api/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000),
+      });
+      if (res.ok) {
+        const url = `http://${host}:3000`;
+        localStorage.setItem(API_URL_KEY, url);
+        return url;
+      }
+    } catch { /* try next */ }
+  }
+  return null;
+}
+
+// ── Health ─────────────────────────────────────────────────────────────────────
 export async function checkServerHealth(): Promise<boolean> {
   try {
     const data = await api<{ status: string }>('/api/health');
@@ -40,7 +130,7 @@ export async function checkServerHealth(): Promise<boolean> {
   }
 }
 
-// ── Auth ────────────────────────────────────────────────────────────────────────
+// ── Auth ───────────────────────────────────────────────────────────────────────
 export interface ApiUser {
   id: string;
   name: string;
@@ -54,6 +144,12 @@ export interface ApiUser {
   email?: string;
 }
 
+interface AuthResponse {
+  success: boolean;
+  user: ApiUser;
+  token?: string;
+}
+
 export async function signup(data: {
   name: string;
   enrollmentNumber: string;
@@ -62,12 +158,16 @@ export async function signup(data: {
   semester: string;
   section: string;
   university?: string;
-}): Promise<{ user: ApiUser }> {
-  return api('/api/auth/signup', { method: 'POST', body: JSON.stringify(data) });
+}): Promise<AuthResponse> {
+  const res = await api<AuthResponse>('/api/auth/signup', { method: 'POST', body: JSON.stringify(data) });
+  if (res.token) setAuthToken(res.token);
+  return res;
 }
 
-export async function login(enrollmentNumber: string, pin: string): Promise<{ user: ApiUser }> {
-  return api('/api/auth/login', { method: 'POST', body: JSON.stringify({ enrollmentNumber, pin }) });
+export async function login(enrollmentNumber: string, pin: string): Promise<AuthResponse> {
+  const res = await api<AuthResponse>('/api/auth/login', { method: 'POST', body: JSON.stringify({ enrollmentNumber, pin }) });
+  if (res.token) setAuthToken(res.token);
+  return res;
 }
 
 export async function forgotPin(enrollmentNumber: string, newPin: string): Promise<{ message: string }> {
@@ -78,8 +178,10 @@ export async function changePin(userId: string, oldPin: string, newPin: string):
   return api('/api/auth/change-pin', { method: 'POST', body: JSON.stringify({ userId, oldPin, newPin }) });
 }
 
-export async function facultyLogin(email: string, password: string): Promise<{ user: ApiUser }> {
-  return api('/api/auth/faculty-login', { method: 'POST', body: JSON.stringify({ email, password }) });
+export async function facultyLogin(email: string, password: string): Promise<AuthResponse> {
+  const res = await api<AuthResponse>('/api/auth/faculty-login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  if (res.token) setAuthToken(res.token);
+  return res;
 }
 
 export async function facultySignup(data: {
@@ -87,19 +189,23 @@ export async function facultySignup(data: {
   email: string;
   password: string;
   branch: string;
-}): Promise<{ user: ApiUser }> {
-  return api('/api/auth/faculty-signup', { method: 'POST', body: JSON.stringify(data) });
+}): Promise<AuthResponse> {
+  const res = await api<AuthResponse>('/api/auth/faculty-signup', { method: 'POST', body: JSON.stringify(data) });
+  if (res.token) setAuthToken(res.token);
+  return res;
 }
 
-export async function adminLogin(code: string): Promise<{ user: ApiUser }> {
-  return api('/api/auth/admin-login', { method: 'POST', body: JSON.stringify({ code }) });
+export async function adminLogin(code: string): Promise<AuthResponse> {
+  const res = await api<AuthResponse>('/api/auth/admin-login', { method: 'POST', body: JSON.stringify({ code }) });
+  if (res.token) setAuthToken(res.token);
+  return res;
 }
 
 export async function updateProfile(userId: string, photoUrl: string): Promise<{ user: ApiUser }> {
   return api(`/api/auth/profile/${userId}`, { method: 'PUT', body: JSON.stringify({ photo_url: photoUrl }) });
 }
 
-// ── Attendance ──────────────────────────────────────────────────────────────────
+// ── Attendance ─────────────────────────────────────────────────────────────────
 export interface AttendanceRecord {
   id: string;
   user_id: string;
@@ -128,7 +234,7 @@ export async function getAttendanceStats(userId: string): Promise<AttendanceStat
   return api(`/api/attendance/stats/${userId}`);
 }
 
-// ── Timetable ──────────────────────────────────────────────────────────────────
+// ── Timetable ─────────────────────────────────────────────────────────────────
 export interface TimeSlot {
   id: string;
   branch: string;
@@ -151,7 +257,7 @@ export async function addTimetableSlot(data: Omit<TimeSlot, 'id'>): Promise<{ id
   return api('/api/timetable', { method: 'POST', body: JSON.stringify(data) });
 }
 
-// ── Tasks ──────────────────────────────────────────────────────────────────────
+// ── Tasks ─────────────────────────────────────────────────────────────────────
 export interface Task {
   id: string;
   user_id: string;
@@ -179,7 +285,7 @@ export async function deleteTask(id: string): Promise<{ success: boolean }> {
   return api(`/api/tasks/${id}`, { method: 'DELETE' });
 }
 
-// ── Resources ──────────────────────────────────────────────────────────────────
+// ── Resources ─────────────────────────────────────────────────────────────────
 export interface Resource {
   id: string;
   title: string;
@@ -205,7 +311,7 @@ export async function addResource(data: Omit<Resource, 'id' | 'created_at'>): Pr
   return api('/api/resources', { method: 'POST', body: JSON.stringify(data) });
 }
 
-// ── Notices ────────────────────────────────────────────────────────────────────
+// ── Notices ───────────────────────────────────────────────────────────────────
 export interface Notice {
   id: string;
   title: string;
@@ -215,18 +321,17 @@ export interface Notice {
   priority: string;
   branch: string;
   date: string;
-  created_at: string;
 }
 
 export async function getNotices(): Promise<{ notices: Notice[] }> {
   return api('/api/notices');
 }
 
-export async function addNotice(data: Omit<Notice, 'id' | 'date' | 'created_at'>): Promise<{ id: string }> {
+export async function addNotice(data: { title: string; content: string; author?: string; category?: string; priority?: string; branch?: string }): Promise<{ id: string }> {
   return api('/api/notices', { method: 'POST', body: JSON.stringify(data) });
 }
 
-// ── Chats ──────────────────────────────────────────────────────────────────────
+// ── Chat ───────────────────────────────────────────────────────────────────────
 export interface Chat {
   id: string;
   participants: string;
@@ -234,10 +339,9 @@ export interface Chat {
   group_name: string;
   last_message: string;
   last_timestamp: string;
-  created_at: string;
 }
 
-export interface ChatMessage {
+export interface Message {
   id: string;
   chat_id: string;
   sender_id: string;
@@ -255,7 +359,7 @@ export async function createChat(participants: string[], isGroup?: boolean, grou
   return api('/api/chats', { method: 'POST', body: JSON.stringify({ participants, isGroup, groupName }) });
 }
 
-export async function getMessages(chatId: string): Promise<{ messages: ChatMessage[] }> {
+export async function getMessages(chatId: string): Promise<{ messages: Message[] }> {
   return api(`/api/messages/${chatId}`);
 }
 
@@ -274,13 +378,13 @@ export interface Exam {
   branch: string;
   semester: string;
   subject: string;
-  questions: { id: string; text: string; options: string[]; correctIndex: number }[];
+  questions: any[];
   duration: number;
   total_marks: number;
   created_at: string;
 }
 
-export async function getExams(branch?: string, semester?: string): Promise<{ exams: Omit<Exam, 'questions'>[] }> {
+export async function getExams(branch?: string, semester?: string): Promise<{ exams: Exam[] }> {
   const params = new URLSearchParams();
   if (branch) params.set('branch', branch);
   if (semester) params.set('semester', semester);
@@ -292,32 +396,54 @@ export async function getExam(id: string): Promise<{ exam: Exam }> {
   return api(`/api/exams/${id}`);
 }
 
-export async function submitExam(examId: string, userId: string, score: number, total: number, answers: Record<string, number>): Promise<{ resultId: string }> {
+export async function createExam(data: { title: string; branch?: string; semester?: string; subject?: string; questions?: any[]; duration?: number; totalMarks?: number }): Promise<{ id: string }> {
+  return api('/api/exams', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function submitExam(examId: string, userId: string, score: number, total: number, answers: Record<string, any>): Promise<{ resultId: string }> {
   return api(`/api/exams/${examId}/submit`, { method: 'POST', body: JSON.stringify({ userId, score, total, answers }) });
 }
 
 // ── Faculty ────────────────────────────────────────────────────────────────────
-export interface Faculty {
-  id: string;
-  name: string;
-  designation: string;
-  department: string;
-  email: string;
-  phone: string;
-  branch: string;
-}
-
-export async function getFaculty(branch?: string): Promise<{ faculty: Faculty[] }> {
-  const qs = branch ? `?branch=${branch}` : '';
-  return api(`/api/faculty${qs}`);
+export async function getFaculty(branch?: string): Promise<{ faculty: any[] }> {
+  const params = new URLSearchParams();
+  if (branch) params.set('branch', branch);
+  const qs = params.toString();
+  return api(`/api/faculty${qs ? '?' + qs : ''}`);
 }
 
 // ── File Upload ────────────────────────────────────────────────────────────────
 export async function uploadFile(file: File): Promise<{ url: string; filename: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await fetch(`${getServerUrl()}/api/upload`, { method: 'POST', body: formData });
+  const baseUrl = getServerUrl() || await autoDetectServer() || '';
+  const token = getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${baseUrl}/api/upload`, {
+    method: 'POST',
+    body: formData,
+    headers,
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Upload failed');
   return data;
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────────
+export async function getSetting(key: string): Promise<{ value: string | null }> {
+  return api(`/api/settings/${key}`);
+}
+
+export async function setSetting(key: string, value: string): Promise<{ success: boolean }> {
+  return api('/api/settings', { method: 'POST', body: JSON.stringify({ key, value }) });
+}
+
+// ── Legacy compatibility ───────────────────────────────────────────────────────
+export function getStoredServerIp(): string {
+  return getApiUrl();
+}
+
+export function setServerIp(url: string): void {
+  setApiUrl(url);
 }

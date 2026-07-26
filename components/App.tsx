@@ -7,7 +7,7 @@ import { ToastProvider, useToast } from './ToastProvider';
 import { AuthProvider, useAuth } from './AuthContext';
 import { AuthPage } from './AuthPage';
 import { Onboarding } from './Onboarding';
-import { Loader2, Bell, ChevronLeft, User as UserIcon, WifiOff, Download } from 'lucide-react';
+import { Loader2, Bell, ChevronLeft, User as UserIcon, WifiOff, Download, Server, Cloud } from 'lucide-react';
 import AdminDashboard from './AdminDashboard';
 import NexusAgent from './NexusAgent';
 import { examService } from '../services/examService';
@@ -19,10 +19,8 @@ import { useApiKeyCheck } from '../hooks/useApiKeyCheck';
 import { useSafeAreaInsets, useIsMobile } from '../hooks/useMobile';
 import { updateService } from '../services/updateService';
 import { checkServerHealth } from '../services/apiClient';
-import ServerConnect from './ServerConnect';
 
 const ONBOARDED_KEY = 'gpa_hub_onboarded_v1';
-const SERVER_CONNECTED_KEY = 'gpa_hub_server_connected';
 
 // Fixed paths: Relative to components/ folder
 const ChatInterface = React.lazy(() => import('./ChatInterface'));
@@ -38,7 +36,7 @@ const AttendanceInterface = React.lazy(() => import('./AttendanceInterface'));
 const ExamHubInterface = React.lazy(() => import('./ExamHubInterface'));
 
 const LoadingFallback: React.FC = () => (
-  <div className="flex-1 flex items-center justify-center h-full" style={{background:'transparent'}}>
+  <div className="flex-1 flex items-center justify-center h-full" style={{ background: 'transparent' }}>
     <div className="flex flex-col items-center gap-4">
       <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Loading Module...</span>
@@ -66,12 +64,11 @@ const OfflineBanner: React.FC = () => {
 };
 
 const AppShell: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, serverOnline } = useAuth();
   const { success } = useToast();
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.EXAM_HUB);
   const { hasKey: isAiActive } = useApiKeyCheck(5000);
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDED_KEY));
-  const [serverConnected, setServerConnected] = useState(() => localStorage.getItem(SERVER_CONNECTED_KEY) === 'true');
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit'>('enter');
   const [license, setLicense] = useState<LicenseStatus | null>(null);
   const prevModeRef = useRef<AppMode>(currentMode);
@@ -106,8 +103,8 @@ const AppShell: React.FC = () => {
   }, []);
 
   // Seed real GTU content on first launch
-  useEffect(() => { 
-    examService.seedDefaultQuizzes(); 
+  useEffect(() => {
+    examService.seedDefaultQuizzes();
     campusService.seedCampusDirectory();
     attendanceService.seedTimetable();
   }, []);
@@ -152,12 +149,11 @@ const AppShell: React.FC = () => {
   }, [success]);
 
   if (showOnboarding) return <Onboarding onComplete={() => { localStorage.setItem(ONBOARDED_KEY, '1'); setShowOnboarding(false); }} />;
-  if (!serverConnected) return <ServerConnect onConnected={() => { localStorage.setItem(SERVER_CONNECTED_KEY, 'true'); setServerConnected(true); }} />;
   if (isLoading || !license) return <LoadingFallback />;
-  
+
   if (!license.isActive && user?.role !== 'GTU_ADMIN') {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center h-[100dvh] bg-slate-950 p-8 text-center" style={{background:'#0a0a0a'}}>
+      <div className="flex-1 flex flex-col items-center justify-center h-[100dvh] bg-slate-950 p-8 text-center" style={{ background: '#0a0a0a' }}>
         <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mb-6 border border-red-500/30">
           <WifiOff className="w-8 h-8 text-red-500" />
         </div>
@@ -207,7 +203,7 @@ const AppShell: React.FC = () => {
   const bottomNavHeight = 85 + insets.bottom;
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden font-sans relative bg-[#050810]">
+    <div className="flex h-[100dvh] w-full overflow-hidden font-sans relative">
       <div className="glow-orb glow-orb-1" />
       <div className="glow-orb glow-orb-2" />
       <div className="glow-orb glow-orb-3" />
@@ -221,17 +217,24 @@ const AppShell: React.FC = () => {
         {/* Offline Banner */}
         <OfflineBanner />
 
+        {/* Server Connect Banner (shows when server is available but not connected) */}
+        {!serverOnline && (
+          <div className="server-connect-banner flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold shrink-0">
+            <Cloud className="w-3.5 h-3.5 animate-pulse" />
+            <span>Running in Offline Mode — All data stored locally. Connect to a college server for multi-device sync.</span>
+          </div>
+        )}
+
         {/* Update Banner */}
         {updateAvailable && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-xs font-bold shrink-0"
-            style={{ background: 'rgba(56, 189, 248, 0.15)', borderBottom: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8' }}>
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-xs font-bold shrink-0 bg-stitch-cyan/15 border-b border-stitch-cyan/30 text-stitch-cyan">
             <div className="flex items-center gap-2">
               <Download className="w-3.5 h-3.5" />
               <span>Update v{updateInfo?.version} available — {updateInfo?.changelog}</span>
             </div>
             <button
               onClick={() => updateInfo && updateService.downloadAndInstall(updateInfo.apkUrl)}
-              className="px-3 py-1.5 min-h-[32px] bg-cyan-500 text-slate-950 rounded-lg font-bold hover:bg-cyan-400 transition-all flex items-center justify-center"
+              className="px-3 py-1.5 min-h-[32px] bg-stitch-cyan text-slate-950 rounded-lg font-bold hover:bg-stitch-cyan/80 transition-all flex items-center justify-center"
             >
               Update
             </button>
@@ -239,26 +242,26 @@ const AppShell: React.FC = () => {
         )}
 
         {/* Mobile Native Header */}
-        <header className="lg:hidden shrink-0 flex items-center justify-between px-4 z-40 sticky top-0 pt-[env(safe-area-inset-top)] box-content bg-slate-950/85 backdrop-blur-2xl border-b border-white/10" style={{height: 52 + insets.top}}>
+        <header className="lg:hidden shrink-0 flex items-center justify-between px-4 z-40 sticky top-0 pt-[env(safe-area-inset-top)] box-content bg-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border-b border-white/10" style={{ height: 52 + insets.top }}>
           <div className="flex items-center gap-2.5">
             {currentMode !== AppMode.CAMPUS ? (
               <button
                 onClick={() => setCurrentMode(AppMode.CAMPUS)}
-                className="p-2 -ml-2 text-cyan-400 active:scale-90 transition-transform min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 rounded-xl"
+                className="p-2 -ml-2 text-stitch-cyan active:scale-90 transition-transform min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-stitch-cyan/50 rounded-xl"
                 aria-label="Go back to Campus Home"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
             ) : (
-              <div className="w-8 h-8 rounded-lg overflow-hidden p-0.5 bg-gradient-to-tr from-cyan-400 to-amber-400 shadow-sm shrink-0">
-                <img src="/gpa_hub_logo.png" className="w-full h-full object-cover rounded-[6px]" alt="Logo" />
+              <div className="w-8 h-8 rounded-[10px] overflow-hidden p-0.5 bg-gradient-to-br from-stitch-primary to-stitch-secondary shadow-sm shrink-0">
+                <img src="/gpa_hub_logo.png" className="w-full h-full object-cover rounded-[8px]" alt="Logo" />
               </div>
             )}
             <div>
-              <h1 className="text-sm font-bold text-white tracking-tight leading-none">
+              <h1 className="text-sm font-display font-bold text-white tracking-tight leading-none">
                 {getModeLabel()}
               </h1>
-              <p className="text-[10px] text-cyan-300 font-mono mt-0.5">GTU Node</p>
+              <p className="text-[10px] text-stitch-tertiary font-mono mt-0.5">GTU Node</p>
             </div>
           </div>
 
@@ -267,9 +270,9 @@ const AppShell: React.FC = () => {
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
               <span>Online</span>
             </div>
-            <button 
-              onClick={() => setCurrentMode(AppMode.PROFILE)} 
-              className="min-h-[44px] min-w-[44px] rounded-full overflow-hidden border border-cyan-400/30 flex items-center justify-center p-0.5 bg-white/5 active:scale-90 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+            <button
+              onClick={() => setCurrentMode(AppMode.PROFILE)}
+              className="min-h-[44px] min-w-[44px] rounded-full overflow-hidden border border-stitch-cyan/30 flex items-center justify-center p-0.5 bg-white/5 active:scale-90 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-stitch-cyan/50"
               aria-label="Open profile settings"
             >
               {user.photoURL ? (
@@ -282,16 +285,16 @@ const AppShell: React.FC = () => {
         </header>
 
         {/* Desktop Header */}
-        <header className="hidden lg:flex h-16 shrink-0 items-center justify-between px-8 z-40" style={{background:'rgba(15,10,30,0.7)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+        <header className="hidden lg:flex h-16 shrink-0 items-center justify-between px-8 z-40 bg-[rgba(15,23,42,0.8)] backdrop-blur-[20px] border-b border-white/10">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-slate-400">Academic Year 2024-25</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{background:'rgba(255,255,255,0.06)', borderColor:'rgba(255,255,255,0.12)'}}>
-              <div className={`w-2 h-2 rounded-full ${isAiActive ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+              <div className={`w-2 h-2 rounded-full ${isAiActive ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
               <span className="text-xs font-medium text-slate-300">{isAiActive ? 'Online' : 'API Key Needed'}</span>
             </div>
-            <button 
+            <button
               className="text-slate-400 hover:text-white transition-colors p-3 min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-xl"
               aria-label="View notifications"
             >

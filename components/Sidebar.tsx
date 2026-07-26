@@ -45,30 +45,31 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMode, onModeChange }) => {
   };
 
   return (
-    <div className="w-[260px] flex flex-col h-full shrink-0 z-50 bg-slate-950/80 backdrop-blur-2xl border-r border-white/10">
-      {/* Brand Header with Generated App Logo */}
-      <div className="h-16 flex items-center px-5 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-cyan-400 via-amber-400 to-emerald-400 shadow-lg shadow-cyan-500/20 shrink-0 transform hover:rotate-6 transition-transform">
-            <img src="/gpa_hub_logo.png" className="w-full h-full object-cover rounded-[10px]" alt="GPA Study Hub Logo" />
+    <div className="w-[280px] flex flex-col h-full shrink-0 z-50 bg-[rgba(15,23,42,0.8)] backdrop-blur-[30px] border-r border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+      {/* Brand Header */}
+      <div className="h-20 flex items-center px-6 border-b border-white/10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-stitch-cyan/10 rounded-bl-full -mr-12 -mt-12 shadow-[0_0_30px_rgba(47,217,244,0.1)]"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-12 h-12 rounded-[16px] overflow-hidden p-0.5 bg-gradient-to-br from-stitch-primary to-stitch-secondary shadow-lg shadow-stitch-primary-container/30 shrink-0 transform hover:rotate-3 transition-transform">
+            <img src="/gpa_hub_logo.png" className="w-full h-full object-cover rounded-[14px]" alt="GPA Study Hub Logo" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-bold text-base text-white tracking-tight leading-none">GPA Hub</h1>
-              <span className="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-extrabold rounded-full tracking-wider uppercase pulse-gold">
+            <div className="flex items-center gap-2">
+              <h1 className="font-display font-extrabold text-lg text-white tracking-tight leading-none">GPA Hub</h1>
+              <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-extrabold rounded-full tracking-wider uppercase">
                 GTU
               </span>
             </div>
-            <p className="text-[10px] text-cyan-300 font-medium uppercase tracking-wider mt-0.5">Academic Portal</p>
+            <p className="text-[11px] text-stitch-tertiary font-semibold uppercase tracking-wider mt-1">Academic Portal</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto no-scrollbar">
+      <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto no-scrollbar">
         {menuItems.map((item, idx) => {
           if (item.type === 'divider') {
-            return <div key={idx} className="my-3 border-t border-white/10" />;
+            return <div key={idx} className="my-4 border-t border-white/5" />;
           }
 
           const Icon = (item.icon as any);
@@ -78,18 +79,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMode, onModeChange }) => {
             <button
               key={item.mode}
               onClick={() => item.mode && onModeChange(item.mode)}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200 group active:scale-95 ${isActive
-                  ? 'text-white font-bold bg-gradient-to-r from-cyan-500/20 via-cyan-500/10 to-transparent border border-cyan-400/40 shadow-lg shadow-cyan-500/15 pulse-cyan'
+              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-[12px] transition-all duration-300 group active:scale-95 ${isActive
+                  ? 'text-white font-bold bg-stitch-primary-container/30 border border-stitch-primary-container/50 shadow-inner shadow-stitch-primary-container/20'
                   : 'text-slate-400 hover:text-white font-medium hover:bg-white/5 border border-transparent'
                 }`}
             >
-              <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
+              <div className="flex items-center gap-4">
+                <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-stitch-primary drop-shadow-[0_0_8px_rgba(195,192,255,0.5)]' : 'text-slate-400 group-hover:text-stitch-primary'}`} />
                 <span className="text-sm tracking-tight">{item.label}</span>
               </div>
               {item.highlight && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-[9px] font-bold rounded-full">
-                  <Sparkles className="w-2.5 h-2.5 text-amber-300" /> New
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold rounded-full">
+                  <Sparkles className="w-3 h-3 text-amber-300" /> New
                 </span>
               )}
             </button>

@@ -9,9 +9,39 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const pino = require('pino');
 const cluster = require('cluster');
 const os = require('os');
+
+// ── JWT Config ──────────────────────────────────────────────────────────────────
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+const JWT_EXPIRES = '30d';
+
+function generateToken(user) {
+  return jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+}
+
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return jsonResponse(res, { error: 'Authorization required' }, 401);
+  }
+  const decoded = verifyToken(authHeader.split(' ')[1]);
+  if (!decoded) {
+    return jsonResponse(res, { error: 'Invalid or expired token' }, 401);
+  }
+  req.user = decoded;
+  next();
+}
 
 // ── Logger ──────────────────────────────────────────────────────────────────────
 const log = pino({
@@ -470,7 +500,7 @@ app.post('/api/auth/signup', (req, res) => {
     auditLog('USER_SIGNUP', id, `New student: ${name} (${enrollmentNumber})`, req.ip);
 
     const user = db.prepare('SELECT id, name, enrollment_number, role, branch, semester, section, university, photo_url FROM users WHERE id = ?').get(id);
-    jsonResponse(res, { success: true, user }, 201);
+    jsonResponse(res, { success: true, user, token: generateToken(user) }, 201);
   } catch (e) {
     log.error({ err: e }, 'Signup error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -496,7 +526,7 @@ app.post('/api/auth/login', (req, res) => {
     }
 
     auditLog('LOGIN_SUCCESS', user.id, '', req.ip);
-    jsonResponse(res, { success: true, user });
+    jsonResponse(res, { success: true, user, token: generateToken(user) });
   } catch (e) {
     log.error({ err: e }, 'Login error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -572,7 +602,7 @@ app.post('/api/auth/faculty-login', (req, res) => {
     }
 
     auditLog('FACULTY_LOGIN', user.id, '', req.ip);
-    jsonResponse(res, { success: true, user });
+    jsonResponse(res, { success: true, user, token: generateToken(user) });
   } catch (e) {
     log.error({ err: e }, 'Faculty login error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -602,7 +632,7 @@ app.post('/api/auth/faculty-signup', (req, res) => {
     auditLog('FACULTY_SIGNUP', id, `New faculty: ${name}`, req.ip);
 
     const user = db.prepare('SELECT id, name, email, role, branch, photo_url FROM users WHERE id = ?').get(id);
-    jsonResponse(res, { success: true, user }, 201);
+    jsonResponse(res, { success: true, user, token: generateToken(user) }, 201);
   } catch (e) {
     log.error({ err: e }, 'Faculty signup error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -629,7 +659,7 @@ app.post('/api/auth/admin-login', (req, res) => {
     }
 
     auditLog('ADMIN_LOGIN', user.id, '', req.ip);
-    jsonResponse(res, { success: true, user });
+    jsonResponse(res, { success: true, user, token: generateToken(user) });
   } catch (e) {
     log.error({ err: e }, 'Admin login error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -646,7 +676,7 @@ app.put('/api/auth/profile/:id', (req, res) => {
       db.prepare('UPDATE users SET photo_url = ? WHERE id = ?').run(photo_url, req.params.id);
     }
     const user = db.prepare('SELECT id, name, enrollment_number, role, branch, semester, section, university, photo_url, email FROM users WHERE id = ?').get(req.params.id);
-    jsonResponse(res, { success: true, user });
+    jsonResponse(res, { success: true, user, token: generateToken(user) });
   } catch (e) {
     log.error({ err: e }, 'Profile update error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
