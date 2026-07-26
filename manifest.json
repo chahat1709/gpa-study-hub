@@ -1,0 +1,26 @@
+{
+  "short_name": "GPAShub",
+  "name": "GPA Study Hub: AI Tutor",
+  "description": "Professional Engineering Study Assistant with AI & E2EE Social Hub",
+  "icons": [
+    {
+      "src": "/gpa_hub_logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/gpa_hub_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "theme_color": "#4f46e5",
+  "background_color": "#0f0a1e",
+  "orientation": "portrait",
+  "categories": ["education", "productivity"]
+}

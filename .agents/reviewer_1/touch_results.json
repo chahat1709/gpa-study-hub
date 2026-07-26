@@ -1,0 +1,40 @@
+{
+  "count": 7,
+  "failures": [
+    {
+      "file": "components\\AdminDashboard.tsx",
+      "line": 715,
+      "tag": "<button className=\"p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors\">"
+    },
+    {
+      "file": "components\\AdminDashboard.tsx",
+      "line": 740,
+      "tag": "<button type=\"submit\" disabled={!newSubject.trim()} className=\"bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-indigo-600 transition-colors shadow-lg disabled:opacity-50\">"
+    },
+    {
+      "file": "components\\AuthPage.tsx",
+      "line": 151,
+      "tag": "<button type=\"submit\" disabled={isLoading} className=\"w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2\">"
+    },
+    {
+      "file": "components\\AuthPage.tsx",
+      "line": 164,
+      "tag": "<button type=\"submit\" disabled={isLoading} className=\"w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2\">"
+    },
+    {
+      "file": "components\\AuthPage.tsx",
+      "line": 209,
+      "tag": "<button type=\"submit\" disabled={isLoading} className=\"w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2\">"
+    },
+    {
+      "file": "components\\AuthPage.tsx",
+      "line": 225,
+      "tag": "<button type=\"submit\" disabled={isLoading} className=\"w-full bg-slate-900 text-white py-2.5 rounded-lg font-semibold hover:bg-slate-800 transition-all flex items-center justify-center gap-2\">"
+    },
+    {
+      "file": "components\\LibraryView.tsx",
+      "line": 160,
+      "tag": "<a href={res.url} target=\"_blank\" rel=\"noopener noreferrer\" className=\"flex items-center justify-center gap-2 w-full py-2 bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-all\">"
+    }
+  ]
+}

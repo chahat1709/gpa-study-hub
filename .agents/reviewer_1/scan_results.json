@@ -1,0 +1,916 @@
+{
+  "totalLeaks": 177,
+  "fileSummaries": {
+    "components\\AdminDashboard.tsx": 122,
+    "components\\AuthPage.tsx": 7,
+    "components\\ErrorBoundary.tsx": 5,
+    "components\\FeatureKeyGuard.tsx": 6,
+    "components\\LibraryView.tsx": 25,
+    "components\\NexusAgent.tsx": 8,
+    "components\\ToastProvider.tsx": 2,
+    "components\\ui\\Button.tsx": 2
+  },
+  "details": {
+    "components\\AdminDashboard.tsx": [
+      {
+        "line": 498,
+        "match": "bg-white",
+        "text": "<div key={i} className=\"bg-white p-5 rounded-[24px] border border-slate-200 shadow-sm hover:shadow-md transition-all group\">"
+      },
+      {
+        "line": 498,
+        "match": "border-slate-200",
+        "text": "<div key={i} className=\"bg-white p-5 rounded-[24px] border border-slate-200 shadow-sm hover:shadow-md transition-all group\">"
+      },
+      {
+        "line": 503,
+        "match": "text-slate-900",
+        "text": "<span className=\"text-xl font-black text-slate-900\">{stat.value}</span>"
+      },
+      {
+        "line": 511,
+        "match": "bg-white",
+        "text": "<div className=\"lg:col-span-2 bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm\">"
+      },
+      {
+        "line": 511,
+        "match": "border-slate-200",
+        "text": "<div className=\"lg:col-span-2 bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm\">"
+      },
+      {
+        "line": 514,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900 text-lg\">Broadcast Notice</h3>"
+      },
+      {
+        "line": 520,
+        "match": "bg-slate-50",
+        "text": "<input value={noticeTitle} onChange={e => setNoticeTitle(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\" placeholder=\"e.g. Exam Schedule\" />"
+      },
+      {
+        "line": 520,
+        "match": "border-slate-200",
+        "text": "<input value={noticeTitle} onChange={e => setNoticeTitle(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\" placeholder=\"e.g. Exam Schedule\" />"
+      },
+      {
+        "line": 524,
+        "match": "bg-slate-50",
+        "text": "<select value={noticePriority} onChange={e => setNoticePriority(e.target.value as any)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\">"
+      },
+      {
+        "line": 524,
+        "match": "border-slate-200",
+        "text": "<select value={noticePriority} onChange={e => setNoticePriority(e.target.value as any)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\">"
+      },
+      {
+        "line": 533,
+        "match": "bg-slate-50",
+        "text": "<textarea rows={3} value={noticeContent} onChange={e => setNoticeContent(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-100 resize-none\" placeholder=\"Type notice details...\" />"
+      },
+      {
+        "line": 533,
+        "match": "border-slate-200",
+        "text": "<textarea rows={3} value={noticeContent} onChange={e => setNoticeContent(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-100 resize-none\" placeholder=\"Type notice details...\" />"
+      },
+      {
+        "line": 539,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 shadow-sm flex flex-col h-[400px]\">"
+      },
+      {
+        "line": 539,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 shadow-sm flex flex-col h-[400px]\">"
+      },
+      {
+        "line": 541,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900\">Recent Notices</h3>"
+      },
+      {
+        "line": 542,
+        "match": "bg-slate-100",
+        "text": "<span className=\"bg-slate-100 text-slate-500 px-2 py-1 rounded text-xs font-bold\">{notices.length}</span>"
+      },
+      {
+        "line": 546,
+        "match": "bg-slate-50",
+        "text": "<div key={n.id} className=\"p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-md hover:border-slate-200 transition-all\">"
+      },
+      {
+        "line": 546,
+        "match": "border-slate-100",
+        "text": "<div key={n.id} className=\"p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-md hover:border-slate-200 transition-all\">"
+      },
+      {
+        "line": 546,
+        "match": "bg-white",
+        "text": "<div key={n.id} className=\"p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-md hover:border-slate-200 transition-all\">"
+      },
+      {
+        "line": 546,
+        "match": "border-slate-200",
+        "text": "<div key={n.id} className=\"p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-md hover:border-slate-200 transition-all\">"
+      },
+      {
+        "line": 551,
+        "match": "text-slate-900",
+        "text": "<h4 className=\"font-bold text-slate-900 text-sm mt-2\">{n.title}</h4>"
+      },
+      {
+        "line": 570,
+        "match": "bg-slate-50",
+        "text": "<span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${activeSlot ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>"
+      },
+      {
+        "line": 585,
+        "match": "bg-white",
+        "text": ": 'bg-white text-slate-900 hover:bg-indigo-50'"
+      },
+      {
+        "line": 585,
+        "match": "text-slate-900",
+        "text": ": 'bg-white text-slate-900 hover:bg-indigo-50'"
+      },
+      {
+        "line": 598,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden\">"
+      },
+      {
+        "line": 598,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden\">"
+      },
+      {
+        "line": 599,
+        "match": "border-slate-100",
+        "text": "<div className=\"p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50\">"
+      },
+      {
+        "line": 599,
+        "match": "bg-slate-50",
+        "text": "<div className=\"p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50\">"
+      },
+      {
+        "line": 600,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900\">Weekly Schedule</h3>"
+      },
+      {
+        "line": 601,
+        "match": "bg-white",
+        "text": "<div className=\"flex gap-1 bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto w-full md:w-auto no-scrollbar\">"
+      },
+      {
+        "line": 601,
+        "match": "border-slate-200",
+        "text": "<div className=\"flex gap-1 bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto w-full md:w-auto no-scrollbar\">"
+      },
+      {
+        "line": 603,
+        "match": "bg-slate-50",
+        "text": "<button key={d} onClick={() => setSelectedDay(d)} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectedDay === d ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>{d}</button>"
+      },
+      {
+        "line": 609,
+        "match": "bg-slate-50",
+        "text": "<div key={i} className=\"p-5 flex items-center hover:bg-slate-50 transition-colors group\">"
+      },
+      {
+        "line": 611,
+        "match": "text-slate-900",
+        "text": "<p className=\"font-bold text-slate-900 text-sm lg:text-lg\">{slot.startTime}</p>"
+      },
+      {
+        "line": 615,
+        "match": "text-slate-900",
+        "text": "<h4 className=\"font-bold text-slate-900 text-sm lg:text-lg group-hover:text-indigo-600 transition-colors truncate\">{slot.subject}</h4>"
+      },
+      {
+        "line": 617,
+        "match": "bg-slate-100",
+        "text": "<span className=\"px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold uppercase tracking-wider text-slate-500\">{slot.type}</span>"
+      },
+      {
+        "line": 634,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm flex flex-col\">"
+      },
+      {
+        "line": 634,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm flex flex-col\">"
+      },
+      {
+        "line": 638,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900\">Upload Vault</h3>"
+      },
+      {
+        "line": 647,
+        "match": "bg-slate-50",
+        "text": "<select value={uploadSubject} onChange={e => setUploadSubject(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\">"
+      },
+      {
+        "line": 647,
+        "match": "border-slate-200",
+        "text": "<select value={uploadSubject} onChange={e => setUploadSubject(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\">"
+      },
+      {
+        "line": 651,
+        "match": "bg-slate-50",
+        "text": "<select value={uploadCategory} onChange={e => setUploadCategory(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\">"
+      },
+      {
+        "line": 651,
+        "match": "border-slate-200",
+        "text": "<select value={uploadCategory} onChange={e => setUploadCategory(e.target.value)} className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\">"
+      },
+      {
+        "line": 661,
+        "match": "bg-white",
+        "text": "<input value={uploadUnit} onChange={e => setUploadUnit(e.target.value)} placeholder=\"Unit / Module Name\" className=\"w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-colors\" />"
+      },
+      {
+        "line": 661,
+        "match": "border-slate-200",
+        "text": "<input value={uploadUnit} onChange={e => setUploadUnit(e.target.value)} placeholder=\"Unit / Module Name\" className=\"w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-colors\" />"
+      },
+      {
+        "line": 664,
+        "match": "bg-white",
+        "text": "<input value={uploadYear} onChange={e => setUploadYear(e.target.value)} placeholder=\"Academic Year (e.g. Winter 2023)\" className=\"w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-colors\" />"
+      },
+      {
+        "line": 664,
+        "match": "border-slate-200",
+        "text": "<input value={uploadYear} onChange={e => setUploadYear(e.target.value)} placeholder=\"Academic Year (e.g. Winter 2023)\" className=\"w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-colors\" />"
+      },
+      {
+        "line": 669,
+        "match": "bg-white",
+        "text": "<input type=\"date\" value={uploadDeadline} onChange={e => setUploadDeadline(e.target.value)} className=\"w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-colors\" />"
+      },
+      {
+        "line": 669,
+        "match": "border-slate-200",
+        "text": "<input type=\"date\" value={uploadDeadline} onChange={e => setUploadDeadline(e.target.value)} className=\"w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-indigo-500 transition-colors\" />"
+      },
+      {
+        "line": 675,
+        "match": "bg-slate-50",
+        "text": "<label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${isUploading ? 'border-indigo-400 bg-indigo-50' : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'}`}>"
+      },
+      {
+        "line": 687,
+        "match": "bg-white",
+        "text": "<div className=\"lg:col-span-2 bg-white rounded-[32px] border border-slate-200 flex flex-col overflow-hidden shadow-sm min-h-[500px]\">"
+      },
+      {
+        "line": 687,
+        "match": "border-slate-200",
+        "text": "<div className=\"lg:col-span-2 bg-white rounded-[32px] border border-slate-200 flex flex-col overflow-hidden shadow-sm min-h-[500px]\">"
+      },
+      {
+        "line": 688,
+        "match": "border-slate-100",
+        "text": "<div className=\"p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-slate-50/50 sticky top-0 z-10 gap-4\">"
+      },
+      {
+        "line": 688,
+        "match": "bg-slate-50",
+        "text": "<div className=\"p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-slate-50/50 sticky top-0 z-10 gap-4\">"
+      },
+      {
+        "line": 691,
+        "match": "bg-white",
+        "text": "<input value={vaultSearch} onChange={e => setVaultSearch(e.target.value)} placeholder=\"Search Library...\" className=\"w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\" />"
+      },
+      {
+        "line": 691,
+        "match": "border-slate-200",
+        "text": "<input value={vaultSearch} onChange={e => setVaultSearch(e.target.value)} placeholder=\"Search Library...\" className=\"w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\" />"
+      },
+      {
+        "line": 695,
+        "match": "bg-slate-200",
+        "text": "<button onClick={() => setRecentUploads(resourceService.getAllResources())} className=\"p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors\"><Filter className=\"w-4 h-4\" /></button>"
+      },
+      {
+        "line": 698,
+        "match": "bg-slate-50",
+        "text": "<div className=\"flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30\">"
+      },
+      {
+        "line": 700,
+        "match": "bg-white",
+        "text": "<div key={res.id} className=\"group p-4 bg-white border border-slate-200 rounded-2xl flex items-center justify-between hover:border-indigo-300 hover:shadow-sm transition-all\">"
+      },
+      {
+        "line": 700,
+        "match": "border-slate-200",
+        "text": "<div key={res.id} className=\"group p-4 bg-white border border-slate-200 rounded-2xl flex items-center justify-between hover:border-indigo-300 hover:shadow-sm transition-all\">"
+      },
+      {
+        "line": 706,
+        "match": "text-slate-900",
+        "text": "<h4 className=\"font-bold text-slate-900 text-sm truncate\">{res.title}</h4>"
+      },
+      {
+        "line": 708,
+        "match": "bg-slate-100",
+        "text": "<span className=\"bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-slate-600\">{res.category}</span>"
+      },
+      {
+        "line": 733,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white p-6 lg:p-8 rounded-[32px] border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6\">"
+      },
+      {
+        "line": 733,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white p-6 lg:p-8 rounded-[32px] border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6\">"
+      },
+      {
+        "line": 735,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"text-xl font-black text-slate-900\">Subject Matrix</h3>"
+      },
+      {
+        "line": 739,
+        "match": "bg-slate-50",
+        "text": "<input value={newSubject} onChange={e => setNewSubject(e.target.value)} placeholder=\"New Subject Name\" className=\"flex-1 md:w-64 bg-slate-50 border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\" />"
+      },
+      {
+        "line": 739,
+        "match": "border-slate-200",
+        "text": "<input value={newSubject} onChange={e => setNewSubject(e.target.value)} placeholder=\"New Subject Name\" className=\"flex-1 md:w-64 bg-slate-50 border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\" />"
+      },
+      {
+        "line": 744,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden\">"
+      },
+      {
+        "line": 744,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden\">"
+      },
+      {
+        "line": 747,
+        "match": "bg-slate-50",
+        "text": "<div key={s} className=\"p-6 flex items-center justify-between hover:bg-slate-50 transition-colors group\">"
+      },
+      {
+        "line": 749,
+        "match": "bg-slate-100",
+        "text": "<div className=\"w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold shrink-0\">"
+      },
+      {
+        "line": 752,
+        "match": "text-slate-900",
+        "text": "<span className=\"font-bold text-slate-900\">{s}</span>"
+      },
+      {
+        "line": 824,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm flex flex-col space-y-6\">"
+      },
+      {
+        "line": 824,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm flex flex-col space-y-6\">"
+      },
+      {
+        "line": 825,
+        "match": "border-slate-100",
+        "text": "<div className=\"flex items-center justify-between pb-4 border-b border-slate-100\">"
+      },
+      {
+        "line": 831,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900 text-lg\">Publish Exam Paper</h3>"
+      },
+      {
+        "line": 854,
+        "match": "bg-slate-50",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 854,
+        "match": "border-slate-200",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 864,
+        "match": "bg-slate-50",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 864,
+        "match": "border-slate-200",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 877,
+        "match": "bg-slate-50",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 877,
+        "match": "border-slate-200",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 889,
+        "match": "bg-slate-50",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 889,
+        "match": "border-slate-200",
+        "text": "className=\"w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 894,
+        "match": "bg-slate-50",
+        "text": "<div className=\"p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3\">"
+      },
+      {
+        "line": 894,
+        "match": "border-slate-200",
+        "text": "<div className=\"p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3\">"
+      },
+      {
+        "line": 913,
+        "match": "bg-white",
+        "text": "className=\"w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none\""
+      },
+      {
+        "line": 913,
+        "match": "border-slate-200",
+        "text": "className=\"w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none\""
+      },
+      {
+        "line": 917,
+        "match": "bg-white",
+        "text": "<input value={qOpt0} onChange={e => setQOpt0(e.target.value)} placeholder=\"Option A\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 917,
+        "match": "border-slate-200",
+        "text": "<input value={qOpt0} onChange={e => setQOpt0(e.target.value)} placeholder=\"Option A\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 918,
+        "match": "bg-white",
+        "text": "<input value={qOpt1} onChange={e => setQOpt1(e.target.value)} placeholder=\"Option B\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 918,
+        "match": "border-slate-200",
+        "text": "<input value={qOpt1} onChange={e => setQOpt1(e.target.value)} placeholder=\"Option B\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 919,
+        "match": "bg-white",
+        "text": "<input value={qOpt2} onChange={e => setQOpt2(e.target.value)} placeholder=\"Option C\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 919,
+        "match": "border-slate-200",
+        "text": "<input value={qOpt2} onChange={e => setQOpt2(e.target.value)} placeholder=\"Option C\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 920,
+        "match": "bg-white",
+        "text": "<input value={qOpt3} onChange={e => setQOpt3(e.target.value)} placeholder=\"Option D\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 920,
+        "match": "border-slate-200",
+        "text": "<input value={qOpt3} onChange={e => setQOpt3(e.target.value)} placeholder=\"Option D\" className=\"bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none\" />"
+      },
+      {
+        "line": 928,
+        "match": "bg-white",
+        "text": "className=\"bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold outline-none\""
+      },
+      {
+        "line": 928,
+        "match": "border-slate-200",
+        "text": "className=\"bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold outline-none\""
+      },
+      {
+        "line": 942,
+        "match": "bg-white",
+        "text": "className=\"w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none\""
+      },
+      {
+        "line": 942,
+        "match": "border-slate-200",
+        "text": "className=\"w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none\""
+      },
+      {
+        "line": 960,
+        "match": "text-slate-900",
+        "text": "<p className=\"font-bold text-slate-900\">{idx + 1}. {q.question}</p>"
+      },
+      {
+        "line": 987,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 shadow-sm space-y-4\">"
+      },
+      {
+        "line": 987,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white rounded-[32px] border border-slate-200 p-6 shadow-sm space-y-4\">"
+      },
+      {
+        "line": 988,
+        "match": "border-slate-100",
+        "text": "<div className=\"flex justify-between items-center border-b border-slate-100 pb-3\">"
+      },
+      {
+        "line": 989,
+        "match": "text-slate-900",
+        "text": "<h4 className=\"font-bold text-slate-900 text-sm\">Published Campus Exams</h4>"
+      },
+      {
+        "line": 990,
+        "match": "bg-slate-100",
+        "text": "<span className=\"bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold\">{publishedQuizzes.length}</span>"
+      },
+      {
+        "line": 994,
+        "match": "bg-slate-50",
+        "text": "<div key={quiz.id} className=\"p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center hover:bg-white hover:shadow-sm transition-all\">"
+      },
+      {
+        "line": 994,
+        "match": "border-slate-100",
+        "text": "<div key={quiz.id} className=\"p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center hover:bg-white hover:shadow-sm transition-all\">"
+      },
+      {
+        "line": 994,
+        "match": "bg-white",
+        "text": "<div key={quiz.id} className=\"p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center hover:bg-white hover:shadow-sm transition-all\">"
+      },
+      {
+        "line": 1000,
+        "match": "text-slate-900",
+        "text": "<h5 className=\"font-bold text-slate-900 text-xs\">{quiz.title}</h5>"
+      },
+      {
+        "line": 1019,
+        "match": "bg-white",
+        "text": "<div className=\"lg:col-span-7 bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm flex flex-col\">"
+      },
+      {
+        "line": 1019,
+        "match": "border-slate-200",
+        "text": "<div className=\"lg:col-span-7 bg-white rounded-[32px] border border-slate-200 p-6 lg:p-8 shadow-sm flex flex-col\">"
+      },
+      {
+        "line": 1020,
+        "match": "border-slate-100",
+        "text": "<div className=\"flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-slate-100\">"
+      },
+      {
+        "line": 1022,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900 text-lg\">Student Gradebook Analytics</h3>"
+      },
+      {
+        "line": 1033,
+        "match": "bg-slate-50",
+        "text": "className=\"w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 1033,
+        "match": "border-slate-200",
+        "text": "className=\"w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100\""
+      },
+      {
+        "line": 1039,
+        "match": "bg-slate-50",
+        "text": "className=\"bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none\""
+      },
+      {
+        "line": 1039,
+        "match": "border-slate-200",
+        "text": "className=\"bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none\""
+      },
+      {
+        "line": 1051,
+        "match": "border-slate-100",
+        "text": "<tr className=\"border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider\">"
+      },
+      {
+        "line": 1065,
+        "match": "bg-slate-50",
+        "text": "<tr key={row.id} className=\"hover:bg-slate-50 transition-colors\">"
+      },
+      {
+        "line": 1066,
+        "match": "text-slate-900",
+        "text": "<td className=\"py-3.5 px-3 font-bold text-slate-900\">{row.studentName}</td>"
+      },
+      {
+        "line": 1068,
+        "match": "bg-slate-100",
+        "text": "<span className=\"px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold uppercase text-slate-600\">{row.subject}</span>"
+      }
+    ],
+    "components\\AuthPage.tsx": [
+      {
+        "line": 112,
+        "match": "bg-slate-50",
+        "text": "<div className=\"min-h-screen flex bg-slate-50\">"
+      },
+      {
+        "line": 132,
+        "match": "bg-slate-200",
+        "text": "<div className=\"flex p-1 bg-slate-200 rounded-xl mb-8\">"
+      },
+      {
+        "line": 133,
+        "match": "bg-white",
+        "text": "<button onClick={() => { setRole('STUDENT'); setStudentStep('PHONE'); }} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${role === 'STUDENT' ? 'bg-white text-indigo-900 shadow-sm' : 'text-slate-600'}`}><User className=\"w-4 h-4\" />Student</button>"
+      },
+      {
+        "line": 134,
+        "match": "bg-white",
+        "text": "<button onClick={() => setRole('FACULTY')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${role === 'FACULTY' ? 'bg-white text-indigo-900 shadow-sm' : 'text-slate-600'}`}><Building2 className=\"w-4 h-4\" />Faculty</button>"
+      },
+      {
+        "line": 187,
+        "match": "bg-white",
+        "text": "<select required value={studentBranch} onChange={(e) => setStudentBranch(e.target.value)} className=\"w-full px-4 py-2 border border-slate-300 rounded-lg outline-none bg-white text-xs\">"
+      },
+      {
+        "line": 196,
+        "match": "bg-white",
+        "text": "<select required value={studentSem} onChange={(e) => setStudentSem(e.target.value)} className=\"w-full px-4 py-2 border border-slate-300 rounded-lg outline-none bg-white text-xs\">"
+      },
+      {
+        "line": 203,
+        "match": "bg-white",
+        "text": "<select required value={studentSec} onChange={(e) => setStudentSec(e.target.value)} className=\"w-full px-4 py-2 border border-slate-300 rounded-lg outline-none bg-white text-xs\">"
+      }
+    ],
+    "components\\ErrorBoundary.tsx": [
+      {
+        "line": 45,
+        "match": "bg-slate-50",
+        "text": "<div className=\"h-full w-full flex items-center justify-center bg-slate-50 p-6\">"
+      },
+      {
+        "line": 46,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white p-8 rounded-2xl shadow-lg border border-slate-200 max-w-md w-full text-center\">"
+      },
+      {
+        "line": 46,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-white p-8 rounded-2xl shadow-lg border border-slate-200 max-w-md w-full text-center\">"
+      },
+      {
+        "line": 50,
+        "match": "text-slate-900",
+        "text": "<h2 className=\"text-xl font-bold text-slate-900 mb-2\">Something went wrong</h2>"
+      },
+      {
+        "line": 54,
+        "match": "bg-slate-100",
+        "text": "<div className=\"bg-slate-100 p-3 rounded-lg text-xs text-left text-slate-600 font-mono mb-6 overflow-hidden text-ellipsis whitespace-nowrap\">"
+      }
+    ],
+    "components\\FeatureKeyGuard.tsx": [
+      {
+        "line": 19,
+        "match": "bg-slate-50",
+        "text": "<div className=\"h-full w-full flex items-center justify-center bg-slate-50/50 p-6 animate-fade-in\">"
+      },
+      {
+        "line": 20,
+        "match": "bg-white",
+        "text": "<div className=\"max-w-md w-full bg-white rounded-[40px] p-10 text-center space-y-8 border border-slate-200 shadow-xl relative overflow-hidden\">"
+      },
+      {
+        "line": 20,
+        "match": "border-slate-200",
+        "text": "<div className=\"max-w-md w-full bg-white rounded-[40px] p-10 text-center space-y-8 border border-slate-200 shadow-xl relative overflow-hidden\">"
+      },
+      {
+        "line": 23,
+        "match": "bg-slate-100",
+        "text": "<div className=\"w-16 h-16 bg-slate-100 text-slate-400 rounded-3xl flex items-center justify-center mx-auto border border-slate-200 shadow-inner\">"
+      },
+      {
+        "line": 23,
+        "match": "border-slate-200",
+        "text": "<div className=\"w-16 h-16 bg-slate-100 text-slate-400 rounded-3xl flex items-center justify-center mx-auto border border-slate-200 shadow-inner\">"
+      },
+      {
+        "line": 28,
+        "match": "text-slate-900",
+        "text": "<h2 className=\"text-xl font-black text-slate-900 uppercase tracking-tight\">{featureName} Locked</h2>"
+      }
+    ],
+    "components\\LibraryView.tsx": [
+      {
+        "line": 57,
+        "match": "bg-slate-50",
+        "text": "<div className=\"h-full flex flex-col bg-slate-50\">"
+      },
+      {
+        "line": 60,
+        "match": "bg-white",
+        "text": "<div className=\"shrink-0 bg-white border-b border-slate-200 px-6 py-3 sticky top-0 z-30\">"
+      },
+      {
+        "line": 60,
+        "match": "border-slate-200",
+        "text": "<div className=\"shrink-0 bg-white border-b border-slate-200 px-6 py-3 sticky top-0 z-30\">"
+      },
+      {
+        "line": 70,
+        "match": "bg-slate-100",
+        "text": ": 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+      },
+      {
+        "line": 70,
+        "match": "bg-slate-200",
+        "text": ": 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+      },
+      {
+        "line": 81,
+        "match": "bg-slate-50",
+        "text": "<div className=\"w-64 bg-slate-50 border-r border-slate-200 shrink-0 hidden md:flex flex-col overflow-y-auto\">"
+      },
+      {
+        "line": 81,
+        "match": "border-slate-200",
+        "text": "<div className=\"w-64 bg-slate-50 border-r border-slate-200 shrink-0 hidden md:flex flex-col overflow-y-auto\">"
+      },
+      {
+        "line": 91,
+        "match": "bg-white",
+        "text": "? 'bg-white text-indigo-600 shadow-sm border border-slate-200'"
+      },
+      {
+        "line": 91,
+        "match": "border-slate-200",
+        "text": "? 'bg-white text-indigo-600 shadow-sm border border-slate-200'"
+      },
+      {
+        "line": 92,
+        "match": "bg-slate-200",
+        "text": ": 'text-slate-600 hover:bg-slate-200/50'"
+      },
+      {
+        "line": 104,
+        "match": "bg-white",
+        "text": "<div className=\"flex-1 flex flex-col overflow-hidden bg-white\">"
+      },
+      {
+        "line": 105,
+        "match": "border-slate-100",
+        "text": "<div className=\"p-6 md:p-8 shrink-0 border-b border-slate-100\">"
+      },
+      {
+        "line": 108,
+        "match": "text-slate-900",
+        "text": "<h2 className=\"text-2xl font-bold text-slate-900\">{selectedSubject}</h2>"
+      },
+      {
+        "line": 120,
+        "match": "bg-slate-50",
+        "text": "className=\"w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all\""
+      },
+      {
+        "line": 120,
+        "match": "border-slate-200",
+        "text": "className=\"w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all\""
+      },
+      {
+        "line": 128,
+        "match": "bg-slate-50",
+        "text": "<div className=\"bg-slate-50 rounded-2xl p-8 border border-slate-200 shadow-sm animate-fade-in\">"
+      },
+      {
+        "line": 128,
+        "match": "border-slate-200",
+        "text": "<div className=\"bg-slate-50 rounded-2xl p-8 border border-slate-200 shadow-sm animate-fade-in\">"
+      },
+      {
+        "line": 129,
+        "match": "border-slate-200",
+        "text": "<div className=\"flex items-center gap-3 mb-6 pb-4 border-b border-slate-200\">"
+      },
+      {
+        "line": 131,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900\">AI Research Summary</h3>"
+      },
+      {
+        "line": 141,
+        "match": "border-slate-200",
+        "text": "<div key={res.id} className=\"group p-5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:shadow-md transition-all bg-white flex flex-col\">"
+      },
+      {
+        "line": 141,
+        "match": "bg-white",
+        "text": "<div key={res.id} className=\"group p-5 rounded-xl border border-slate-200 hover:border-indigo-500 hover:shadow-md transition-all bg-white flex flex-col\">"
+      },
+      {
+        "line": 153,
+        "match": "text-slate-900",
+        "text": "<h4 className=\"font-semibold text-slate-900 text-sm truncate mb-1 group-hover:text-indigo-600 transition-colors\">{res.title}</h4>"
+      },
+      {
+        "line": 160,
+        "match": "bg-slate-50",
+        "text": "<a href={res.url} target=\"_blank\" rel=\"noopener noreferrer\" className=\"flex items-center justify-center gap-2 w-full py-2 bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-all\">"
+      },
+      {
+        "line": 169,
+        "match": "bg-slate-100",
+        "text": "<div className=\"w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4\">"
+      },
+      {
+        "line": 172,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"font-bold text-slate-900 mb-2\">No resources found</h3>"
+      }
+    ],
+    "components\\NexusAgent.tsx": [
+      {
+        "line": 96,
+        "match": "bg-white",
+        "text": "<div className=\"bg-white rounded-2xl p-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 flex items-center gap-2 animate-slide-up w-[340px]\">"
+      },
+      {
+        "line": 96,
+        "match": "border-slate-100",
+        "text": "<div className=\"bg-white rounded-2xl p-2 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 flex items-center gap-2 animate-slide-up w-[340px]\">"
+      },
+      {
+        "line": 112,
+        "match": "bg-slate-100",
+        "text": "className=\"p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-indigo-600\""
+      },
+      {
+        "line": 120,
+        "match": "bg-slate-100",
+        "text": "className={`p-2 rounded-xl transition-all shadow-sm ${hasKey ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-400'}`}"
+      },
+      {
+        "line": 130,
+        "match": "bg-white",
+        "text": "className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 border border-white/20 ${isOpen ? 'bg-slate-900 rotate-90 text-white' : 'bg-white text-indigo-600 hover:scale-105'}`}"
+      },
+      {
+        "line": 145,
+        "match": "text-slate-900",
+        "text": "<h3 className=\"mt-8 text-xl font-bold text-slate-900\">Listening...</h3>"
+      },
+      {
+        "line": 150,
+        "match": "bg-white",
+        "text": "className=\"mt-16 px-8 py-3 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm gap-2 text-sm font-semibold\""
+      },
+      {
+        "line": 150,
+        "match": "border-slate-200",
+        "text": "className=\"mt-16 px-8 py-3 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-600 hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm gap-2 text-sm font-semibold\""
+      }
+    ],
+    "components\\ToastProvider.tsx": [
+      {
+        "line": 49,
+        "match": "bg-white",
+        "text": "className={`pointer-events-auto min-w-[300px] max-w-sm w-full bg-white rounded-xl shadow-lg border p-4 flex items-start gap-3 animate-slide-in ${"
+      },
+      {
+        "line": 63,
+        "match": "text-slate-800",
+        "text": "<p className=\"text-sm font-medium text-slate-800\">{toast.message}</p>"
+      }
+    ],
+    "components\\ui\\Button.tsx": [
+      {
+        "line": 19,
+        "match": "bg-slate-100",
+        "text": "secondary: \"bg-slate-100 text-slate-600 hover:bg-slate-200\","
+      },
+      {
+        "line": 19,
+        "match": "bg-slate-200",
+        "text": "secondary: \"bg-slate-100 text-slate-600 hover:bg-slate-200\","
+      }
+    ]
+  }
+}

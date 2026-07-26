@@ -1,0 +1,55 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isFaculty() {
+      // Check custom claims first (fast), then fall back to Firestore lookup
+      return request.auth != null && (
+        request.auth.token.role == 'FACULTY' || 
+        request.auth.token.role == 'GTU_ADMIN'
+      );
+    }
+
+    // 1. Profile Pictures
+    // Users can upload their OWN profile pic.
+    // Limit: 2MB, Image Only
+    match /users/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && request.auth.uid == userId
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    
+    // 2. Library Resources (PDFs/Docs)
+    // Only Faculty can upload.
+    // Limit: 10MB, PDF/DOCX only (No EXE)
+    match /resources/{branch}/{semester}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isFaculty()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && (request.resource.contentType == 'application/pdf' || 
+                       request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                       request.resource.contentType == 'image/jpeg' ||
+                       request.resource.contentType == 'image/png');
+      allow delete: if isFaculty();
+    }
+    
+    // 3. Chat Attachments (Images & Documents)
+    // Only chat participants can upload.
+    // Limit: 5MB
+    match /chats/{chatId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+                   && request.resource.size < 5 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*') ||
+                       request.resource.contentType == 'application/pdf');
+      allow delete: if isAuthenticated();
+    }
+  }
+}
