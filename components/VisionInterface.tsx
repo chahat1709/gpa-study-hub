@@ -95,19 +95,19 @@ const VisionInterface: React.FC = () => {
   return (
     <div className="h-full flex flex-col lg:flex-row gap-6 p-4 lg:p-8 overflow-y-auto bg-transparent">
       <div className="flex-1 flex flex-col gap-6">
-        <div className="glass-card bg-slate-900/40 backdrop-blur-xl p-8 rounded-[40px] border border-white/10 text-white shadow-[0_0_30px_rgba(34,211,238,0.1)] flex flex-col gap-6 flex-1 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-bl-full -mr-12 -mt-12 shadow-[0_0_30px_rgba(34,211,238,0.3)]"></div>
+        <div className="glass-card bg-white/5 p-8 rounded-[40px] border border-white/10 text-white shadow-[0_0_30px_rgba(47,217,244,0.1)] flex flex-col gap-6 flex-1 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-stitch-cyan/10 rounded-bl-full -mr-12 -mt-12 shadow-[0_0_30px_rgba(47,217,244,0.3)]"></div>
 
           <div className="flex justify-between items-center relative z-10">
-            <h2 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-tight">
-              <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+            <h2 className="text-xl font-black font-display text-white flex items-center gap-3 uppercase tracking-tight">
+              <div className="p-2 bg-stitch-cyan rounded-[16px] shadow-[0_0_15px_rgba(47,217,244,0.3)]">
                 <Calculator className="w-6 h-6 text-slate-950" />
               </div>
               Visual Solver
             </h2>
           </div>
 
-          <div className="flex-1 border-2 border-dashed border-cyan-400/20 rounded-[32px] bg-white/5 relative overflow-hidden transition-all hover:bg-cyan-500/5 hover:border-cyan-400/40 flex items-center justify-center min-h-[350px] group shadow-inner">
+          <div className="flex-1 border-2 border-dashed border-stitch-cyan/20 rounded-[32px] bg-white/5 relative overflow-hidden transition-all hover:bg-stitch-cyan/5 hover:border-stitch-cyan/40 flex items-center justify-center min-h-[350px] group shadow-inner">
             {state.imagePreview ? (
               <div className="relative w-full h-full p-6 flex items-center justify-center">
                 <img
@@ -117,7 +117,7 @@ const VisionInterface: React.FC = () => {
                 />
 
                 {state.isLoading && (
-                  <div className="absolute inset-x-0 h-1 bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.8)] z-20 animate-scan"></div>
+                  <div className="absolute inset-x-0 h-1 bg-stitch-cyan shadow-[0_0_20px_rgba(47,217,244,0.8)] z-20 animate-scan"></div>
                 )}
 
                 <button
@@ -129,9 +129,9 @@ const VisionInterface: React.FC = () => {
               </div>
             ) : (
               <div className="text-center p-12 transition-transform group-hover:scale-105">
-                <div className="w-24 h-24 bg-white/10 shadow-[0_0_30px_rgba(34,211,238,0.15)] rounded-[32px] flex items-center justify-center mx-auto mb-6 relative border border-cyan-400/20">
-                  <Upload className="w-10 h-10 text-cyan-400" />
-                  <div className="absolute inset-[-8px] border-2 border-cyan-400/30 rounded-[36px] animate-pulse"></div>
+                <div className="w-24 h-24 bg-white/10 shadow-[0_0_30px_rgba(47,217,244,0.15)] rounded-[32px] flex items-center justify-center mx-auto mb-6 relative border border-stitch-cyan/20">
+                  <Upload className="w-10 h-10 text-stitch-cyan" />
+                  <div className="absolute inset-[-8px] border-2 border-stitch-cyan/30 rounded-[36px] animate-pulse"></div>
                 </div>
                 <p className="text-white font-black text-lg uppercase tracking-tight">Drop Problem Node</p>
                 <p className="text-slate-300 text-sm mt-2 font-medium">Upload equation, diagram, or text snippet</p>
@@ -154,13 +154,13 @@ const VisionInterface: React.FC = () => {
                 value={state.prompt}
                 onChange={(e) => setState(s => ({ ...s, prompt: e.target.value }))}
                 placeholder="e.g. 'Show step-by-step derivation'"
-                className="flex-1 bg-white/5 border border-white/10 text-white rounded-2xl px-6 py-4 text-[15px] focus:ring-2 focus:ring-cyan-400/30 focus:border-cyan-400/50 outline-none transition-all shadow-sm font-medium placeholder:text-slate-400"
+                className="flex-1 bg-white/5 border border-white/10 text-white rounded-[16px] px-6 py-4 text-[15px] focus:ring-2 focus:ring-stitch-cyan/30 focus:border-stitch-cyan/50 outline-none transition-all shadow-sm font-medium placeholder:text-slate-400"
                 disabled={!state.imagePreview || state.isLoading}
               />
               <button
                 onClick={handleAnalyze}
                 disabled={!state.imagePreview || (!hasKey && !state.imagePreview) || state.isLoading}
-                className={`px-8 py-4 min-h-[44px] rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-2xl transition-all active:scale-95 ${hasKey ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:from-cyan-400 hover:to-blue-400' : 'bg-slate-800 text-white shadow-slate-900/10 hover:bg-slate-700'}`}
+                className={`px-8 py-4 min-h-[44px] rounded-[16px] font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-2xl transition-all active:scale-95 ${hasKey ? 'bg-stitch-cyan text-slate-950 shadow-[0_0_15px_rgba(47,217,244,0.3)] hover:bg-[rgba(47,217,244,0.8)]' : 'bg-slate-800 text-white shadow-slate-900/10 hover:bg-slate-700'}`}
               >
                 {state.isLoading ? <Loader2 className="w-5 h-5 animate-spin text-slate-950" /> : hasKey ? <Zap className="w-5 h-5" /> : <Key className="w-4 h-4" />}
                 {hasKey ? 'Compute' : 'Connect Key'}
@@ -170,18 +170,18 @@ const VisionInterface: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 glass-card bg-slate-900/40 backdrop-blur-xl rounded-[40px] border border-white/10 text-white shadow-[0_0_30px_rgba(34,211,238,0.1)] p-8 flex flex-col h-full min-h-[400px] relative overflow-hidden">
+      <div className="flex-1 glass-card bg-white/5 rounded-[40px] border border-white/10 text-white shadow-[0_0_30px_rgba(47,217,244,0.1)] p-8 flex flex-col h-full min-h-[400px] relative overflow-hidden">
         <div className="flex justify-between items-center mb-8 relative z-10">
-          <h2 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-tight">
-            <Sparkles className="w-6 h-6 text-cyan-400" />
+          <h2 className="text-xl font-black font-display text-white flex items-center gap-3 uppercase tracking-tight">
+            <Sparkles className="w-6 h-6 text-stitch-cyan" />
             AI Workspace
           </h2>
           {state.result && (
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-cyan-400/30 transition-all active:scale-90"
+              className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-[16px] text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-stitch-cyan/30 transition-all active:scale-90"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-cyan-400" />}
+              {copied ? <Check className="w-4 h-4 text-stitch-cyan" /> : <Copy className="w-4 h-4 text-stitch-cyan" />}
               {copied ? 'Captured' : 'Capture'}
             </button>
           )}
@@ -190,12 +190,12 @@ const VisionInterface: React.FC = () => {
           {state.isLoading ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-6">
               <div className="relative">
-                <div className="w-20 h-20 border-4 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-                <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse"></div>
+                <div className="w-20 h-20 border-4 border-stitch-cyan/20 border-t-stitch-cyan rounded-full animate-spin shadow-[0_0_15px_rgba(47,217,244,0.5)]"></div>
+                <div className="absolute inset-0 bg-stitch-cyan blur-3xl opacity-20 animate-pulse"></div>
               </div>
               <div className="text-center">
-                <p className="text-sm font-black uppercase tracking-[0.3em] text-white">Decoding Image</p>
-                <p className="text-[10px] text-cyan-300 mt-2 font-bold uppercase tracking-widest">Neural weights aligning...</p>
+                <p className="text-sm font-black font-display uppercase tracking-[0.3em] text-white">Decoding Image</p>
+                <p className="text-[10px] text-stitch-cyan mt-2 font-bold uppercase tracking-widest">Neural weights aligning...</p>
               </div>
             </div>
           ) : state.result ? (
@@ -204,7 +204,7 @@ const VisionInterface: React.FC = () => {
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 text-center opacity-40">
-              <Scan className="w-20 h-20 mb-6 animate-pulse text-cyan-400" />
+              <Scan className="w-20 h-20 mb-6 animate-pulse text-stitch-cyan" />
               <p className="text-sm font-black uppercase tracking-widest text-white">Awaiting Visual Input</p>
             </div>
           )}

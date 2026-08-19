@@ -351,16 +351,16 @@ const AdminDashboard: React.FC = () => {
       {showDiagnostics && <SystemDiagnostics onClose={() => setShowDiagnostics(false)} />}
 
       {/* SIDEBAR (Desktop) */}
-      <aside className="hidden lg:flex w-[280px] border-r border-white/10 flex-col shrink-0 z-50 bg-slate-900/40 backdrop-blur-xl text-white shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+      <aside className="hidden lg:flex w-[280px] border-r border-white/10 flex-col shrink-0 z-50 bg-[rgba(15,23,42,0.8)] backdrop-blur-[30px] text-white shadow-[4px_0_24px_rgba(47,217,244,0.1)]">
         <div className="h-20 flex items-center px-8 border-b border-white/10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-bl-full -mr-12 -mt-12 shadow-[0_0_30px_rgba(34,211,238,0.1)]"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-stitch-cyan/10 rounded-bl-full -mr-12 -mt-12 shadow-[0_0_30px_rgba(47,217,244,0.3)]"></div>
           <div className="flex items-center gap-3 relative z-10">
-            <div className="bg-gradient-to-br from-cyan-500 to-blue-500 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/30">
+            <div className="bg-stitch-cyan w-10 h-10 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(47,217,244,0.3)]">
               <ShieldCheck className="w-5 h-5 text-slate-950" />
             </div>
             <div>
-              <h1 className="font-black text-lg text-white tracking-tight leading-none">Admin</h1>
-              <p className="text-[10px] text-cyan-300 font-bold uppercase tracking-wider mt-1">{user?.branch || 'General'} Faculty</p>
+              <h1 className="font-black font-display text-lg text-white tracking-tight leading-none">Admin</h1>
+              <p className="text-[10px] text-stitch-cyan font-bold uppercase tracking-wider mt-1">{user?.branch || 'General'} Faculty</p>
             </div>
           </div>
         </div>
@@ -369,23 +369,23 @@ const AdminDashboard: React.FC = () => {
             const isActive = activeTab === item.id;
             return (
               <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${isActive ? 'bg-cyan-500/20 text-white font-bold shadow-inner shadow-[0_0_15px_rgba(34,211,238,0.1)] border border-cyan-400/50' : 'text-slate-300 hover:bg-white/10 hover:text-white font-medium hover:border hover:border-white/5 border border-transparent'}`}>
-                <item.icon className={`w-5 h-5 ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' : 'text-slate-400 group-hover:text-cyan-300 transition-colors'}`} />
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${isActive ? 'bg-stitch-cyan/20 text-white font-bold shadow-inner shadow-[0_0_15px_rgba(47,217,244,0.1)] border border-stitch-cyan/50' : 'text-slate-300 hover:bg-white/10 hover:text-white font-medium hover:border hover:border-white/5 border border-transparent'}`}>
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-stitch-cyan drop-shadow-[0_0_8px_rgba(47,217,244,0.5)]' : 'text-slate-400 group-hover:text-stitch-cyan transition-colors'}`} />
                 <span className="text-sm tracking-tight">{item.label}</span>
-                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></div>}
+                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-stitch-cyan shadow-[0_0_8px_rgba(47,217,244,0.8)]"></div>}
               </button>
             );
           })}
         </nav>
         <div className="p-6 border-t border-white/10 bg-white/5 shadow-inner">
-          <div className="glass-card bg-slate-900/40 p-4 rounded-2xl border border-white/10 shadow-[0_0_15px_rgba(0,0,0,0.2)] flex items-center gap-4 text-white">
+          <div className="glass-card bg-white/5 p-4 rounded-[16px] border border-white/10 shadow-[0_0_15px_rgba(0,0,0,0.2)] flex items-center gap-4 text-white">
             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-slate-300 border border-white/10 shadow-inner">
               <Users className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-white truncate">{user?.name}</p>
               <div className="flex gap-2">
-                <button onClick={() => window.location.reload()} className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-wider mt-0.5">Exit</button>
+                <button onClick={() => window.location.reload()} className="text-[10px] font-bold text-stitch-cyan hover:text-[rgba(47,217,244,0.8)] uppercase tracking-wider mt-0.5">Exit</button>
                 <button onClick={logout} className="text-[10px] font-bold text-rose-400 hover:text-rose-300 uppercase tracking-wider mt-0.5">Sign Out</button>
               </div>
             </div>
@@ -395,26 +395,26 @@ const AdminDashboard: React.FC = () => {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-transparent">
-        <header className="h-16 bg-slate-900/40 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-6 shrink-0 z-40 sticky top-0 pt-[env(safe-area-inset-top)] text-white shadow-sm">
+        <header className="h-16 bg-[rgba(15,23,42,0.8)] backdrop-blur-[30px] border-b border-white/10 flex items-center justify-between px-6 shrink-0 z-40 sticky top-0 pt-[env(safe-area-inset-top)] text-white shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="lg:hidden w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
+            <div className="lg:hidden w-8 h-8 bg-stitch-cyan rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(47,217,244,0.3)]">
               <ShieldCheck className="w-4 h-4 text-slate-950" />
             </div>
-            <h2 className="text-lg font-black text-white tracking-tight uppercase drop-shadow-md">
+            <h2 className="text-lg font-black font-display text-white tracking-tight uppercase drop-shadow-md">
               {activeTab === 'CONSOLE' ? 'Control Center' : activeTab === 'EXAMS' ? 'Exams & Gradebook' : activeTab}
             </h2>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setShowDiagnostics(true)}
-              className="hidden md:flex items-center gap-2 px-4 py-2.5 min-h-[44px] glass-card bg-slate-900/40 border border-white/10 rounded-full text-xs font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all shadow-inner hover:border-cyan-400/30">
-              <Activity className="w-4 h-4 text-emerald-400" />
+              className="hidden md:flex items-center gap-2 px-4 py-2.5 min-h-[44px] glass-card bg-white/5 border border-white/10 rounded-full text-xs font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all shadow-inner hover:border-stitch-cyan/30">
+              <Activity className="w-4 h-4 text-stitch-cyan" />
               <span>Status</span>
             </button>
             <button onClick={logout} className="lg:hidden p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-rose-400 transition-colors">
               <LogOut className="w-5 h-5" />
             </button>
             <div className="hidden lg:block w-px h-8 bg-white/10 mx-1"></div>
-            <button className="hidden lg:block p-3 min-h-[44px] min-w-[44px] text-slate-400 hover:text-cyan-400 transition-colors relative">
+            <button className="hidden lg:block p-3 min-h-[44px] min-w-[44px] text-slate-400 hover:text-stitch-cyan transition-colors relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-slate-900 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
             </button>
@@ -422,22 +422,22 @@ const AdminDashboard: React.FC = () => {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 lg:pb-8 native-scroll relative">
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-stitch-cyan/5 rounded-full blur-[100px] pointer-events-none"></div>
           <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8 animate-fade-in relative z-10">
             {renderTab()}
           </div>
         </main>
 
         {/* MOBILE BOTTOM NAV */}
-        <div className="lg:hidden fixed bottom-0 left-0 w-full bg-slate-900/60 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)] z-50 text-white shadow-[0_-4px_24px_rgba(0,0,0,0.2)]">
+        <div className="lg:hidden fixed bottom-0 left-0 w-full bg-[rgba(15,23,42,0.8)] backdrop-blur-[30px] border-t border-white/10 pb-[env(safe-area-inset-bottom)] z-50 text-white shadow-[0_-4px_24px_rgba(0,0,0,0.2)]">
           <div className="flex justify-around items-center h-[60px]">
             {TAB_ITEMS.map(item => {
               const isActive = activeTab === item.id;
               return (
                 <button key={item.id} onClick={() => setActiveTab(item.id)}
-                  className={`flex-1 flex flex-col items-center justify-center h-full min-h-[44px] active:scale-90 transition-all ${isActive ? 'bg-white/5 border-t-2 border-cyan-400' : ''}`}>
-                  <item.icon className={`w-6 h-6 mb-1 ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' : 'text-slate-400'}`} />
-                  <span className={`text-[10px] font-bold ${isActive ? 'text-cyan-400' : 'text-slate-400'}`}>{item.label}</span>
+                  className={`flex-1 flex flex-col items-center justify-center h-full min-h-[44px] active:scale-90 transition-all ${isActive ? 'bg-white/5 border-t-2 border-stitch-cyan' : ''}`}>
+                  <item.icon className={`w-6 h-6 mb-1 ${isActive ? 'text-stitch-cyan drop-shadow-[0_0_8px_rgba(47,217,244,0.5)]' : 'text-slate-400'}`} />
+                  <span className={`text-[10px] font-bold ${isActive ? 'text-stitch-cyan' : 'text-slate-400'}`}>{item.label}</span>
                 </button>
               );
             })}

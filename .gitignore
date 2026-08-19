@@ -13,3 +13,16 @@ Thumbs.db
 *.apk
 coverage/
 .vite/
+
+# test artifacts
+test-results/
+playwright-report/
+*.db-journal
+
+
+# agent config (local)
+.claude/
+.opencode/
+
+# playwright auth state
+e2e/.auth/

@@ -42,7 +42,20 @@ export function getApiUrl(): string {
 }
 
 export function setApiUrl(url: string): void {
-  localStorage.setItem(API_URL_KEY, url.replace(/\/$/, ''));
+  const cleaned = url.replace(/\/$/, '');
+  try {
+    const parsed = new URL(cleaned);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      if (import.meta.env.DEV) console.warn('Invalid API URL protocol');
+      return;
+    }
+  } catch {
+    if (!cleaned.startsWith('http') && !cleaned.match(/^[\d.]+$/)) {
+      if (import.meta.env.DEV) console.warn('Invalid API URL format');
+      return;
+    }
+  }
+  localStorage.setItem(API_URL_KEY, cleaned);
 }
 
 export function clearApiUrl(): void {
@@ -437,6 +450,183 @@ export async function getSetting(key: string): Promise<{ value: string | null }>
 
 export async function setSetting(key: string, value: string): Promise<{ success: boolean }> {
   return api('/api/settings', { method: 'POST', body: JSON.stringify({ key, value }) });
+}
+
+// ── Academic Content (GTU 2024-25 syllabus, questions, notes, labs) ─────────────
+export interface AcademicSubject {
+  id: string;
+  code: string;
+  name: string;
+  branch: string;
+  semester: number;
+  credits: number;
+  is_lab: number;
+}
+
+export interface AcademicUnit {
+  id: string;
+  subject_id: string;
+  unit_number: number;
+  title: string;
+  topics: string;
+  weightage: number;
+}
+
+export interface SyllabusTopic {
+  id: string;
+  unit_id: string;
+  topic: string;
+  subtopics: string;
+  learning_outcomes: string;
+  bloom_level: string;
+  hours_allocated: number;
+}
+
+export interface AcademicQuestion {
+  id: string;
+  subject_id: string;
+  unit_id: string;
+  question_text: string;
+  question_type: string;
+  options: string | null;
+  correct_answer: string;
+  explanation: string;
+  marks: number;
+  difficulty: string;
+  bloom_level: string;
+  co_code: string;
+  source: string;
+}
+
+export interface Pyq {
+  id: string;
+  subject_id: string;
+  year: number;
+  semester: string;
+  exam_type: string;
+  question_number: number;
+  question_text: string;
+  question_type: string;
+  options: string | null;
+  correct_answer: string;
+  solution: string;
+  marks: number;
+  unit_id: string;
+  co_code: string;
+}
+
+export interface AcademicNote {
+  id: string;
+  subject_id: string;
+  unit_id: string;
+  title: string;
+  content: string;
+  content_type: string;
+  tags: string;
+  is_verified: number;
+}
+
+export interface LabExperiment {
+  id: string;
+  subject_id: string;
+  experiment_number: number;
+  title: string;
+  aim: string;
+  apparatus: string;
+  theory: string;
+  procedure: string;
+  observations: string;
+  calculations: string;
+  result: string;
+  viva_questions: string;
+  precautions: string;
+  reference_material: string;
+}
+
+export interface AcademicProject {
+  id: string;
+  subject_id: string;
+  branch: string;
+  semester: number;
+  title: string;
+  type: string;
+  description: string;
+  objectives: string;
+  technologies: string;
+  prerequisites: string;
+  timeline_weeks: number;
+  deliverables: string;
+  difficulty: string;
+}
+
+export async function getAcademicMeta(): Promise<{ branches: string[]; semesters: string[]; updated_at: string | null }> {
+  return api('/api/academic/meta');
+}
+
+export async function getAcademicSubjects(branch?: string, semester?: string): Promise<{ subjects: AcademicSubject[] }> {
+  const params = new URLSearchParams();
+  if (branch) params.set('branch', branch);
+  if (semester) params.set('semester', semester);
+  const qs = params.toString();
+  return api(`/api/academic/subjects${qs ? '?' + qs : ''}`);
+}
+
+export async function getAcademicSubjectDetail(id: string): Promise<{ subject: AcademicSubject; units: AcademicUnit[] }> {
+  return api(`/api/academic/subjects/${id}`);
+}
+
+export async function getAcademicUnit(id: string): Promise<{ unit: AcademicUnit; topics: SyllabusTopic[] }> {
+  return api(`/api/academic/units/${id}`);
+}
+
+export async function getAcademicQuestions(opts: { subjectId?: string; unitId?: string; type?: string; difficulty?: string; limit?: number } = {}): Promise<{ questions: AcademicQuestion[] }> {
+  const params = new URLSearchParams();
+  if (opts.subjectId) params.set('subjectId', opts.subjectId);
+  if (opts.unitId) params.set('unitId', opts.unitId);
+  if (opts.type) params.set('type', opts.type);
+  if (opts.difficulty) params.set('difficulty', opts.difficulty);
+  if (opts.limit) params.set('limit', String(opts.limit));
+  const qs = params.toString();
+  return api(`/api/academic/questions${qs ? '?' + qs : ''}`);
+}
+
+export async function getAcademicPyqs(opts: { subjectId?: string; year?: number; examType?: string } = {}): Promise<{ pyqs: Pyq[] }> {
+  const params = new URLSearchParams();
+  if (opts.subjectId) params.set('subjectId', opts.subjectId);
+  if (opts.year) params.set('year', String(opts.year));
+  if (opts.examType) params.set('examType', opts.examType);
+  const qs = params.toString();
+  return api(`/api/academic/pyqs${qs ? '?' + qs : ''}`);
+}
+
+export async function getAcademicNotes(opts: { subjectId?: string; unitId?: string; contentType?: string } = {}): Promise<{ notes: AcademicNote[] }> {
+  const params = new URLSearchParams();
+  if (opts.subjectId) params.set('subjectId', opts.subjectId);
+  if (opts.unitId) params.set('unitId', opts.unitId);
+  if (opts.contentType) params.set('contentType', opts.contentType);
+  const qs = params.toString();
+  return api(`/api/academic/notes${qs ? '?' + qs : ''}`);
+}
+
+export async function getAcademicLabs(subjectId?: string): Promise<{ labs: LabExperiment[] }> {
+  const qs = subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : '';
+  return api(`/api/academic/labs${qs}`);
+}
+
+export async function getAcademicProjects(branch?: string, semester?: string): Promise<{ projects: AcademicProject[] }> {
+  const params = new URLSearchParams();
+  if (branch) params.set('branch', branch);
+  if (semester) params.set('semester', semester);
+  const qs = params.toString();
+  return api(`/api/academic/projects${qs ? '?' + qs : ''}`);
+}
+
+export async function getAcademicDashboard(branch?: string, semester?: string): Promise<{ subjects: number; units: number; questions: number; pyqs: number; notes: number; labs: number; projects: number }> {
+  const params = new URLSearchParams();
+  if (branch) params.set('branch', branch);
+  if (semester) params.set('semester', semester);
+  const qs = params.toString();
+  return api(`/api/academic/dashboard${qs ? '?' + qs : ''}`);
 }
 
 // ── Legacy compatibility ───────────────────────────────────────────────────────

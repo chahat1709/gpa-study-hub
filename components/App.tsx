@@ -5,6 +5,8 @@ import { AppMode } from '../types';
 import ErrorBoundary from './ErrorBoundary';
 import { ToastProvider, useToast } from './ToastProvider';
 import { AuthProvider, useAuth } from './AuthContext';
+import { SocketProvider } from './SocketContext';
+import { NotificationProvider, useNotifications } from './NotificationContext';
 import { AuthPage } from './AuthPage';
 import { Onboarding } from './Onboarding';
 import { Loader2, Bell, ChevronLeft, User as UserIcon, WifiOff, Download, Server, Cloud } from 'lucide-react';
@@ -19,6 +21,12 @@ import { useApiKeyCheck } from '../hooks/useApiKeyCheck';
 import { useSafeAreaInsets, useIsMobile } from '../hooks/useMobile';
 import { updateService } from '../services/updateService';
 import { checkServerHealth } from '../services/apiClient';
+
+// 3D Design Components
+import WebGLBackground from './3d/WebGLBackground';
+import MagneticCursor from './3d/MagneticCursor';
+import ScrollAnimations from './3d/ScrollAnimations';
+import LoadingScreen from './3d/LoadingScreen';
 
 const ONBOARDED_KEY = 'gpa_hub_onboarded_v1';
 
@@ -76,6 +84,7 @@ const AppShell: React.FC = () => {
   const isMobile = useIsMobile();
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<null | Awaited<ReturnType<typeof updateService.checkForUpdate>>>({ version: '', versionCode: 0, apkUrl: '', changelog: '', mandatory: false });
+  const [showLoading, setShowLoading] = useState(true);
 
   // Check for app updates (native only)
   useEffect(() => {
@@ -149,19 +158,10 @@ const AppShell: React.FC = () => {
   }, [success]);
 
   if (showOnboarding) return <Onboarding onComplete={() => { localStorage.setItem(ONBOARDED_KEY, '1'); setShowOnboarding(false); }} />;
+  if (showLoading) return <LoadingScreen onComplete={() => setShowLoading(false)} />;
   if (isLoading || !license) return <LoadingFallback />;
 
-  if (!license.isActive && user?.role !== 'GTU_ADMIN') {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center h-[100dvh] bg-slate-950 p-8 text-center" style={{ background: '#0a0a0a' }}>
-        <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mb-6 border border-red-500/30">
-          <WifiOff className="w-8 h-8 text-red-500" />
-        </div>
-        <h1 className="text-2xl font-bold text-white mb-2">Service Suspended</h1>
-        <p className="text-slate-400 max-w-sm">The institutional node lease for this campus has expired or is suspended due to unpaid maintenance. Please contact the administrator.</p>
-      </div>
-    );
-  }
+
 
   if (!user) return <AuthPage />;
   if (user.role === 'FACULTY' || user.role === 'GTU_ADMIN') return <AdminDashboard />
@@ -203,10 +203,19 @@ const AppShell: React.FC = () => {
   const bottomNavHeight = 85 + insets.bottom;
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden font-sans relative">
-      <div className="glow-orb glow-orb-1" />
-      <div className="glow-orb glow-orb-2" />
-      <div className="glow-orb glow-orb-3" />
+    <div className="flex h-[100dvh] w-full overflow-hidden font-sans relative antialiased min-h-screen">
+      {/* 3D WebGL Background */}
+      <WebGLBackground />
+      
+      {/* Magnetic Custom Cursor */}
+      <MagneticCursor />
+      
+      {/* GSAP Scroll Animations */}
+      <ScrollAnimations />
+
+      {/* Atmospheric Backgrounds */}
+      <div className="bg-blob-1"></div>
+      <div className="bg-blob-2"></div>
 
       <div className="hidden lg:block shrink-0 h-full z-50 relative">
         <Sidebar currentMode={currentMode} onModeChange={setCurrentMode} />
@@ -242,26 +251,26 @@ const AppShell: React.FC = () => {
         )}
 
         {/* Mobile Native Header */}
-        <header className="lg:hidden shrink-0 flex items-center justify-between px-4 z-40 sticky top-0 pt-[env(safe-area-inset-top)] box-content bg-[rgba(15,23,42,0.85)] backdrop-blur-[20px] border-b border-white/10" style={{ height: 52 + insets.top }}>
+        <header className="lg:hidden shrink-0 flex items-center justify-between px-4 z-40 sticky top-0 pt-[env(safe-area-inset-top)] box-content bg-transparent backdrop-blur-md transition-all duration-300" style={{ height: 52 + insets.top }}>
           <div className="flex items-center gap-2.5">
             {currentMode !== AppMode.CAMPUS ? (
               <button
                 onClick={() => setCurrentMode(AppMode.CAMPUS)}
-                className="p-2 -ml-2 text-stitch-cyan active:scale-90 transition-transform min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-stitch-cyan/50 rounded-xl"
+                className="p-2 -ml-2 text-primary active:scale-90 transition-transform min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 aria-label="Go back to Campus Home"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
             ) : (
-              <div className="w-8 h-8 rounded-[10px] overflow-hidden p-0.5 bg-gradient-to-br from-stitch-primary to-stitch-secondary shadow-sm shrink-0">
+              <div className="w-8 h-8 rounded-[10px] overflow-hidden p-0.5 bg-gradient-to-br from-primary to-secondary shadow-sm shrink-0">
                 <img src="/gpa_hub_logo.png" className="w-full h-full object-cover rounded-[8px]" alt="Logo" />
               </div>
             )}
             <div>
-              <h1 className="text-sm font-display font-bold text-white tracking-tight leading-none">
+              <h1 className="text-sm font-display-lg font-bold text-white tracking-tight leading-none">
                 {getModeLabel()}
               </h1>
-              <p className="text-[10px] text-stitch-tertiary font-mono mt-0.5">GTU Node</p>
+              <p className="text-[10px] text-white/50 font-mono mt-0.5">GTU Node</p>
             </div>
           </div>
 
@@ -272,7 +281,7 @@ const AppShell: React.FC = () => {
             </div>
             <button
               onClick={() => setCurrentMode(AppMode.PROFILE)}
-              className="min-h-[44px] min-w-[44px] rounded-full overflow-hidden border border-stitch-cyan/30 flex items-center justify-center p-0.5 bg-white/5 active:scale-90 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-stitch-cyan/50"
+              className="min-h-[44px] min-w-[44px] rounded-full overflow-hidden border border-primary/30 flex items-center justify-center p-0.5 bg-white/5 active:scale-90 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label="Open profile settings"
             >
               {user.photoURL ? (
@@ -294,12 +303,7 @@ const AppShell: React.FC = () => {
               <div className={`w-2 h-2 rounded-full ${isAiActive ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
               <span className="text-xs font-medium text-slate-300">{isAiActive ? 'Online' : 'API Key Needed'}</span>
             </div>
-            <button
-              className="text-slate-400 hover:text-white transition-colors p-3 min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-xl"
-              aria-label="View notifications"
-            >
-              <Bell className="w-5 h-5" />
-            </button>
+            <NotificationBell />
           </div>
         </header>
 
@@ -325,10 +329,68 @@ const AppShell: React.FC = () => {
   );
 };
 
+const NotificationBell: React.FC = () => {
+  const { unreadCount, notifications, markAllRead } = useNotifications();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => { setOpen(!open); if (!open) markAllRead(); }}
+        className="relative text-slate-400 hover:text-white transition-colors p-3 min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-xl"
+        aria-label="View notifications"
+      >
+        <Bell className="w-5 h-5" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1.5 right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50">
+            <div className="p-3 border-b border-white/10">
+              <h3 className="text-sm font-bold text-white">Notifications</h3>
+            </div>
+            {notifications.length === 0 ? (
+              <div className="p-6 text-center text-slate-500 text-xs">No notifications yet</div>
+            ) : (
+              notifications.slice(0, 20).map(n => (
+                <div key={n.id} className={`p-3 border-b border-white/5 ${!n.isRead ? 'bg-white/5' : ''}`}>
+                  <div className="flex items-start gap-2">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                      n.type === 'error' ? 'bg-red-500' :
+                      n.type === 'warning' ? 'bg-amber-500' :
+                      n.type === 'success' ? 'bg-emerald-500' :
+                      n.type === 'chat' ? 'bg-blue-500' :
+                      n.type === 'attendance' ? 'bg-purple-500' : 'bg-slate-500'
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white">{n.title}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5 truncate">{n.message}</p>
+                      <p className="text-[10px] text-slate-600 mt-1">{n.timestamp.toLocaleTimeString()}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const App: React.FC = () => (
   <ToastProvider>
     <AuthProvider>
-      <AppShell />
+      <SocketProvider>
+        <NotificationProvider>
+          <AppShell />
+        </NotificationProvider>
+      </SocketProvider>
     </AuthProvider>
   </ToastProvider>
 );

@@ -1,26 +1,40 @@
 {
   "name": "gpa-study-hub-server",
-  "version": "2.0.0",
-  "description": "Local backend server for GPA Study Hub",
+  "version": "3.0.0",
+  "description": "Production SaaS backend for GPA Study Hub - scalable to 1 lakh users",
   "main": "server.js",
   "scripts": {
     "start": "NODE_ENV=production node server.js",
     "dev": "NODE_ENV=development node server.js",
     "pm2": "pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop gpa-study-hub",
-    "pm2:logs": "pm2 logs gpa-study-hub"
+    "pm2:logs": "pm2 logs gpa-study-hub",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "k8s:apply": "kubectl apply -f k8s/"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^11.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.0",
     "helmet": "^7.1.0",
     "hpp": "^0.2.3",
+    "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^9.0.5",
+    "pg": "^8.22.0",
     "pino": "^9.0.0",
     "pino-pretty": "^11.0.0",
+    "socket.io": "^4.8.3",
     "uuid": "^9.0.0"
+  },
+  "optionalDependencies": {
+    "bullmq": "^5.0.0",
+    "prom-client": "^15.0.0"
   }
 }

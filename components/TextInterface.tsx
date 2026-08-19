@@ -62,7 +62,7 @@ const TextInterface: React.FC = () => {
 
   if (isChecking) return (
     <div className="h-full w-full flex items-center justify-center bg-transparent">
-      <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+      <Loader2 className="w-8 h-8 animate-spin text-stitch-cyan" />
     </div>
   );
 
@@ -76,8 +76,8 @@ const TextInterface: React.FC = () => {
   return (
     <div className="h-full flex flex-col gap-6 max-w-4xl mx-auto p-4 lg:p-8 animate-fade-in">
       <div className="glass-card p-6 rounded-[32px] border border-white/10 text-white shadow-2xl">
-        <h2 className="text-lg font-black text-white mb-6 flex items-center gap-2 uppercase tracking-tight">
-          <BookOpen className="w-5 h-5 text-indigo-400" />
+        <h2 className="text-lg font-black font-display text-white mb-6 flex items-center gap-2 uppercase tracking-tight">
+          <BookOpen className="w-5 h-5 text-stitch-primary" />
           Study Tools
         </h2>
 
@@ -99,13 +99,13 @@ const TextInterface: React.FC = () => {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Paste your lecture notes, essay draft, or topic here..."
-            className="w-full h-40 p-5 bg-white/5 border border-white/10 rounded-[28px] focus:ring-4 focus:ring-indigo-500/20 focus:bg-white/10 outline-none resize-none text-white placeholder:text-slate-400 font-medium transition-all"
+            className="w-full h-40 p-5 bg-white/5 border border-white/10 rounded-[28px] focus:ring-4 focus:ring-stitch-cyan/20 focus:bg-white/10 outline-none resize-none text-white placeholder:text-slate-400 font-medium transition-all"
           />
           <div className="flex justify-end">
             <button
               onClick={() => handleGenerate()}
               disabled={!prompt.trim() || isLoading}
-              className="bg-indigo-600 text-white px-8 py-4 min-h-[44px] rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 transition-all shadow-xl shadow-indigo-600/30"
+              className="stitch-btn text-white px-8 py-4 min-h-[44px] rounded-[16px] font-black uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 transition-all"
             >
               {isLoading ? (
                 <>
@@ -129,9 +129,9 @@ const TextInterface: React.FC = () => {
           <button
             onClick={copyToClipboard}
             disabled={!result}
-            className="text-slate-300 hover:text-white p-3 min-h-[44px] min-w-[44px] rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest"
+            className="text-slate-300 hover:text-white p-3 min-h-[44px] min-w-[44px] rounded-[16px] hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-stitch-cyan" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? 'Captured' : 'Capture'}
           </button>
         </div>

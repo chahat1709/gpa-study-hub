@@ -1,8 +1,13 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 const Database = require('better-sqlite3');
 const multer = require('multer');
 const path = require('path');
@@ -15,7 +20,10 @@ const cluster = require('cluster');
 const os = require('os');
 
 // ── JWT Config ──────────────────────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required. Set a strong random string (64+ chars).');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = '30d';
 
 function generateToken(user) {
@@ -39,8 +47,32 @@ function authMiddleware(req, res, next) {
   if (!decoded) {
     return jsonResponse(res, { error: 'Invalid or expired token' }, 401);
   }
+  // Verify user still exists and is active
+  const user = db.prepare('SELECT id, is_active FROM users WHERE id = ?').get(decoded.id);
+  if (!user || !user.is_active) {
+    return jsonResponse(res, { error: 'Account inactive or not found' }, 401);
+  }
   req.user = decoded;
   next();
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return jsonResponse(res, { error: 'Insufficient permissions' }, 403);
+    }
+    next();
+  };
+}
+
+function requireOwnershipOrAdmin(paramName = 'userId') {
+  return (req, res, next) => {
+    const resourceUserId = req.params[paramName] || req.body[paramName];
+    if (req.user.role === 'GTU_ADMIN' || req.user.role === 'FACULTY' || req.user.id === resourceUserId) {
+      return next();
+    }
+    return jsonResponse(res, { error: 'Access denied' }, 403);
+  };
 }
 
 // ── Logger ──────────────────────────────────────────────────────────────────────
@@ -154,20 +186,25 @@ app.use(cors({
   origin: function (origin, callback) {
     const allowed = [
       'http://localhost:5173',
+      'http://localhost:5174',
       'http://localhost:3000',
       'http://localhost:4173',
+      'http://localhost:4174',
       'capacitor://localhost',
     ];
-    if (!origin || allowed.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowed.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    // Allow local network IPs in development
+    if (process.env.NODE_ENV !== 'production') {
       const ip = origin.match(/\/\/([\d.]+):/);
-      if (ip && /^192\.168\./.test(ip[1]) || /^10\./.test(ip[1]) || /^172\.(1[6-9]|2\d|3[01])\./.test(ip[1])) {
-        callback(null, true);
-      } else {
-        callback(null, true);
+      if (ip && (/^192\.168\./.test(ip[1]) || /^10\./.test(ip[1]) || /^172\.(1[6-9]|2\d|3[01])\./.test(ip[1]))) {
+        return callback(null, true);
       }
     }
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));
@@ -178,6 +215,7 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later' },
+  keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
 });
 
 const authLimiter = rateLimit({
@@ -186,6 +224,16 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts, please wait 15 minutes' },
+  keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+});
+
+const forgotPinLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many PIN reset attempts, please wait 15 minutes' },
+  keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
 });
 
 const uploadLimiter = rateLimit({
@@ -194,15 +242,76 @@ const uploadLimiter = rateLimit({
   message: { error: 'Upload limit reached, try again later' },
 });
 
+// ─── AI Rate Limiting ────────────────────────────────────────────────────────────
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 50, // 50 requests per hour per user
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { 
+    error: 'AI rate limit exceeded. Try again later or use offline mode.',
+    fallback: true,
+    retryAfter: 3600
+  },
+  keyGenerator: (req) => req.user?.id || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+});
+
+const aiStrictLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10, // stricter for grading (expensive)
+  message: { error: 'Grading limit exceeded', fallback: true, retryAfter: 3600 },
+  keyGenerator: (req) => req.user?.id || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+});
+
 app.use(generalLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/signup', authLimiter);
 app.use('/api/auth/faculty-login', authLimiter);
+app.use('/api/auth/faculty-signup', authLimiter);
 app.use('/api/auth/admin-login', authLimiter);
+app.use('/api/auth/forgot-pin', forgotPinLimiter);
 app.use('/api/upload', uploadLimiter);
 
+app.use(cookieParser());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: false, limit: '5mb' }));
+
+// ─── CSRF Protection (Double-Submit Cookie) ───────────────────────────────────────
+function generateCsrfToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+app.use((req, res, next) => {
+  // Generate CSRF token if not present
+  let csrfToken = req.cookies?.['csrf_token'];
+  if (!csrfToken) {
+    csrfToken = generateCsrfToken();
+    res.cookie('csrf_token', csrfToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+  }
+  req.csrfToken = csrfToken;
+  
+  // Expose token for frontend
+  res.locals.csrfToken = csrfToken;
+  
+  // Validate CSRF token on state-changing requests
+  const stateChangingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+  const isApiRoute = req.path.startsWith('/api/');
+  const isExempt = ['/api/auth/login', '/api/auth/signup', '/api/auth/forgot-pin', '/api/auth/verify-reset-token', '/api/auth/reset-pin-with-token', '/api/auth/faculty-login', '/api/auth/faculty-signup', '/api/auth/admin-login', '/api/ai/mock', '/api/health'].some(p => req.path.startsWith(p));
+  
+  if (isApiRoute && stateChangingMethods.includes(req.method) && !isExempt) {
+    const headerToken = req.headers['x-csrf-token'] || req.body?.csrf_token;
+    if (!headerToken || headerToken !== csrfToken) {
+      return jsonResponse(res, { error: 'Invalid CSRF token' }, 403);
+    }
+  }
+  
+  next();
+});
 
 // ── Request Logging & Metrics ───────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -220,10 +329,39 @@ app.use((req, res, next) => {
   next();
 });
 
+// ─── AI Usage Tracking Middleware ────────────────────────────────────────────────
+function trackAIUsage(req, res, next) {
+  if (!req.user) return next();
+  const provider = req.body?.provider || 'unknown';
+  const type = req.body?.type || req.path.split('/').pop() || 'chat';
+  
+  res.on('finish', () => {
+    if (res.statusCode < 400) {
+      try {
+        db.prepare(`
+          INSERT INTO ai_usage (id, user_id, provider, request_type, tokens_used, success)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(generateId(), req.user.id, provider, type, req.body?.tokens || 0, res.statusCode < 400 ? 1 : 0);
+      } catch (e) {
+        log.error({ err: e }, 'AI usage tracking failed');
+      }
+    }
+  });
+  next();
+}
+
+app.use(trackAIUsage);
+
 // ── Input Sanitization ─────────────────────────────────────────────────────────
 function sanitize(input) {
   if (typeof input !== 'string') return input;
-  return input.replace(/[<>]/g, '').trim().substring(0, 5000);
+  return input
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .replace(/data:/gi, '')
+    .trim()
+    .substring(0, 5000);
 }
 
 function sanitizeObj(obj) {
@@ -256,7 +394,7 @@ app.use((req, res, next) => {
 // ── File Uploads ────────────────────────────────────────────────────────────────
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', authMiddleware, express.static(uploadsDir));
 
 const ALLOWED_MIME = new Set([
   'image/jpeg', 'image/png', 'image/webp', 'image/gif',
@@ -307,6 +445,7 @@ db.exec(`
     photo_url TEXT DEFAULT '',
     email TEXT DEFAULT '',
     password_hash TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -317,8 +456,7 @@ db.exec(`
     date TEXT NOT NULL,
     status TEXT DEFAULT 'PRESENT',
     slot_id TEXT DEFAULT '',
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    created_at TEXT DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS timetable (
@@ -343,8 +481,7 @@ db.exec(`
     due_date TEXT DEFAULT '',
     completed INTEGER DEFAULT 0,
     category TEXT DEFAULT 'GENERAL',
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    created_at TEXT DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS resources (
@@ -389,8 +526,7 @@ db.exec(`
     sender_name TEXT NOT NULL,
     content TEXT NOT NULL,
     is_encrypted INTEGER DEFAULT 0,
-    timestamp TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (chat_id) REFERENCES chats(id)
+    timestamp TEXT DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS exams (
@@ -412,9 +548,7 @@ db.exec(`
     score INTEGER DEFAULT 0,
     total INTEGER DEFAULT 100,
     answers TEXT DEFAULT '{}',
-    completed_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (exam_id) REFERENCES exams(id)
+    completed_at TEXT DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS faculty (
@@ -441,6 +575,166 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  -- Core Academic Content Tables
+  CREATE TABLE IF NOT EXISTS subjects (
+    id TEXT PRIMARY KEY,
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    branch TEXT NOT NULL CHECK (branch IN ('EC', 'ICT')),
+    semester INTEGER NOT NULL CHECK (semester BETWEEN 1 AND 6),
+    credits INTEGER DEFAULT 3,
+    is_lab INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(code, branch, semester)
+  );
+
+  CREATE TABLE IF NOT EXISTS units (
+    id TEXT PRIMARY KEY,
+    subject_id TEXT NOT NULL,
+    unit_number INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    topics TEXT, -- JSON array of topic strings
+    weightage INTEGER DEFAULT 0, -- exam weightage %
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(subject_id, unit_number),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS syllabus (
+    id TEXT PRIMARY KEY,
+    subject_id TEXT NOT NULL,
+    unit_id TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    subtopics TEXT, -- JSON array
+    learning_outcomes TEXT, -- JSON array of CO codes
+    bloom_level TEXT CHECK (bloom_level IN ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
+    hours_allocated INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS question_banks (
+    id TEXT PRIMARY KEY,
+    subject_id TEXT NOT NULL,
+    unit_id TEXT,
+    question_text TEXT NOT NULL,
+    question_type TEXT NOT NULL CHECK (question_type IN ('MCQ', 'DESCRIPTIVE', 'NUMERICAL', 'TRUE_FALSE')),
+    options TEXT, -- JSON array for MCQ
+    correct_answer TEXT NOT NULL,
+    explanation TEXT,
+    marks INTEGER DEFAULT 1,
+    difficulty TEXT CHECK (difficulty IN ('Easy', 'Medium', 'Hard')) DEFAULT 'Medium',
+    bloom_level TEXT CHECK (bloom_level IN ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
+    co_code TEXT, -- Course Outcome code
+    source TEXT DEFAULT 'manual', -- 'manual', 'pyq', 'generated'
+    is_active INTEGER DEFAULT 1,
+    created_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS pyqs (
+    id TEXT PRIMARY KEY,
+    subject_id TEXT NOT NULL,
+    year INTEGER NOT NULL,
+    semester INTEGER NOT NULL,
+    exam_type TEXT CHECK (exam_type IN ('WINTER', 'SUMMER', 'REMID', 'IMPROVEMENT')),
+    question_number INTEGER,
+    question_text TEXT NOT NULL,
+    question_type TEXT NOT NULL CHECK (question_type IN ('MCQ', 'DESCRIPTIVE', 'NUMERICAL')),
+    options TEXT, -- JSON array for MCQ
+    correct_answer TEXT,
+    solution TEXT, -- Detailed solution
+    marks INTEGER DEFAULT 1,
+    unit_id TEXT,
+    co_code TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS notes (
+    id TEXT PRIMARY KEY,
+    subject_id TEXT NOT NULL,
+    unit_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL, -- Markdown/HTML content
+    content_type TEXT CHECK (content_type IN ('THEORY', 'FORMULA', 'DERIVATION', 'DIAGRAM', 'SUMMARY', 'MNEMONIC')) DEFAULT 'THEORY',
+    file_url TEXT,
+    tags TEXT, -- JSON array
+    is_verified INTEGER DEFAULT 0,
+    created_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS labs (
+    id TEXT PRIMARY KEY,
+    subject_id TEXT NOT NULL,
+    experiment_number INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    aim TEXT NOT NULL,
+    apparatus TEXT, -- JSON array
+    theory TEXT,
+    procedure TEXT NOT NULL, -- Step-by-step
+    observations TEXT, -- Expected observations format
+    calculations TEXT,
+    result TEXT,
+    viva_questions TEXT, -- JSON array of {question, answer}
+    precautions TEXT, -- JSON array
+    reference_material TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(subject_id, experiment_number)
+  );
+
+  CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    subject_id TEXT,
+    branch TEXT NOT NULL CHECK (branch IN ('EC', 'ICT', 'COMMON')),
+    semester INTEGER CHECK (semester BETWEEN 1 AND 6),
+    title TEXT NOT NULL,
+    type TEXT CHECK (type IN ('MINI', 'MAJOR', 'RESEARCH', 'INDUSTRY')) DEFAULT 'MINI',
+    description TEXT,
+    objectives TEXT, -- JSON array
+    technologies TEXT, -- JSON array
+    prerequisites TEXT,
+    timeline_weeks INTEGER,
+    deliverables TEXT, -- JSON array
+    difficulty TEXT CHECK (difficulty IN ('Beginner', 'Intermediate', 'Advanced')),
+    github_url TEXT,
+    report_url TEXT,
+    created_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS student_progress (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    subject_id TEXT NOT NULL,
+    unit_id TEXT,
+    questions_attempted INTEGER DEFAULT 0,
+    questions_correct INTEGER DEFAULT 0,
+    pyqs_attempted INTEGER DEFAULT 0,
+    pyqs_correct INTEGER DEFAULT 0,
+    notes_read INTEGER DEFAULT 0,
+    labs_completed INTEGER DEFAULT 0,
+    last_activity TEXT DEFAULT (datetime('now')),
+    mastery_level TEXT CHECK (mastery_level IN ('Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert')) DEFAULT 'Novice',
+    UNIQUE(user_id, subject_id, unit_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_attendance_user ON attendance_records(user_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);
   CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(chat_id);
@@ -449,10 +743,269 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
 
-// ── Helpers ─────────────────────────────────────────────────────────────────────
+// Migration: ensure users.is_active exists (required by authMiddleware)
+const userCols = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
+if (!userCols.includes('is_active')) {
+  db.exec('ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1');
+}
+
+// ── Academic Schema (separate to isolate issues) ──────────────────────────────────
+function initAcademicSchema() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS subjects (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      name TEXT NOT NULL,
+      branch TEXT NOT NULL CHECK (branch IN ('EC', 'ICT')),
+      semester INTEGER NOT NULL CHECK (semester BETWEEN 1 AND 6),
+      credits INTEGER DEFAULT 3,
+      is_lab INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(code, branch, semester)
+    );
+
+    CREATE TABLE IF NOT EXISTS units (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      unit_number INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      topics TEXT,
+      weightage INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(subject_id, unit_number)
+    );
+
+    CREATE TABLE IF NOT EXISTS syllabus (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      unit_id TEXT NOT NULL,
+      topic TEXT NOT NULL,
+      subtopics TEXT,
+      learning_outcomes TEXT,
+      bloom_level TEXT CHECK (bloom_level IN ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
+      hours_allocated INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS question_banks (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      unit_id TEXT,
+      question_text TEXT NOT NULL,
+      question_type TEXT NOT NULL CHECK (question_type IN ('MCQ', 'DESCRIPTIVE', 'NUMERICAL', 'TRUE_FALSE')),
+      options TEXT,
+      correct_answer TEXT NOT NULL,
+      explanation TEXT,
+      marks INTEGER DEFAULT 1,
+      difficulty TEXT CHECK (difficulty IN ('Easy', 'Medium', 'Hard')) DEFAULT 'Medium',
+      bloom_level TEXT CHECK (bloom_level IN ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
+      co_code TEXT,
+      source TEXT DEFAULT 'manual',
+      is_active INTEGER DEFAULT 1,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS pyqs (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      year INTEGER NOT NULL,
+      semester INTEGER NOT NULL,
+      exam_type TEXT CHECK (exam_type IN ('WINTER', 'SUMMER', 'REMID', 'IMPROVEMENT')),
+      question_number INTEGER,
+      question_text TEXT NOT NULL,
+      question_type TEXT NOT NULL CHECK (question_type IN ('MCQ', 'DESCRIPTIVE', 'NUMERICAL')),
+      options TEXT,
+      correct_answer TEXT,
+      solution TEXT,
+      marks INTEGER DEFAULT 1,
+      unit_id TEXT,
+      co_code TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      unit_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      content_type TEXT CHECK (content_type IN ('THEORY', 'FORMULA', 'DERIVATION', 'DIAGRAM', 'SUMMARY', 'MNEMONIC')) DEFAULT 'THEORY',
+      file_url TEXT,
+      tags TEXT,
+      is_verified INTEGER DEFAULT 0,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS labs (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      experiment_number INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      aim TEXT NOT NULL,
+      apparatus TEXT,
+      theory TEXT,
+      procedure TEXT NOT NULL,
+      observations TEXT,
+      calculations TEXT,
+      result TEXT,
+      viva_questions TEXT,
+      precautions TEXT,
+      reference_material TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(subject_id, experiment_number)
+    );
+
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT,
+      branch TEXT NOT NULL CHECK (branch IN ('EC', 'ICT', 'COMMON')),
+      semester INTEGER CHECK (semester BETWEEN 1 AND 6),
+      title TEXT NOT NULL,
+      type TEXT CHECK (type IN ('MINI', 'MAJOR', 'RESEARCH', 'INDUSTRY')) DEFAULT 'MINI',
+      description TEXT,
+      objectives TEXT,
+      technologies TEXT,
+      prerequisites TEXT,
+      timeline_weeks INTEGER,
+      deliverables TEXT,
+      difficulty TEXT CHECK (difficulty IN ('Beginner', 'Intermediate', 'Advanced')),
+      github_url TEXT,
+      report_url TEXT,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS student_progress (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      subject_id TEXT NOT NULL,
+      unit_id TEXT,
+      questions_attempted INTEGER DEFAULT 0,
+      questions_correct INTEGER DEFAULT 0,
+      pyqs_attempted INTEGER DEFAULT 0,
+      pyqs_correct INTEGER DEFAULT 0,
+      notes_read INTEGER DEFAULT 0,
+      labs_completed INTEGER DEFAULT 0,
+      last_activity TEXT DEFAULT (datetime('now')),
+      mastery_level TEXT CHECK (mastery_level IN ('Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert')) DEFAULT 'Novice',
+      UNIQUE(user_id, subject_id, unit_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_subjects_branch_sem ON subjects(branch, semester);
+    CREATE INDEX IF NOT EXISTS idx_units_subject ON units(subject_id);
+    CREATE INDEX IF NOT EXISTS idx_syllabus_subject_unit ON syllabus(subject_id, unit_id);
+    CREATE INDEX IF NOT EXISTS idx_question_banks_subject_unit ON question_banks(subject_id, unit_id);
+    CREATE INDEX IF NOT EXISTS idx_question_banks_type ON question_banks(question_type);
+    CREATE INDEX IF NOT EXISTS idx_pyqs_subject_year ON pyqs(subject_id, year);
+    CREATE INDEX IF NOT EXISTS idx_notes_subject_unit ON notes(subject_id, unit_id);
+    CREATE INDEX IF NOT EXISTS idx_labs_subject ON labs(subject_id);
+    CREATE INDEX IF NOT EXISTS idx_projects_branch_sem ON projects(branch, semester);
+    CREATE INDEX IF NOT EXISTS idx_student_progress_user_subject ON student_progress(user_id, subject_id);
+  `);
+}
+
+// Initialize academic schema after main schema
+initAcademicSchema();
+
+// ─── AI Rate Limiting Table ──────────────────────────────────────────────────────
+function initAIRateLimitTable() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ai_usage (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      provider TEXT NOT NULL,
+      request_type TEXT NOT NULL, -- 'chat', 'grading', 'tutoring', 'explanation'
+      tokens_used INTEGER DEFAULT 0,
+      success INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_ai_usage_user_date ON ai_usage(user_id, created_at);
+  `);
+}
+initAIRateLimitTable();
+
+// ─── PIN Reset Tokens Table ───────────────────────────────────────────────────────
+function initPinResetTable() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pin_reset_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL,
+      used INTEGER DEFAULT 0,
+      expires_at TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_pin_reset_token ON pin_reset_tokens(token);
+    CREATE INDEX IF NOT EXISTS idx_pin_reset_user ON pin_reset_tokens(user_id);
+  `);
+}
+initPinResetTable();
+
+// ─── Email Transporter ─────────────────────────────────────────────────────────────
+const emailTransporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT) || 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+async function sendResetEmail(email, token, name) {
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-pin?token=${token}`;
+  
+  const mailOptions = {
+    from: `"GPA Study Hub" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: 'Reset Your PIN - GPA Study Hub',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0;">GPA Study Hub</h1>
+        </div>
+        <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+          <h2 style="color: #333;">Hi ${name},</h2>
+          <p style="color: #666; line-height: 1.6;">You requested to reset your PIN. Click the button below to set a new PIN:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Reset My PIN</a>
+          </div>
+          <p style="color: #666; font-size: 14px;">Or copy this link: <a href="${resetUrl}">${resetUrl}</a></p>
+          <p style="color: #999; font-size: 12px;">This link expires in 1 hour. If you didn't request this, please ignore this email.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px;">GPA Study Hub - Your GTU Study Companion</p>
+        </div>
+      </div>
+    `,
+  };
+  
+  try {
+    await emailTransporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    log.error({ err: error }, 'Failed to send reset email');
+    return { success: false, error: error.message };
+  }
+}
+
 function hashPin(pin) {
   const salt = 'gpa_hub_salt_v2';
   return crypto.createHash('sha256').update(pin + salt).digest('hex');
+}
+
+// Bcrypt for faculty passwords
+function hashPassword(password) {
+  return bcrypt.hashSync(password, 12);
+}
+
+function verifyPassword(password, hash) {
+  return bcrypt.compareSync(password, hash);
 }
 
 function generateId() {
@@ -480,7 +1033,7 @@ app.post('/api/auth/signup', (req, res) => {
     if (!name || !enrollmentNumber || !pin) {
       return jsonResponse(res, { error: 'Name, enrollment number, and PIN required' }, 400);
     }
-    if (pin.length < 4 || pin.length > 8) {
+    if (pin.length < 4 || pin.length > 8 || !/^\d+$/.test(pin)) {
       return jsonResponse(res, { error: 'PIN must be 4-8 digits' }, 400);
     }
 
@@ -533,41 +1086,129 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
-app.post('/api/auth/forgot-pin', (req, res) => {
+app.post('/api/auth/forgot-pin', forgotPinLimiter, async (req, res) => {
   try {
-    const { enrollmentNumber, newPin } = req.body;
-    if (!enrollmentNumber || !newPin) {
-      return jsonResponse(res, { error: 'Enrollment number and new PIN required' }, 400);
-    }
-    if (newPin.length < 4 || newPin.length > 8) {
-      return jsonResponse(res, { error: 'PIN must be 4-8 digits' }, 400);
+    const { enrollmentNumber, email } = req.body;
+    if (!enrollmentNumber || !email) {
+      return jsonResponse(res, { error: 'Enrollment number and email required' }, 400);
     }
 
-    const user = db.prepare('SELECT id FROM users WHERE enrollment_number = ?').get(enrollmentNumber);
+    const user = db.prepare('SELECT id, name, email FROM users WHERE enrollment_number = ?').get(enrollmentNumber);
     if (!user) {
-      return jsonResponse(res, { error: 'Enrollment number not found' }, 404);
+      // Don't reveal if enrollment exists
+      return jsonResponse(res, { success: true, message: 'If the enrollment exists, a reset link has been sent' });
     }
 
-    const pinHash = hashPin(newPin);
-    db.prepare('UPDATE users SET pin_hash = ? WHERE id = ?').run(pinHash, user.id);
-    auditLog('PIN_RESET', user.id, 'PIN reset via forgot-pin', req.ip);
-    jsonResponse(res, { success: true, message: 'PIN updated successfully' });
+    if (user.email !== email) {
+      return jsonResponse(res, { error: 'Email does not match enrollment' }, 400);
+    }
+
+    // Generate reset token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+    db.prepare(`
+      INSERT INTO pin_reset_tokens (id, user_id, token, email, expires_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(generateId(), user.id, token, email, expiresAt);
+
+    // Send reset email
+    await sendResetEmail(email, token, user.name);
+
+    auditLog('PIN_RESET_REQUESTED', user.id, `Reset requested for ${email}`, req.ip);
+    jsonResponse(res, { success: true, message: 'If the enrollment exists, a reset link has been sent' });
   } catch (e) {
     log.error({ err: e }, 'Forgot PIN error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
   }
 });
 
-app.post('/api/auth/change-pin', (req, res) => {
+// Verify reset token
+app.post('/api/auth/verify-reset-token', (req, res) => {
   try {
-    const { userId, oldPin, newPin } = req.body;
-    if (!userId || !oldPin || !newPin) {
+    const { token } = req.body;
+    if (!token) {
+      return jsonResponse(res, { error: 'Token required' }, 400);
+    }
+
+    const resetToken = db.prepare(`
+      SELECT id, user_id, email, expires_at, used
+      FROM pin_reset_tokens WHERE token = ?
+    `).get(token);
+
+    if (!resetToken) {
+      return jsonResponse(res, { error: 'Invalid token' }, 400);
+    }
+
+    if (resetToken.used) {
+      return jsonResponse(res, { error: 'Token already used' }, 400);
+    }
+
+    if (new Date(resetToken.expires_at) < new Date()) {
+      return jsonResponse(res, { error: 'Token expired' }, 400);
+    }
+
+    jsonResponse(res, { success: true, valid: true });
+  } catch (e) {
+    log.error({ err: e }, 'Verify reset token error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+// Reset PIN with token
+app.post('/api/auth/reset-pin-with-token', (req, res) => {
+  try {
+    const { token, newPin } = req.body;
+    if (!token || !newPin) {
+      return jsonResponse(res, { error: 'Token and new PIN required' }, 400);
+    }
+    if (!/^\d{4,8}$/.test(newPin)) {
+      return jsonResponse(res, { error: 'PIN must be 4-8 digits' }, 400);
+    }
+
+    const resetToken = db.prepare(`
+      SELECT id, user_id, email, expires_at, used
+      FROM pin_reset_tokens WHERE token = ?
+    `).get(token);
+
+    if (!resetToken) {
+      return jsonResponse(res, { error: 'Invalid token' }, 400);
+    }
+
+    if (resetToken.used) {
+      return jsonResponse(res, { error: 'Token already used' }, 400);
+    }
+
+    if (new Date(resetToken.expires_at) < new Date()) {
+      return jsonResponse(res, { error: 'Token expired' }, 400);
+    }
+
+    // Update PIN
+    const pinHash = hashPin(newPin);
+    db.prepare('UPDATE users SET pin_hash = ? WHERE id = ?').run(pinHash, resetToken.user_id);
+
+    // Mark token as used
+    db.prepare('UPDATE pin_reset_tokens SET used = 1 WHERE id = ?').run(resetToken.id);
+
+    auditLog('PIN_RESET', resetToken.user_id, 'PIN reset via email token', '');
+    jsonResponse(res, { success: true, message: 'PIN updated successfully' });
+  } catch (e) {
+    log.error({ err: e }, 'Reset PIN with token error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.post('/api/auth/change-pin', authMiddleware, (req, res) => {
+  try {
+    const { oldPin, newPin } = req.body;
+    if (!oldPin || !newPin) {
       return jsonResponse(res, { error: 'All fields required' }, 400);
     }
-    if (newPin.length < 4 || newPin.length > 8) {
+    if (newPin.length < 4 || newPin.length > 8 || !/^\d+$/.test(newPin)) {
       return jsonResponse(res, { error: 'New PIN must be 4-8 digits' }, 400);
     }
 
+    const userId = req.user.id;
     const user = db.prepare('SELECT pin_hash FROM users WHERE id = ?').get(userId);
     if (!user || user.pin_hash !== hashPin(oldPin)) {
       auditLog('PIN_CHANGE_FAILED', userId, 'Incorrect old PIN', req.ip);
@@ -590,30 +1231,38 @@ app.post('/api/auth/faculty-login', (req, res) => {
       return jsonResponse(res, { error: 'Email and password required' }, 400);
     }
 
-    const pinHash = hashPin(password);
     const user = db.prepare(`
-      SELECT id, name, email, role, branch, photo_url
-      FROM users WHERE email = ? AND pin_hash = ? AND role IN ('FACULTY', 'GTU_ADMIN')
-    `).get(email, pinHash);
+      SELECT id, name, email, role, branch, photo_url, pin_hash
+      FROM users WHERE email = ? AND role IN ('FACULTY', 'GTU_ADMIN')
+    `).get(email);
 
-    if (!user) {
+    if (!user || !verifyPassword(password, user.pin_hash)) {
       auditLog('FACULTY_LOGIN_FAILED', '', `Failed faculty login: ${email}`, req.ip);
       return jsonResponse(res, { error: 'Invalid credentials' }, 401);
     }
 
     auditLog('FACULTY_LOGIN', user.id, '', req.ip);
-    jsonResponse(res, { success: true, user, token: generateToken(user) });
+    const { pin_hash, ...userWithoutHash } = user;
+    jsonResponse(res, { success: true, user: userWithoutHash, token: generateToken(userWithoutHash) });
   } catch (e) {
     log.error({ err: e }, 'Faculty login error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
   }
 });
 
-app.post('/api/auth/faculty-signup', (req, res) => {
+app.post('/api/auth/faculty-signup', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
   try {
     const { name, email, password, branch } = req.body;
     if (!name || !email || !password) {
       return jsonResponse(res, { error: 'All fields required' }, 400);
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+      return jsonResponse(res, { error: 'Password must be at least 8 characters' }, 400);
+    }
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      return jsonResponse(res, { error: 'Password must contain uppercase, lowercase, and number' }, 400);
     }
 
     const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
@@ -622,17 +1271,17 @@ app.post('/api/auth/faculty-signup', (req, res) => {
     }
 
     const id = generateId();
-    const pinHash = hashPin(password);
+    const pinHash = hashPassword(password);
 
     db.prepare(`
       INSERT INTO users (id, name, email, pin_hash, role, branch)
       VALUES (?, ?, ?, ?, 'FACULTY', ?)
     `).run(id, name, email, pinHash, branch || 'EC');
 
-    auditLog('FACULTY_SIGNUP', id, `New faculty: ${name}`, req.ip);
+    auditLog('FACULTY_SIGNUP', id, `New faculty: ${name} (created by ${req.user.id})`, req.ip);
 
     const user = db.prepare('SELECT id, name, email, role, branch, photo_url FROM users WHERE id = ?').get(id);
-    jsonResponse(res, { success: true, user, token: generateToken(user) }, 201);
+    jsonResponse(res, { success: true, user }, 201);
   } catch (e) {
     log.error({ err: e }, 'Faculty signup error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -645,7 +1294,11 @@ app.post('/api/auth/admin-login', (req, res) => {
     if (!code) {
       return jsonResponse(res, { error: 'Admin code required' }, 400);
     }
-    const ADMIN_CODE = process.env.ADMIN_CODE || 'GTU-ADMIN-2025';
+    const ADMIN_CODE = process.env.ADMIN_CODE;
+    if (!ADMIN_CODE) {
+      log.error('ADMIN_CODE environment variable not set');
+      return jsonResponse(res, { error: 'Admin login not configured' }, 500);
+    }
     if (code !== ADMIN_CODE) {
       auditLog('ADMIN_LOGIN_FAILED', '', 'Invalid admin code', req.ip);
       return jsonResponse(res, { error: 'Invalid admin code' }, 401);
@@ -654,8 +1307,10 @@ app.post('/api/auth/admin-login', (req, res) => {
     let user = db.prepare(`SELECT id, name, role FROM users WHERE role = 'GTU_ADMIN' LIMIT 1`).get();
     if (!user) {
       const id = generateId();
-      db.prepare(`INSERT INTO users (id, name, email, pin_hash, role) VALUES (?, 'GTU Admin', 'admin@gtu.edu', ?, 'GTU_ADMIN')`).run(id, hashPin('admin'));
-      user = { id, name: 'GTU Admin', role: 'GTU_ADMIN' };
+      const adminPin = crypto.randomBytes(4).readUInt32BE(0).toString().substring(0, 6);
+      db.prepare(`INSERT INTO users (id, name, email, pin_hash, role) VALUES (?, 'GTU Admin', 'admin@gtu.edu', ?, 'GTU_ADMIN')`).run(id, hashPin(adminPin));
+      log.info({ adminId: id }, 'Admin account created');
+      user = { id, name: 'GTU Admin', role: 'GTU_ADMIN', initialPin: adminPin };
     }
 
     auditLog('ADMIN_LOGIN', user.id, '', req.ip);
@@ -666,7 +1321,7 @@ app.post('/api/auth/admin-login', (req, res) => {
   }
 });
 
-app.put('/api/auth/profile/:id', (req, res) => {
+app.put('/api/auth/profile/:id', authMiddleware, requireOwnershipOrAdmin('id'), (req, res) => {
   try {
     const { photo_url } = req.body;
     if (photo_url && photo_url.length > 200000) {
@@ -684,7 +1339,7 @@ app.put('/api/auth/profile/:id', (req, res) => {
 });
 
 // ── Attendance Routes ───────────────────────────────────────────────────────────
-app.get('/api/attendance/:userId', (req, res) => {
+app.get('/api/attendance/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
   try {
     const records = db.prepare('SELECT * FROM attendance_records WHERE user_id = ? ORDER BY date DESC').all(req.params.userId);
     jsonResponse(res, { records });
@@ -694,7 +1349,7 @@ app.get('/api/attendance/:userId', (req, res) => {
   }
 });
 
-app.post('/api/attendance', (req, res) => {
+app.post('/api/attendance', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
   try {
     const { userId, subject, date, status, slotId } = req.body;
     if (!userId || !subject || !date) {
@@ -711,7 +1366,7 @@ app.post('/api/attendance', (req, res) => {
   }
 });
 
-app.get('/api/attendance/stats/:userId', (req, res) => {
+app.get('/api/attendance/stats/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
   try {
     const all = db.prepare('SELECT subject, status, COUNT(*) as count FROM attendance_records WHERE user_id = ? GROUP BY subject, status').all(req.params.userId);
     const subjects = {};
@@ -742,7 +1397,7 @@ app.get('/api/timetable/:branch/:semester/:day', (req, res) => {
   }
 });
 
-app.post('/api/timetable', (req, res) => {
+app.post('/api/timetable', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
   try {
     const { branch, semester, day, slotIndex, subject, type, startTime, endTime, facultyName, batch } = req.body;
     if (!branch || !semester || !day || slotIndex === undefined || !subject || !startTime || !endTime) {
@@ -758,7 +1413,7 @@ app.post('/api/timetable', (req, res) => {
 });
 
 // ── Tasks Routes ────────────────────────────────────────────────────────────────
-app.get('/api/tasks/:userId', (req, res) => {
+app.get('/api/tasks/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
   try {
     const tasks = db.prepare('SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC').all(req.params.userId);
     jsonResponse(res, { tasks });
@@ -768,14 +1423,14 @@ app.get('/api/tasks/:userId', (req, res) => {
   }
 });
 
-app.post('/api/tasks', (req, res) => {
+app.post('/api/tasks', authMiddleware, (req, res) => {
   try {
-    const { userId, title, description, dueDate, category } = req.body;
-    if (!userId || !title) {
-      return jsonResponse(res, { error: 'userId and title required' }, 400);
+    const { title, description, dueDate, category } = req.body;
+    if (!title) {
+      return jsonResponse(res, { error: 'title required' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO tasks (id, user_id, title, description, due_date, category) VALUES (?, ?, ?, ?, ?, ?)').run(id, userId, title, description || '', dueDate || '', category || 'GENERAL');
+    db.prepare('INSERT INTO tasks (id, user_id, title, description, due_date, category) VALUES (?, ?, ?, ?, ?, ?)').run(id, req.user.id, title, description || '', dueDate || '', category || 'GENERAL');
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Add task error');
@@ -783,9 +1438,14 @@ app.post('/api/tasks', (req, res) => {
   }
 });
 
-app.put('/api/tasks/:id', (req, res) => {
+app.put('/api/tasks/:id', authMiddleware, (req, res) => {
   try {
     const { completed } = req.body;
+    const task = db.prepare('SELECT user_id FROM tasks WHERE id = ?').get(req.params.id);
+    if (!task) return jsonResponse(res, { error: 'Task not found' }, 404);
+    if (task.user_id !== req.user.id && req.user.role !== 'GTU_ADMIN') {
+      return jsonResponse(res, { error: 'Access denied' }, 403);
+    }
     db.prepare('UPDATE tasks SET completed = ? WHERE id = ?').run(completed ? 1 : 0, req.params.id);
     jsonResponse(res, { success: true });
   } catch (e) {
@@ -794,8 +1454,13 @@ app.put('/api/tasks/:id', (req, res) => {
   }
 });
 
-app.delete('/api/tasks/:id', (req, res) => {
+app.delete('/api/tasks/:id', authMiddleware, (req, res) => {
   try {
+    const task = db.prepare('SELECT user_id FROM tasks WHERE id = ?').get(req.params.id);
+    if (!task) return jsonResponse(res, { error: 'Task not found' }, 404);
+    if (task.user_id !== req.user.id && req.user.role !== 'GTU_ADMIN') {
+      return jsonResponse(res, { error: 'Access denied' }, 403);
+    }
     db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
     jsonResponse(res, { success: true });
   } catch (e) {
@@ -821,7 +1486,7 @@ app.get('/api/resources', (req, res) => {
   }
 });
 
-app.post('/api/resources', (req, res) => {
+app.post('/api/resources', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
   try {
     const { title, description, url, type, branch, semester, subject, uploadedBy } = req.body;
     if (!title) {
@@ -847,7 +1512,7 @@ app.get('/api/notices', (req, res) => {
   }
 });
 
-app.post('/api/notices', (req, res) => {
+app.post('/api/notices', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
   try {
     const { title, content, author, category, priority, branch } = req.body;
     if (!title || !content) {
@@ -864,7 +1529,7 @@ app.post('/api/notices', (req, res) => {
 });
 
 // ── Chat Routes ─────────────────────────────────────────────────────────────────
-app.get('/api/chats/:userId', (req, res) => {
+app.get('/api/chats/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
   try {
     const chats = db.prepare('SELECT * FROM chats WHERE participants LIKE ? ORDER BY last_timestamp DESC').all(`%${req.params.userId}%`);
     jsonResponse(res, { chats });
@@ -874,7 +1539,7 @@ app.get('/api/chats/:userId', (req, res) => {
   }
 });
 
-app.post('/api/chats', (req, res) => {
+app.post('/api/chats', authMiddleware, (req, res) => {
   try {
     const { participants, isGroup, groupName } = req.body;
     if (!participants || !Array.isArray(participants)) {
@@ -889,8 +1554,14 @@ app.post('/api/chats', (req, res) => {
   }
 });
 
-app.get('/api/messages/:chatId', (req, res) => {
+app.get('/api/messages/:chatId', authMiddleware, (req, res) => {
   try {
+    const chat = db.prepare('SELECT participants FROM chats WHERE id = ?').get(req.params.chatId);
+    if (!chat) return jsonResponse(res, { error: 'Chat not found' }, 404);
+    const participants = JSON.parse(chat.participants || '[]');
+    if (!participants.includes(req.user.id) && req.user.role !== 'GTU_ADMIN') {
+      return jsonResponse(res, { error: 'Access denied' }, 403);
+    }
     const messages = db.prepare('SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC').all(req.params.chatId);
     jsonResponse(res, { messages });
   } catch (e) {
@@ -899,17 +1570,23 @@ app.get('/api/messages/:chatId', (req, res) => {
   }
 });
 
-app.post('/api/messages', (req, res) => {
+app.post('/api/messages', authMiddleware, (req, res) => {
   try {
-    const { chatId, senderId, senderName, content, isEncrypted } = req.body;
-    if (!chatId || !senderId || !senderName || !content) {
-      return jsonResponse(res, { error: 'All fields required' }, 400);
+    const { chatId, content, isEncrypted } = req.body;
+    if (!chatId || !content) {
+      return jsonResponse(res, { error: 'chatId and content required' }, 400);
     }
     if (content.length > 5000) {
       return jsonResponse(res, { error: 'Message too long (max 5000 chars)' }, 400);
     }
+    const chat = db.prepare('SELECT participants FROM chats WHERE id = ?').get(chatId);
+    if (!chat) return jsonResponse(res, { error: 'Chat not found' }, 404);
+    const participants = JSON.parse(chat.participants || '[]');
+    if (!participants.includes(req.user.id)) {
+      return jsonResponse(res, { error: 'Access denied' }, 403);
+    }
     const id = generateId();
-    db.prepare('INSERT INTO messages (id, chat_id, sender_id, sender_name, content, is_encrypted) VALUES (?, ?, ?, ?, ?, ?)').run(id, chatId, senderId, senderName, content, isEncrypted ? 1 : 0);
+    db.prepare('INSERT INTO messages (id, chat_id, sender_id, sender_name, content, is_encrypted) VALUES (?, ?, ?, ?, ?, ?)').run(id, chatId, req.user.id, req.user.name, sanitizeInput(content), isEncrypted ? 1 : 0);
     db.prepare('UPDATE chats SET last_message = ?, last_timestamp = datetime("now") WHERE id = ?').run(content.substring(0, 100), chatId);
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
@@ -918,7 +1595,7 @@ app.post('/api/messages', (req, res) => {
   }
 });
 
-app.get('/api/users/search', (req, res) => {
+app.get('/api/users/search', authMiddleware, (req, res) => {
   try {
     const { q } = req.query;
     if (!q || q.length < 2) return jsonResponse(res, { users: [] });
@@ -947,7 +1624,7 @@ app.get('/api/exams', (req, res) => {
   }
 });
 
-app.post('/api/exams', (req, res) => {
+app.post('/api/exams', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
   try {
     const { title, branch, semester, subject, questions, duration, totalMarks } = req.body;
     if (!title) {
@@ -964,9 +1641,8 @@ app.post('/api/exams', (req, res) => {
 
 app.get('/api/exams/:id', (req, res) => {
   try {
-    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.id);
+    const exam = db.prepare('SELECT id, title, branch, semester, subject, duration, total_marks, created_at FROM exams WHERE id = ?').get(req.params.id);
     if (!exam) return jsonResponse(res, { error: 'Exam not found' }, 404);
-    exam.questions = JSON.parse(exam.questions || '[]');
     jsonResponse(res, { exam });
   } catch (e) {
     log.error({ err: e }, 'Get exam error');
@@ -974,15 +1650,49 @@ app.get('/api/exams/:id', (req, res) => {
   }
 });
 
-app.post('/api/exams/:id/submit', (req, res) => {
+app.get('/api/exams/:id/questions', authMiddleware, (req, res) => {
   try {
-    const { userId, score, total, answers } = req.body;
-    if (!userId || score === undefined) {
-      return jsonResponse(res, { error: 'userId and score required' }, 400);
+    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.id);
+    if (!exam) return jsonResponse(res, { error: 'Exam not found' }, 404);
+    exam.questions = JSON.parse(exam.questions || '[]');
+    jsonResponse(res, { exam });
+  } catch (e) {
+    log.error({ err: e }, 'Get exam questions error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.post('/api/exams/:id/submit', authMiddleware, (req, res) => {
+  try {
+    const { answers } = req.body;
+    if (!answers || typeof answers !== 'object') {
+      return jsonResponse(res, { error: 'Answers required' }, 400);
     }
+
+    const userId = req.user.id;
+    const exam = db.prepare('SELECT id, total_marks, questions FROM exams WHERE id = ?').get(req.params.id);
+    if (!exam) {
+      return jsonResponse(res, { error: 'Exam not found' }, 404);
+    }
+
+    let score = 0;
+    const total = exam.total_marks || 100;
+    try {
+      const questions = JSON.parse(exam.questions || '[]');
+      if (Array.isArray(questions) && questions.length > 0) {
+        const pointsPerQ = total / questions.length;
+        for (const q of questions) {
+          if (answers[q.id] && answers[q.id] === q.correctAnswer) {
+            score += pointsPerQ;
+          }
+        }
+        score = Math.round(score);
+      }
+    } catch { /* default to 0 if questions parsing fails */ }
+
     const id = generateId();
-    db.prepare('INSERT INTO exam_results (id, user_id, exam_id, score, total, answers) VALUES (?, ?, ?, ?, ?, ?)').run(id, userId, req.params.id, score, total || 100, JSON.stringify(answers || {}));
-    jsonResponse(res, { success: true, resultId: id }, 201);
+    db.prepare('INSERT INTO exam_results (id, user_id, exam_id, score, total, answers) VALUES (?, ?, ?, ?, ?, ?)').run(id, userId, req.params.id, score, total, JSON.stringify(answers));
+    jsonResponse(res, { success: true, resultId: id, score, total }, 201);
   } catch (e) {
     log.error({ err: e }, 'Submit exam error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -1006,7 +1716,7 @@ app.get('/api/faculty', (req, res) => {
   }
 });
 
-app.post('/api/faculty', (req, res) => {
+app.post('/api/faculty', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
   try {
     const { name, designation, department, email, phone, branch } = req.body;
     if (!name) {
@@ -1022,7 +1732,7 @@ app.post('/api/faculty', (req, res) => {
 });
 
 // ── File Upload ─────────────────────────────────────────────────────────────────
-app.post('/api/upload', upload.single('file'), (req, res) => {
+app.post('/api/upload', authMiddleware, upload.single('file'), (req, res) => {
   try {
     if (!req.file) return jsonResponse(res, { error: 'No file uploaded' }, 400);
     const url = `/uploads/${req.file.filename}`;
@@ -1035,7 +1745,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 });
 
 // ── Settings ────────────────────────────────────────────────────────────────────
-app.get('/api/settings/:key', (req, res) => {
+app.get('/api/settings/:key', authMiddleware, (req, res) => {
   try {
     const setting = db.prepare('SELECT value FROM settings WHERE key = ?').get(req.params.key);
     jsonResponse(res, { value: setting ? setting.value : null });
@@ -1045,7 +1755,7 @@ app.get('/api/settings/:key', (req, res) => {
   }
 });
 
-app.post('/api/settings', (req, res) => {
+app.post('/api/settings', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
   try {
     const { key, value } = req.body;
     if (!key) {
@@ -1059,6 +1769,303 @@ app.post('/api/settings', (req, res) => {
   }
 });
 
+// ─── AI Endpoints (Server-Side Rate Limited + Mock Fallbacks) ────────────────────
+app.post('/api/ai/chat', authMiddleware, aiLimiter, (req, res) => {
+  const { message, context, provider } = req.body;
+  if (!message) return jsonResponse(res, { error: 'Message required' }, 400);
+  
+  // Server-side: return mock fallback immediately (real AI is client-side)
+  const mockResponse = getMockAIResponse('chat', message, context);
+  jsonResponse(res, { 
+    response: mockResponse,
+    fallback: true,
+    provider: provider || 'mock',
+    tokensUsed: mockResponse.length / 4
+  });
+});
+
+app.post('/api/ai/grade', authMiddleware, aiStrictLimiter, (req, res) => {
+  const { answers, questions, subject } = req.body;
+  if (!answers || !questions) return jsonResponse(res, { error: 'Answers and questions required' }, 400);
+  
+  const mockGrading = getMockGrading(answers, questions);
+  jsonResponse(res, { 
+    score: mockGrading.score,
+    total: mockGrading.total,
+    feedback: mockGrading.feedback,
+    fallback: true
+  });
+});
+
+app.post('/api/ai/explain', authMiddleware, aiLimiter, (req, res) => {
+  const { topic, subject, level } = req.body;
+  if (!topic) return jsonResponse(res, { error: 'Topic required' }, 400);
+  
+  const mockExplanation = getMockExplanation(topic, subject, level);
+  jsonResponse(res, { 
+    explanation: mockExplanation,
+    fallback: true,
+    provider: 'mock'
+  });
+});
+
+app.get('/api/ai/usage', authMiddleware, (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 30;
+    const usage = db.prepare(`
+      SELECT provider, request_type, COUNT(*) as count, SUM(tokens_used) as tokens
+      FROM ai_usage 
+      WHERE user_id = ? AND created_at >= datetime('now', ?)
+      GROUP BY provider, request_type
+    `).all(req.user.id, `-${days} days`);
+    jsonResponse(res, { usage });
+  } catch (e) {
+    log.error({ err: e }, 'AI usage error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.post('/api/ai/mock', (req, res) => {
+  // Public mock endpoint (no auth) for offline mode
+  const { type, message, topic, answers, questions } = req.body;
+  try {
+    console.log('AI Mock Request:', { type, hasAnswers: !!answers, hasQuestions: !!questions, questionsType: typeof questions, isArray: Array.isArray(questions) });
+    let mock;
+    switch (type) {
+      case 'chat': mock = { response: getMockAIResponse('chat', message) }; break;
+      case 'grade': mock = getMockGrading(answers, questions); break;
+      case 'explain': mock = { explanation: getMockExplanation(message) }; break;
+      default: mock = { response: 'Mock response available for chat, grade, explain' };
+    }
+    jsonResponse(res, { ...mock, fallback: true, provider: 'mock' });
+  } catch (e) {
+    log.error({ err: e, body: req.body }, 'AI mock error');
+    jsonResponse(res, { error: 'Internal server error', detail: e.message }, 500);
+  }
+});
+
+// ─── Academic Content Routes (seeded GTU 2024-25 data) ─────────────────────────
+app.get('/api/academic/meta', (req, res) => {
+  try {
+    const branches = db.prepare('SELECT DISTINCT branch FROM subjects ORDER BY branch').all().map((r) => r.branch);
+    const semesters = db.prepare('SELECT DISTINCT semester FROM subjects ORDER BY semester').all().map((r) => r.semester);
+    jsonResponse(res, { branches, semesters, updated_at: db.prepare("SELECT value FROM settings WHERE key = 'seed_gtu_2024_25_v1'").get()?.value || null });
+  } catch (e) {
+    log.error({ err: e }, 'Academic meta error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/subjects', (req, res) => {
+  try {
+    const { branch, semester } = req.query;
+    let sql = 'SELECT id, code, name, branch, semester, credits, is_lab FROM subjects WHERE 1=1';
+    const params = [];
+    if (branch) { sql += ' AND branch = ?'; params.push(branch); }
+    if (semester) { sql += ' AND semester = ?'; params.push(parseInt(semester)); }
+    sql += ' ORDER BY semester, is_lab, code';
+    jsonResponse(res, { subjects: db.prepare(sql).all(...params) });
+  } catch (e) {
+    log.error({ err: e }, 'Academic subjects error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/subjects/:id', (req, res) => {
+  try {
+    const subject = db.prepare('SELECT * FROM subjects WHERE id = ?').get(req.params.id);
+    if (!subject) return jsonResponse(res, { error: 'Subject not found' }, 404);
+    const units = db.prepare('SELECT id, unit_number, title, topics, weightage FROM units WHERE subject_id = ? ORDER BY unit_number').all(subject.id);
+    jsonResponse(res, { subject, units });
+  } catch (e) {
+    log.error({ err: e }, 'Academic subject detail error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/units/:id', (req, res) => {
+  try {
+    const unit = db.prepare('SELECT * FROM units WHERE id = ?').get(req.params.id);
+    if (!unit) return jsonResponse(res, { error: 'Unit not found' }, 404);
+    const topics = db.prepare('SELECT id, topic, subtopics, learning_outcomes, bloom_level, hours_allocated FROM syllabus WHERE unit_id = ? ORDER BY rowid').all(unit.id);
+    jsonResponse(res, { unit, topics });
+  } catch (e) {
+    log.error({ err: e }, 'Academic unit detail error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/questions', authMiddleware, (req, res) => {
+  try {
+    const { subjectId, unitId, type, difficulty, limit } = req.query;
+    let sql = 'SELECT id, subject_id, unit_id, question_text, question_type, options, correct_answer, explanation, marks, difficulty, bloom_level, co_code, source FROM question_banks WHERE is_active = 1';
+    const params = [];
+    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
+    if (unitId) { sql += ' AND unit_id = ?'; params.push(unitId); }
+    if (type) { sql += ' AND question_type = ?'; params.push(type); }
+    if (difficulty) { sql += ' AND difficulty = ?'; params.push(difficulty); }
+    sql += ' ORDER BY rowid';
+    const max = Math.min(parseInt(limit) || 50, 200);
+    sql += ' LIMIT ?';
+    params.push(max);
+    jsonResponse(res, { questions: db.prepare(sql).all(...params) });
+  } catch (e) {
+    log.error({ err: e }, 'Academic questions error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/pyqs', authMiddleware, (req, res) => {
+  try {
+    const { subjectId, year, examType } = req.query;
+    let sql = 'SELECT id, subject_id, year, semester, exam_type, question_number, question_text, question_type, options, correct_answer, solution, marks, unit_id, co_code FROM pyqs WHERE 1=1';
+    const params = [];
+    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
+    if (year) { sql += ' AND year = ?'; params.push(parseInt(year)); }
+    if (examType) { sql += ' AND exam_type = ?'; params.push(examType); }
+    sql += ' ORDER BY year DESC, question_number';
+    jsonResponse(res, { pyqs: db.prepare(sql).all(...params) });
+  } catch (e) {
+    log.error({ err: e }, 'Academic pyqs error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/notes', authMiddleware, (req, res) => {
+  try {
+    const { subjectId, unitId, contentType } = req.query;
+    let sql = 'SELECT id, subject_id, unit_id, title, content, content_type, tags, is_verified FROM notes WHERE 1=1';
+    const params = [];
+    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
+    if (unitId) { sql += ' AND unit_id = ?'; params.push(unitId); }
+    if (contentType) { sql += ' AND content_type = ?'; params.push(contentType); }
+    sql += ' ORDER BY unit_id, content_type';
+    jsonResponse(res, { notes: db.prepare(sql).all(...params) });
+  } catch (e) {
+    log.error({ err: e }, 'Academic notes error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/labs', authMiddleware, (req, res) => {
+  try {
+    const { subjectId } = req.query;
+    let sql = 'SELECT id, subject_id, experiment_number, title, aim, apparatus, theory, procedure, observations, calculations, result, viva_questions, precautions, reference_material FROM labs WHERE 1=1';
+    const params = [];
+    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
+    sql += ' ORDER BY experiment_number';
+    jsonResponse(res, { labs: db.prepare(sql).all(...params) });
+  } catch (e) {
+    log.error({ err: e }, 'Academic labs error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/projects', (req, res) => {
+  try {
+    const { branch, semester } = req.query;
+    let sql = 'SELECT id, subject_id, branch, semester, title, type, description, objectives, technologies, prerequisites, timeline_weeks, deliverables, difficulty FROM projects WHERE 1=1';
+    const params = [];
+    if (branch) { sql += ' AND branch = ?'; params.push(branch); }
+    if (semester) { sql += ' AND semester = ?'; params.push(parseInt(semester)); }
+    sql += ' ORDER BY semester, branch';
+    jsonResponse(res, { projects: db.prepare(sql).all(...params) });
+  } catch (e) {
+    log.error({ err: e }, 'Academic projects error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/academic/dashboard', (req, res) => {
+  try {
+    const { branch, semester } = req.query;
+    const semInt = semester ? parseInt(semester) : null;
+    const params = () => [branch || null, branch || null, semInt, semInt];
+    const count = (sql) => db.prepare(sql).get(...params()).c;
+    const subjects = count('SELECT COUNT(*) c FROM subjects WHERE (branch = ? OR ? IS NULL) AND (semester = ? OR ? IS NULL)');
+    const units = count('SELECT COUNT(*) c FROM units u JOIN subjects s ON s.id = u.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
+    const questions = count('SELECT COUNT(*) c FROM question_banks q JOIN subjects s ON s.id = q.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
+    const pyqs = count('SELECT COUNT(*) c FROM pyqs p JOIN subjects s ON s.id = p.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
+    const notes = count('SELECT COUNT(*) c FROM notes n JOIN subjects s ON s.id = n.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
+    const labs = count('SELECT COUNT(*) c FROM labs l JOIN subjects s ON s.id = l.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
+    const projects = count('SELECT COUNT(*) c FROM projects WHERE (branch = ? OR ? IS NULL) AND (semester = ? OR ? IS NULL)');
+    jsonResponse(res, { subjects, units, questions, pyqs, notes, labs, projects });
+  } catch (e) {
+    log.error({ err: e }, 'Academic dashboard error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+// ─── Mock AI Response Generators ─────────────────────────────────────────────────
+function getMockAIResponse(type, message, context = '') {
+  const responses = {
+    chat: [
+      `I understand you're asking about "${message}". Based on the GTU syllabus, this relates to ${context || 'core concepts'}. Let me break it down:\n\n**Key Points:**\n1. Fundamental principle\n2. Practical application\n3. Common exam pattern\n\n**Study Tip:** Focus on numerical problems from past papers - they repeat often.\n\nNeed a numerical example or diagram explanation?`,
+      `Great question on "${message}"! This is a ${getRandomItem(['frequently asked', 'conceptually important', 'numerical-heavy'])} topic in GTU exams.\n\n**Quick Summary:**\n• Definition & formula\n• Step-by-step derivation\n• Common variants\n\n**Pro Tip:** Create a one-page formula sheet for this unit. 80% of questions come from 20% of formulas.\n\nWant me to generate a practice problem?`
+    ],
+    explain: [
+      `**${message}** - Simplified Explanation\n\n**What it is:** Core concept in simple terms\n**Formula:** [Standard formula]\n**Units:** [SI units]\n\n**Derivation Steps:**\n1. Start from basic principle\n2. Apply boundary conditions\n3. Arrive at final equation\n\n**Memory Hook:** "${getRandomMnemonic(message)}"\n\n**Typical Exam Questions:**\n- Derive the expression for...\n- Calculate when given...\n- Explain the physical significance of...`,
+      `**Topic: ${message}**\n\n**Concept Map:**\n├── Definition\n├── Formula → Variables\n├── Assumptions\n├── Applications\n└── Limitations\n\n**Bloom's Level:** Understand → Apply\n**CO Mapping:** CO${Math.floor(Math.random()*4)+1}\n\n**Practice:** Try solving Q${Math.floor(Math.random()*5)+1} from last 3 years' papers.`
+    ]
+  };
+  
+  const arr = responses[type] || responses.chat;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getMockGrading(answers, questions) {
+  const qArray = Array.isArray(questions) ? questions : [];
+  const total = qArray.length || 10;
+  let correct = 0;
+  
+  if (Array.isArray(answers)) {
+    answers.forEach((ans, i) => {
+      if (qArray[i] && qArray[i].correct === ans) correct++;
+      else if (Math.random() > 0.4) correct++;
+    });
+  }
+  
+  const score = Math.max(0, Math.min(total, correct + Math.floor(Math.random() * 2)));
+  const percentage = Math.round((score / total) * 100);
+  
+  const breakdown = qArray.map(function(q, i) {
+    return {
+      question: i + 1,
+      yourAnswer: answers?.[i],
+      correct: q?.correct,
+      status: answers?.[i] === q?.correct ? 'correct' : 'incorrect'
+    };
+  });
+  
+  return {
+    score: score,
+    total: total,
+    percentage: percentage,
+    feedback: percentage >= 80 
+      ? 'Excellent! You have strong grasp of this unit.' 
+      : percentage >= 60 
+        ? 'Good effort. Review the incorrect answers - focus on concept clarity.' 
+        : 'Needs improvement. Revisit the unit notes and try practice questions.',
+    breakdown: breakdown
+  };
+}
+
+function getMockExplanation(topic, subject = '', level = 'intermediate') {
+  const explanations = [
+    `**${topic}** (${subject || 'General'})\n\n**Definition:** Fundamental concept in engineering\n\n**Key Formula:** ${getRandomFormula()}\n\n**Step-by-Step Derivation:**\n1. Identify given parameters\n2. Apply governing principle\n3. Substitute and solve\n\n**Common Mistakes:**\n- Unit conversion errors\n- Sign convention\n- Boundary conditions\n\n**Exam Pattern:** ${getRandomExamPattern()}\n\n**Quick Reference Card:**\n• When to use: [Condition]\n• What to find: [Unknown]\n• Check: [Validation step]`,
+    
+    `**${topic}** - ${level.charAt(0).toUpperCase() + level.slice(1)} Level\n\n**Concept:** ${getRandomConcept()}\n\n**Visual:** [Diagram would be here]\n\n**Worked Example:**\nGiven: [Standard problem]\nFind: [Unknown]\nSolution: [Step-by-step]\nAnswer: [With units]\n\n**Practice Set:** Try problems from Unit ${Math.floor(Math.random()*6)+1} PYQs`
+  ];
+  
+  return explanations[Math.floor(Math.random() * explanations.length)];
+}
+
+function getRandomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function getRandomMnemonic(topic) { return topic.split(' ').map(w => w[0]).join('').toUpperCase(); }
+function getRandomFormula() { return 'V = IR / P = VI / F = ma'; }
+function getRandomExamPattern() { return '2-3 marks numerical, 1 mark theory'; }
+function getRandomConcept() { return 'Core principle applied to real-world scenarios'; }
+
 // ── Health Check ────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   jsonResponse(res, {
@@ -1070,17 +2077,17 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Metrics Endpoint ────────────────────────────────────────────────────────────
-app.get('/api/metrics', (req, res) => {
+app.get('/api/metrics', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
   jsonResponse(res, getMetrics());
 });
 
 // ── Alerts Endpoint ─────────────────────────────────────────────────────────────
-app.get('/api/alerts', (req, res) => {
+app.get('/api/alerts', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
   jsonResponse(res, { alerts: checkAlerts() });
 });
 
 // ── Audit Log Endpoint ──────────────────────────────────────────────────────────
-app.get('/api/audit-log', (req, res) => {
+app.get('/api/audit-log', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const logs = db.prepare('SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ?').all(limit);
@@ -1206,10 +2213,85 @@ setInterval(() => {
   }
 }, 60000);
 
-// ── Start ───────────────────────────────────────────────────────────────────────
+// ── SaaS Tenant Routes ──────────────────────────────────────────────
+const { TenantManager } = require('./config/tenant');
+const tenantMgr = new TenantManager(db);
+
+app.get('/api/saas/tenants', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
+  try {
+    jsonResponse(res, { tenants: tenantMgr.listTenants() });
+  } catch (e) {
+    log.error({ err: e }, 'List tenants error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.post('/api/saas/tenants', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
+  try {
+    const { name, code, domain, plan, adminEmail, maxUsers } = req.body;
+    if (!name || !code) return jsonResponse(res, { error: 'Name and code required' }, 400);
+    const tenant = tenantMgr.createTenant({ name, code, domain, plan, adminEmail, maxUsers });
+    jsonResponse(res, { success: true, tenant }, 201);
+  } catch (e) {
+    log.error({ err: e }, 'Create tenant error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/saas/tenants/:id/stats', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
+  try {
+    jsonResponse(res, { stats: tenantMgr.getTenantStats(req.params.id) });
+  } catch (e) {
+    log.error({ err: e }, 'Tenant stats error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.get('/api/saas/tenants/:id/capacity', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
+  try {
+    jsonResponse(res, { capacity: tenantMgr.checkCapacity(req.params.id) });
+  } catch (e) {
+    log.error({ err: e }, 'Tenant capacity error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+app.put('/api/saas/tenants/:id/plan', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (!plan) return jsonResponse(res, { error: 'Plan required' }, 400);
+    jsonResponse(res, { success: true, result: tenantMgr.updatePlan(req.params.id, plan) });
+  } catch (e) {
+    log.error({ err: e }, 'Update plan error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+// ── Redis Integration (optional) ────────────────────────────────────
+let redisCache = null;
+let useRedis = false;
+
+try {
+  if (process.env.REDIS_URL) {
+    const { cache } = require('./config/redis');
+    redisCache = cache;
+    useRedis = true;
+    log.info('Redis cache enabled');
+  }
+} catch {
+  log.warn('Redis not available, running without cache');
+}
+
+// ── WebSocket Integration ───────────────────────────────────────────
+const http = require('http');
+const server = http.createServer(app);
+const { setupWebSocket } = require('./websocket');
+const io = setupWebSocket(server, db);
+
+// ── Start ───────────────────────────────────────────────────────────────
 seedData();
 
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   const interfaces = os.networkInterfaces();
   let localIP = 'localhost';
   for (const name of Object.keys(interfaces)) {
@@ -1219,15 +2301,19 @@ app.listen(PORT, '0.0.0.0', () => {
       }
     }
   }
-  log.info(`GPA Study Hub Server started on port ${PORT}`);
+  log.info(`GPA Study Hub Server v3.0 started on port ${PORT}`);
   log.info(`Local:   http://localhost:${PORT}`);
   log.info(`Network: http://${localIP}:${PORT}`);
   log.info(`Health:  http://${localIP}:${PORT}/api/health`);
   log.info(`Metrics: http://${localIP}:${PORT}/api/metrics`);
-  console.log(`\n  GPA Study Hub Server running!`);
-  console.log(`  Local:   http://localhost:${PORT}`);
-  console.log(`  Network: http://${localIP}:${PORT}`);
-  console.log(`  Health:  http://${localIP}:${PORT}/api/health`);
-  console.log(`  Metrics: http://${localIP}:${PORT}/api/metrics`);
+  log.info(`WebSocket: ws://${localIP}:${PORT}/socket.io/`);
+  log.info(`Redis: ${useRedis ? 'enabled' : 'disabled'}`);
+  console.log(`\n  GPA Study Hub Server v3.0 running!`);
+  console.log(`  Local:      http://localhost:${PORT}`);
+  console.log(`  Network:    http://${localIP}:${PORT}`);
+  console.log(`  Health:     http://${localIP}:${PORT}/api/health`);
+  console.log(`  Metrics:    http://${localIP}:${PORT}/api/metrics`);
+  console.log(`  WebSocket:  ws://${localIP}:${PORT}/socket.io/`);
+  console.log(`  Redis:      ${useRedis ? 'enabled' : 'disabled'}`);
   console.log(`\n  Use this IP in the app: ${localIP}\n`);
 });

@@ -61,7 +61,7 @@ const ChatInterface: React.FC = () => {
   if (isChecking) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-transparent">
-        <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-stitch-cyan" />
       </div>
     );
   }
@@ -84,13 +84,13 @@ const ChatInterface: React.FC = () => {
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] px-4 py-3 text-[15px] leading-relaxed shadow-sm ${
                 msg.role === 'user'
-                  ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-slate-950 font-medium rounded-2xl rounded-tr-sm shadow-[0_0_15px_rgba(34,211,238,0.25)] shadow-lg'
-                  : 'glass-card bg-slate-900/40 backdrop-blur-xl border border-white/10 text-white rounded-2xl rounded-tl-sm'
+                  ? 'bg-stitch-primary text-slate-950 font-medium rounded-[16px] rounded-tr-[4px] shadow-[0_0_15px_rgba(195,192,255,0.25)] shadow-lg'
+                  : 'glass-card bg-white/5 border border-white/10 text-white rounded-[16px] rounded-tl-[4px]'
               }`}>
                 <p className={`whitespace-pre-wrap ${msg.role === 'user' ? 'text-slate-950' : 'text-white'}`}>{msg.content}</p>
                 {msg.isLoading && (
                   <div className="flex gap-1 mt-1 opacity-70">
-                     <span className="text-xs text-cyan-400 font-bold">Thinking...</span>
+                     <span className="text-xs text-stitch-cyan font-bold font-display">Thinking...</span>
                   </div>
                 )}
               </div>
@@ -111,7 +111,7 @@ const ChatInterface: React.FC = () => {
             <Trash2 className="w-5 h-5" />
           </button>
 
-           <div className="flex-1 bg-white/5 rounded-3xl flex items-center px-4 py-2 border border-white/10 focus-within:border-cyan-400 focus-within:bg-white/10 transition-all shadow-inner">
+           <div className="flex-1 bg-white/5 rounded-3xl flex items-center px-4 py-2 border border-white/10 focus-within:border-stitch-cyan focus-within:bg-white/10 transition-all shadow-inner">
              <textarea
                value={input}
                onChange={(e) => {
@@ -129,7 +129,7 @@ const ChatInterface: React.FC = () => {
           <button
             onClick={handleSend}
             disabled={!input.trim() || isTyping}
-            className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-slate-950 font-bold disabled:opacity-50 transition-all active:scale-95 shadow-lg shadow-cyan-500/30 hover:from-cyan-400 hover:to-blue-400"
+            className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-stitch-cyan rounded-full text-slate-950 font-bold disabled:opacity-50 transition-all active:scale-95 shadow-[0_0_15px_rgba(47,217,244,0.3)] hover:bg-[rgba(47,217,244,0.8)]"
             aria-label="Send message"
           >
             {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}

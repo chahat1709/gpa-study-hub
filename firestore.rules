@@ -80,11 +80,11 @@ service cloud.firestore {
     }
 
     // 6. Exam Results
-    // Students can read/write their own results.
-    // Faculty/Admin can read/write all results for Gradebook.
+    // Students can READ their own results.
+    // ONLY Faculty/Admin can WRITE (grade) results.
     match /exam_results/{resultId} {
       allow read: if isAuthenticated() && (isFaculty() || resource.data.studentId == request.auth.uid);
-      allow write: if isAuthenticated() && (isFaculty() || request.resource.data.studentId == request.auth.uid);
+      allow write: if isAuthenticated() && isFaculty();
     }
 
     // 7. Official Quizzes

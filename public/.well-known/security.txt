@@ -1,0 +1,10 @@
+# Security Contact Information for GPA Study Hub
+Contact: security@gpa-study-hub.com
+Contact: https://github.com/your-org/gpa-study-hub/security/advisories
+Expires: 2025-12-31T23:59:59.000Z
+Encryption: https://gpa-study-hub.com/.well-known/pgp-key.asc
+Preferred-Languages: en, gu, hi
+Canonical: https://gpa-study-hub.com/.well-known/security.txt
+Policy: https://gpa-study-hub.com/security-policy
+Acknowledgments: https://gpa-study-hub.com/hall-of-fame
+Hiring: https://gpa-study-hub.com/careers

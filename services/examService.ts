@@ -1,5 +1,6 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { getCurrentApiKey, getGeminiApiKey } from "./aiProviderService";
+import { getAcademicSubjects, getAcademicQuestions, AcademicSubject } from "./apiClient";
 import { db, isConfigValid } from "../firebase";
 import { collection, addDoc, query, where, getDocs, serverTimestamp, Timestamp, deleteDoc, doc } from "firebase/firestore";
 import { offlineStorageService } from "./offlineStorageService";
@@ -66,7 +67,8 @@ export const examService = {
     try {
       const apiKey = getGeminiApiKey();
       if (!apiKey) {
-        return examService.getFallbackQuiz(subject, unit);
+        const bankQuiz = await examService.generateBankQuiz(subject, unit, count);
+        return bankQuiz || examService.getFallbackQuiz(subject, unit);
       }
 
       const ai = new GoogleGenAI({ apiKey });
@@ -114,7 +116,76 @@ export const examService = {
         createdAt: Date.now()
       };
     } catch {
-      return examService.getFallbackQuiz(subject, unit);
+      const bankQuiz = await examService.generateBankQuiz(subject, unit, count);
+      return bankQuiz || examService.getFallbackQuiz(subject, unit);
+    }
+  },
+
+  /**
+   * RESOLVE SUBJECT ID FROM THE GTU SUBJECT CATALOG (by code/name match)
+   */
+  resolveSubjectId: async (subject: string): Promise<string | null> => {
+    try {
+      const { subjects } = await getAcademicSubjects();
+      const needle = subject.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+      let match: AcademicSubject | null = null;
+      for (const s of subjects) {
+        const hay = `${s.code} ${s.name}`.toLowerCase();
+        if (needle && hay.includes(needle)) {
+          match = s;
+          break;
+        }
+      }
+      return match ? match.id : null;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * GTU QUESTION BANK QUIZ
+   * Builds a quiz from real seeded question_banks MCQs (server-backed).
+   * Returns null when the server/bank is unavailable, letting callers fall back.
+   */
+  generateBankQuiz: async (subject: string, unit: string = 'All Units', count: number = 5): Promise<Quiz | null> => {
+    try {
+      const subjectId = await examService.resolveSubjectId(subject);
+      if (!subjectId) return null;
+
+      const { questions } = await getAcademicQuestions({ subjectId, type: 'MCQ', limit: count });
+      if (!questions.length) return null;
+
+      const quizQuestions: QuizQuestion[] = [];
+      for (const q of questions) {
+        let opts: string[] = [];
+        try { opts = JSON.parse(q.options || '[]'); } catch { opts = []; }
+        if (!Array.isArray(opts) || opts.length < 2) continue;
+        const correctIndex = opts.indexOf(q.correct_answer);
+        if (correctIndex === -1) continue;
+        quizQuestions.push({
+          id: q.id,
+          question: q.question_text,
+          options: opts,
+          correctAnswer: correctIndex,
+          explanation: q.explanation || '',
+          unit: unit === 'All Units' ? undefined : unit,
+        });
+      }
+      if (quizQuestions.length < 2) return null;
+
+      return {
+        id: `bank-quiz-${Date.now()}`,
+        title: `${subject} — GTU Question Bank`,
+        subject,
+        unit,
+        durationMinutes: Math.max(5, quizQuestions.length * 2),
+        questions: quizQuestions,
+        isOfficial: true,
+        createdBy: 'GTU Exam Cell',
+        createdAt: Date.now()
+      };
+    } catch {
+      return null;
     }
   },
 

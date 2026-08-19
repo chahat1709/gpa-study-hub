@@ -2,7 +2,29 @@
 /**
  * GTU ACADEMIC MATRIX SERVICE
  * Handles university-wide subjects, sections, and semesters.
+ * Sources: live API (/api/academic/*) with hardcoded matrix as offline fallback.
  */
+
+import {
+  getAcademicMeta,
+  getAcademicSubjects,
+  getAcademicSubjectDetail,
+  getAcademicUnit,
+  getAcademicQuestions,
+  getAcademicPyqs,
+  getAcademicNotes,
+  getAcademicLabs,
+  getAcademicProjects,
+  getAcademicDashboard,
+  AcademicSubject,
+  AcademicUnit,
+  SyllabusTopic,
+  AcademicQuestion,
+  Pyq,
+  AcademicNote,
+  LabExperiment,
+  AcademicProject,
+} from './apiClient';
 
 const STORAGE_KEY = 'GPA_HUB_ACADEMIC_MATRIX';
 
@@ -48,6 +70,12 @@ const saveMatrix = (matrix: AcademicMatrix) => {
   academicMatrix = matrix;
 };
 
+const branchLabel = (branch: string): string =>
+  branch === 'EC' ? 'Diploma EC' : branch === 'ICT' ? 'ICTET' : branch;
+
+const subjectLabel = (s: { code: string; name: string; branch: string }): string =>
+  `${branchLabel(s.branch)} - ${s.name} (${s.code})`;
+
 export const academicService = {
   getSubjects: (): string[] => academicMatrix.subjects,
   getSections: (): string[] => academicMatrix.sections,
@@ -71,5 +99,97 @@ export const academicService = {
       academicMatrix.categories.push(name);
       saveMatrix(academicMatrix);
     }
-  }
+  },
+
+  // ── Live content (falls back to the matrix above when the server is offline) ──
+
+  getMeta: async (): Promise<{ branches: string[]; semesters: string[] }> => {
+    try {
+      const meta = await getAcademicMeta();
+      return {
+        branches: meta.branches.map(branchLabel),
+        semesters: meta.semesters,
+      };
+    } catch {
+      return { branches: academicMatrix.branches, semesters: academicMatrix.semesters };
+    }
+  },
+
+  getSubjectList: async (branch?: string, semester?: string): Promise<AcademicSubject[]> => {
+    try {
+      const data = await getAcademicSubjects(branch, semester);
+      return data.subjects;
+    } catch {
+      return [];
+    }
+  },
+
+  getSubjectDetail: async (id: string): Promise<{ subject: AcademicSubject; units: AcademicUnit[] } | null> => {
+    try {
+      return await getAcademicSubjectDetail(id);
+    } catch {
+      return null;
+    }
+  },
+
+  getUnit: async (id: string): Promise<{ unit: AcademicUnit; topics: SyllabusTopic[] } | null> => {
+    try {
+      return await getAcademicUnit(id);
+    } catch {
+      return null;
+    }
+  },
+
+  getQuestions: async (opts: { subjectId?: string; unitId?: string; type?: string; difficulty?: string; limit?: number } = {}): Promise<AcademicQuestion[]> => {
+    try {
+      const data = await getAcademicQuestions(opts);
+      return data.questions;
+    } catch {
+      return [];
+    }
+  },
+
+  getPyqs: async (opts: { subjectId?: string; year?: number; examType?: string } = {}): Promise<Pyq[]> => {
+    try {
+      const data = await getAcademicPyqs(opts);
+      return data.pyqs;
+    } catch {
+      return [];
+    }
+  },
+
+  getNotes: async (opts: { subjectId?: string; unitId?: string; contentType?: string } = {}): Promise<AcademicNote[]> => {
+    try {
+      const data = await getAcademicNotes(opts);
+      return data.notes;
+    } catch {
+      return [];
+    }
+  },
+
+  getLabs: async (subjectId?: string): Promise<LabExperiment[]> => {
+    try {
+      const data = await getAcademicLabs(subjectId);
+      return data.labs;
+    } catch {
+      return [];
+    }
+  },
+
+  getProjects: async (branch?: string, semester?: string): Promise<AcademicProject[]> => {
+    try {
+      const data = await getAcademicProjects(branch, semester);
+      return data.projects;
+    } catch {
+      return [];
+    }
+  },
+
+  getDashboard: async (branch?: string, semester?: string): Promise<{ subjects: number; units: number; questions: number; pyqs: number; notes: number; labs: number; projects: number } | null> => {
+    try {
+      return await getAcademicDashboard(branch, semester);
+    } catch {
+      return null;
+    }
+  },
 };

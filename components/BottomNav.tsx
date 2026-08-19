@@ -23,9 +23,9 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentMode, onModeChange }) => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 w-full z-40 pb-[env(safe-area-inset-bottom)] px-4 flex justify-center pb-4 pointer-events-none">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 px-4">
       <nav 
-        className="stitch-nav pointer-events-auto flex justify-around items-center h-[64px] w-full max-w-sm px-2 shadow-2xl relative"
+        className="glass-panel rounded-full mx-auto w-full max-w-[400px] px-4 py-3 flex items-center justify-between shadow-[0_20px_40px_rgba(0,0,0,0.8),_0_0_30px_rgba(47,217,244,0.15)] border border-white/10 gap-1 pointer-events-auto"
         role="navigation"
         aria-label="Main navigation"
       >
@@ -41,25 +41,19 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentMode, onModeChange }) => {
               aria-current={isActive ? 'page' : undefined}
               tabIndex={isActive ? 0 : -1}
               onClick={() => handleNavClick(item.mode)}
-              className="flex-1 flex flex-col items-center justify-center h-full active:scale-95 transition-all duration-300 relative group focus:outline-none rounded-full"
+              className={`relative flex items-center justify-center rounded-full transition-all duration-300 active:scale-95 group focus:outline-none ${isActive ? 'bg-gradient-to-tr from-primary to-secondary text-surface w-14 h-14 shadow-lg' : 'text-on-surface-variant w-14 h-14 hover:text-white hover:bg-white/10'}`}
             >
-              <div 
-                className={`p-2 rounded-full transition-all duration-300 flex items-center justify-center relative ${
-                  isActive 
-                    ? 'bg-stitch-primary-container shadow-inner shadow-stitch-primary/30 text-white' 
-                    : 'text-slate-400 group-hover:text-stitch-primary'
-                }`}
-              >
-                <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              <div className="flex flex-col items-center justify-center relative">
+                <Icon className={`w-[24px] h-[24px] transition-transform group-hover:scale-110 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
                 {item.badge && !isActive && (
-                  <span className="absolute 0 right-0 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" aria-hidden="true" />
+                  <span className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_rgba(233,196,0,0.8)]" aria-hidden="true" />
+                )}
+                {!isActive && (
+                  <span className={`text-[9px] font-bold mt-0.5 tracking-wide text-white/50 group-hover:text-white/80 transition-colors`}>
+                    {item.label}
+                  </span>
                 )}
               </div>
-              <span className={`text-[10px] font-bold mt-1 transition-colors tracking-wide ${
-                isActive ? 'text-stitch-primary' : 'text-slate-400'
-              }`}>
-                {item.label}
-              </span>
             </button>
           );
         })}

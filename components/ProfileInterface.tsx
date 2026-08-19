@@ -87,7 +87,7 @@ const ProfileInterface: React.FC = () => {
 
   if (!user) return (
     <div className="h-full w-full flex flex-col items-center justify-center bg-transparent text-white gap-3">
-      <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+      <Loader2 className="w-6 h-6 animate-spin text-stitch-cyan" />
       <p className="text-sm text-slate-400 font-medium">Loading profile...</p>
     </div>
   );
@@ -97,10 +97,10 @@ const ProfileInterface: React.FC = () => {
       <div className="max-w-3xl mx-auto p-6 md:p-10 space-y-8 w-full">
         
         {/* Profile Card */}
-        <div className="glass-card bg-slate-900/40 backdrop-blur-xl p-8 rounded-3xl border border-white/10 flex flex-col items-center md:flex-row gap-8 relative overflow-hidden shadow-[0_0_30px_rgba(34,211,238,0.1)]">
+        <div className="glass-card bg-white/5 p-8 rounded-[24px] border border-white/10 flex flex-col items-center md:flex-row gap-8 relative overflow-hidden shadow-[0_0_30px_rgba(47,217,244,0.1)]">
           <div className="relative group shrink-0">
             <div 
-              className={`w-28 h-28 rounded-full overflow-hidden border-2 border-cyan-400/40 shadow-[0_0_20px_rgba(34,211,238,0.2)] bg-white/5 cursor-pointer relative ${isUploading ? 'opacity-50' : ''}`}
+              className={`w-28 h-28 rounded-full overflow-hidden border-2 border-stitch-cyan/40 shadow-[0_0_20px_rgba(47,217,244,0.2)] bg-white/5 cursor-pointer relative ${isUploading ? 'opacity-50' : ''}`}
               onClick={() => fileInputRef.current?.click()}
             >
               {user.photoURL ? (
@@ -120,19 +120,19 @@ const ProfileInterface: React.FC = () => {
           <div className="text-center md:text-left flex-1">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">{user.name}</h1>
+                <h1 className="text-2xl font-bold font-display text-white tracking-tight">{user.name}</h1>
                 <p className="text-slate-400 font-medium text-xs mt-0.5">{user.role} • {user.branch || 'Diploma EC'}</p>
               </div>
-              <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold w-fit mx-auto md:mx-0 shadow-inner">
+              <span className="px-3 py-1 bg-stitch-cyan/10 text-stitch-cyan border border-stitch-cyan/30 rounded-full text-xs font-bold w-fit mx-auto md:mx-0 shadow-inner">
                 {user.role}
               </span>
             </div>
 
             <div className="flex justify-center md:justify-start gap-2 mt-4 flex-wrap">
-               <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 rounded-xl text-xs font-semibold">
+               <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 rounded-[12px] text-xs font-semibold">
                  Sem {user.semester || '4'} - Sec {user.section || 'A'}
                </span>
-               <span className="px-3 py-1 bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 rounded-xl text-xs font-mono font-bold shadow-inner">
+               <span className="px-3 py-1 bg-stitch-cyan/10 border border-stitch-cyan/30 text-stitch-cyan rounded-[12px] text-xs font-mono font-bold shadow-inner">
                  {user.enrollmentNumber || '22EC101'}
                </span>
             </div>
@@ -140,7 +140,7 @@ const ProfileInterface: React.FC = () => {
             {/* Role Info (Read-only - Roles are server-controlled) */}
             <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center gap-2 justify-center md:justify-start">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-full md:w-auto">Current Role:</span>
-              <span className={`px-4 py-2 text-xs font-bold rounded-xl border ${user.role === 'STUDENT' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 border-cyan-400/50 shadow-lg shadow-cyan-500/30' : user.role === 'FACULTY' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-400/50 shadow-lg shadow-purple-500/30' : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400/50 shadow-lg shadow-amber-500/30'}`}>
+              <span className={`px-4 py-2 text-xs font-bold rounded-[12px] border ${user.role === 'STUDENT' ? 'bg-stitch-cyan text-slate-950 border-stitch-cyan/50 shadow-lg shadow-[0_0_15px_rgba(47,217,244,0.3)]' : user.role === 'FACULTY' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-400/50 shadow-lg shadow-purple-500/30' : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400/50 shadow-lg shadow-amber-500/30'}`}>
                 {user.role === 'STUDENT' ? 'Student' : user.role === 'FACULTY' ? 'Faculty' : 'GTU Admin'}
               </span>
               <span className="text-[9px] text-slate-500 italic">Role changes require admin approval</span>
@@ -152,9 +152,9 @@ const ProfileInterface: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* AI Configuration */}
-          <div className="glass-card bg-slate-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-[0_0_20px_rgba(34,211,238,0.05)]">
+          <div className="glass-card bg-white/5 p-6 rounded-[24px] border border-white/10 shadow-[0_0_20px_rgba(47,217,244,0.05)]">
             <div className="flex items-center gap-3 mb-6">
-               <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/30 rounded-xl text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+               <div className="p-2.5 bg-stitch-cyan/20 border border-stitch-cyan/30 rounded-[12px] text-stitch-cyan shadow-[0_0_15px_rgba(47,217,244,0.2)]">
                  <Cpu className="w-5 h-5" />
                </div>
                <div>
@@ -169,13 +169,13 @@ const ProfileInterface: React.FC = () => {
                 <button
                   key={p}
                   onClick={() => handleProviderChange(p)}
-                  className={`w-full p-3 rounded-xl border text-left text-xs font-medium transition-all flex items-center gap-3 ${
+                  className={`w-full p-3 rounded-[12px] border text-left text-xs font-medium transition-all flex items-center gap-3 ${
                     provider === p
-                      ? 'bg-cyan-500/20 border-cyan-400/50 text-white shadow-inner shadow-[0_0_10px_rgba(34,211,238,0.1)]'
+                      ? 'bg-stitch-cyan/20 border-stitch-cyan/50 text-white shadow-inner shadow-[0_0_10px_rgba(47,217,244,0.1)]'
                       : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${provider === p ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-slate-500'}`} />
+                  <span className={`w-2 h-2 rounded-full ${provider === p ? 'bg-stitch-cyan shadow-[0_0_8px_rgba(47,217,244,0.8)]' : 'bg-slate-500'}`} />
                   <div>
                     <div className="font-bold">{PROVIDERS[p].name}</div>
                     {p === 'opencode-zen' && <div className="text-[10px] text-emerald-400 font-bold mt-0.5">FREE — No limits</div>}
@@ -194,7 +194,7 @@ const ProfileInterface: React.FC = () => {
                       type={showKey ? "text" : "password"}
                       value={geminiKey}
                       onChange={(e) => setGeminiKeyState(e.target.value)}
-                      className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all font-mono"
+                      className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="AIza..."
                     />
                     <button
@@ -204,7 +204,7 @@ const ProfileInterface: React.FC = () => {
                       {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <button onClick={handleSaveGemini} disabled={!geminiKey} className="w-full mt-2 py-2.5 min-h-[44px] bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)] active:scale-95">Save Gemini Key</button>
+                  <button onClick={handleSaveGemini} disabled={!geminiKey} className="stitch-btn w-full mt-2 py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95">Save Gemini Key</button>
                 </div>
               )}
 
@@ -216,7 +216,7 @@ const ProfileInterface: React.FC = () => {
                       type={showKey ? "text" : "password"}
                       value={zenKey}
                       onChange={(e) => setZenKeyState(e.target.value)}
-                      className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all font-mono"
+                      className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="Get free key at opencode.ai/auth"
                     />
                     <button
@@ -226,10 +226,10 @@ const ProfileInterface: React.FC = () => {
                       {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <a href="https://opencode.ai/auth" target="_blank" rel="noopener noreferrer" className="block mt-2 text-center py-2 text-cyan-400 text-xs font-bold hover:underline drop-shadow-md">
+                  <a href="https://opencode.ai/auth" target="_blank" rel="noopener noreferrer" className="block mt-2 text-center py-2 text-stitch-cyan text-xs font-bold hover:underline drop-shadow-md">
                     Get free API key →
                   </a>
-                  <button onClick={handleSaveZen} disabled={!zenKey} className="w-full mt-2 py-2.5 min-h-[44px] bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)] active:scale-95">Save Zen Key</button>
+                  <button onClick={handleSaveZen} disabled={!zenKey} className="stitch-btn w-full mt-2 py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95">Save Zen Key</button>
                 </div>
               )}
 
@@ -241,7 +241,7 @@ const ProfileInterface: React.FC = () => {
                       type="url"
                       value={customUrl}
                       onChange={(e) => setCustomUrlState(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all font-mono"
+                      className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="https://api.example.com/v1/chat/completions"
                     />
                   </div>
@@ -252,7 +252,7 @@ const ProfileInterface: React.FC = () => {
                         type={showKey ? "text" : "password"}
                         value={customKey}
                         onChange={(e) => setCustomKeyState(e.target.value)}
-                        className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all font-mono"
+                        className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                         placeholder="sk-..."
                       />
                       <button
@@ -269,18 +269,18 @@ const ProfileInterface: React.FC = () => {
                       type="text"
                       value={customModel}
                       onChange={(e) => setCustomModelState(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all font-mono"
+                      className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="e.g., gpt-4o, claude-3-5-sonnet"
                     />
                   </div>
-                  <button onClick={handleSaveCustom} disabled={!customUrl || !customKey || !customModel} className="w-full py-2.5 min-h-[44px] bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-[0_0_15px_rgba(34,211,238,0.2)] active:scale-95">Save Custom Config</button>
+                  <button onClick={handleSaveCustom} disabled={!customUrl || !customKey || !customModel} className="stitch-btn w-full py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95">Save Custom Config</button>
                 </div>
               )}
 
               {window.aistudio && (
                 <button
                   onClick={() => window.aistudio!.openSelectKey()}
-                  className="w-full py-2 text-cyan-400 text-xs font-bold hover:underline drop-shadow-md"
+                  className="w-full py-2 text-stitch-cyan text-xs font-bold hover:underline drop-shadow-md"
                 >
                   Sync from Project IDX
                 </button>
@@ -289,26 +289,26 @@ const ProfileInterface: React.FC = () => {
           </div>
 
           {/* Account Actions */}
-          <div className="glass-card bg-slate-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/10 flex flex-col justify-between shadow-[0_0_20px_rgba(34,211,238,0.05)]">
+          <div className="glass-card bg-white/5 p-6 rounded-[24px] border border-white/10 flex flex-col justify-between shadow-[0_0_20px_rgba(47,217,244,0.05)]">
             <div className="flex items-center gap-3 mb-6">
-               <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-300">
+               <div className="p-2.5 bg-white/5 border border-white/10 rounded-[12px] text-slate-300">
                  <Shield className="w-5 h-5" />
                </div>
                <div>
-                 <h3 className="font-semibold text-white text-sm">Account & Security</h3>
+                 <h3 className="font-bold font-display text-white text-sm">Account & Security</h3>
                  <p className="text-xs text-slate-400">Zero-Knowledge E2EE</p>
                </div>
             </div>
             
             <div className="space-y-3 mt-auto">
-              <div className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 text-xs text-slate-300">
+              <div className="flex items-center justify-between p-3 rounded-[12px] border border-white/10 bg-white/5 text-xs text-slate-300">
                 <span>PWA Offline Cache</span>
-                <span className="text-emerald-400 font-bold">Active</span>
+                <span className="text-stitch-cyan font-bold">Active</span>
               </div>
               
               <button 
                 onClick={logout}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition-all font-bold text-xs"
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-[12px] bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition-all font-bold text-xs"
               >
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>

@@ -1,190 +1,64 @@
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f0a1e" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/gpa_hub_logo.png">
-    <title>GPA Study Hub</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-      :root {
-        --sat: env(safe-area-inset-top);
-        --sab: env(safe-area-inset-bottom);
-        --glass-bg: rgba(255, 255, 255, 0.05);
-        --glass-border-top: rgba(255, 255, 255, 0.12);
-        --glass-border-bottom: rgba(255, 255, 255, 0.04);
-        --stitch-cyan: #2fd9f4;
-        --stitch-indigo: #4338ca;
-      }
-      * {
-        touch-action: pan-x pan-y;
-        -webkit-tap-highlight-color: transparent;
-        box-sizing: border-box;
-      }
-      body { 
-        font-family: 'Inter', sans-serif; 
-        background: linear-gradient(180deg, #0F172A 0%, #1E1B4B 100%);
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        height: 100dvh;
-        width: 100%;
-        color: #dae2fd;
-      }
-      
-      h1, h2, h3, h4, h5, h6, .font-display {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0a1e" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/gpa_hub_logo.png">
+  <title>GPA Study Hub</title>
 
-      input, textarea, select {
-        font-size: 16px !important;
-        background: rgba(255,255,255,0.05) !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        color: #dae2fd !important;
-        border-radius: 8px !important;
-        transition: all 0.3s ease;
-      }
-      input::placeholder, textarea::placeholder {
-        color: rgba(199,196,215,0.6) !important;
-      }
-      input:focus, textarea:focus, select:focus {
-        outline: none !important;
-        border-color: var(--stitch-cyan) !important;
-        box-shadow: 0 0 10px rgba(47, 217, 244, 0.3) !important;
-      }
-      
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      
-      .native-scroll {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: contain;
-      }
-
-      /* Exact Stitch Glass Panel */
-      .glass-card {
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1.5px solid transparent;
-        border-top-color: var(--glass-border-top);
-        border-left-color: var(--glass-border-top);
-        border-bottom-color: var(--glass-border-bottom);
-        border-right-color: var(--glass-border-bottom);
-        border-radius: 16px;
-        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.5);
-        text-shadow: 0 0.5px 0 rgba(0,0,0,0.2);
-        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      }
-      .glass-card:hover {
-        transform: translateY(-2px);
-      }
-      
-      /* Primary Magnetic Button */
-      .stitch-btn {
-        background: #4338ca;
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 15px rgba(67, 56, 202, 0.3);
-        border-radius: 8px;
-        color: #ffffff;
-        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      }
-      .stitch-btn:active {
-        transform: scale(0.98);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 0 5px rgba(67, 56, 202, 0.5);
-      }
-
-      /* 3D Pill Navigation */
-      .stitch-nav {
-        background: rgba(15,23,42,0.8);
-        backdrop-filter: blur(30px);
-        border-radius: 48px;
-        border: 1px solid rgba(255,255,255,0.1);
-        padding-bottom: env(safe-area-inset-bottom);
-      }
-
-      /* Smooth transitions */
-      button, a {
-        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
-      }
-
-      /* Page transition animations */
-      @keyframes pageEnter {
-        from { opacity: 0; transform: translateY(8px) scale(0.99); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      @keyframes pageExit {
-        from { opacity: 1; transform: translateY(0) scale(1); }
-        to { opacity: 0; transform: translateY(-4px) scale(0.99); }
-      }
-      .page-enter {
-        animation: pageEnter 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-      }
-      .page-exit {
-        animation: pageExit 0.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-      }
-
-      /* Slide-up entrance for modals */
-      @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .slide-up-enter {
-        animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-      }
-
-      /* Stagger animation helper */
-      @keyframes staggerFadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .stagger-item {
-        opacity: 0;
-        animation: staggerFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-      }
-    </style>
-
-<link rel="stylesheet" href="/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
-  <body class="antialiased text-slate-100 bg-[#0f0a1e]">
-    <div class="glow-orb glow-orb-1"></div>
-    <div class="glow-orb glow-orb-2"></div>
-    <div class="glow-orb glow-orb-3"></div>
-    <div id="root" role="main" aria-label="GPA Study Hub Application" style="position:relative;z-index:1;">
-      <!-- Professional Loading Skeleton (shown until React mounts) -->
-      <div id="app-skeleton" style="position:fixed;inset:0;background:linear-gradient(135deg,#0f0a1e 0%,#1a1145 40%,#0d1b2a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
-        <div style="text-align:center;">
-          <div style="width:64px;height:64px;margin:0 auto 24px;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(16,185,129,0.2));border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;">
-            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#10b981);animation:pulse 1.5s ease-in-out infinite;"></div>
-          </div>
-          <div style="font-family:'Inter',sans-serif;color:#e2e8f0;font-size:18px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;">GPA Study Hub</div>
-          <div style="font-family:'Inter',sans-serif;color:rgba(148,163,184,0.6);font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Loading GTU Node...</div>
-          <div style="margin-top:32px;display:flex;gap:4px;justify-content:center;">
-            <div style="width:6px;height:6px;border-radius:50%;background:#6366f1;animation:bounce 1.4s infinite ease-in-out both;animation-delay:-0.32s;"></div>
-            <div style="width:6px;height:6px;border-radius:50%;background:#818cf8;animation:bounce 1.4s infinite ease-in-out both;animation-delay:-0.16s;"></div>
-            <div style="width:6px;height:6px;border-radius:50%;background:#10b981;animation:bounce 1.4s infinite ease-in-out both;"></div>
+
+<body class="antialiased text-slate-100 bg-[#0f0a1e]">
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+  <div class="glow-orb glow-orb-3"></div>
+  <div id="root" role="main" aria-label="GPA Study Hub Application" style="position:relative;z-index:1;">
+    <!-- Professional Loading Skeleton (shown until React mounts) -->
+    <div id="app-skeleton"
+      style="position:fixed;inset:0;background:linear-gradient(135deg,#0f0a1e 0%,#1a1145 40%,#0d1b2a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
+      <div style="text-align:center;">
+        <div
+          style="width:64px;height:64px;margin:0 auto 24px;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(16,185,129,0.2));border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;">
+          <div
+            style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#10b981);animation:pulse 1.5s ease-in-out infinite;">
           </div>
         </div>
-        <style>
-          @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.95)}}
-          @keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
-        </style>
+        <div
+          style="font-family:'Inter',sans-serif;color:#e2e8f0;font-size:18px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;">
+          GPA Study Hub</div>
+        <div
+          style="font-family:'Inter',sans-serif;color:rgba(148,163,184,0.6);font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">
+          Loading GTU Node...</div>
+        <div style="margin-top:32px;display:flex;gap:4px;justify-content:center;">
+          <div
+            style="width:6px;height:6px;border-radius:50%;background:#6366f1;animation:bounce 1.4s infinite ease-in-out both;animation-delay:-0.32s;">
+          </div>
+          <div
+            style="width:6px;height:6px;border-radius:50%;background:#818cf8;animation:bounce 1.4s infinite ease-in-out both;animation-delay:-0.16s;">
+          </div>
+          <div
+            style="width:6px;height:6px;border-radius:50%;background:#10b981;animation:bounce 1.4s infinite ease-in-out both;">
+          </div>
+        </div>
       </div>
     </div>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
-        });
-      }
-    </script>
-    <script type="module" src="/index.tsx"></script>
+  </div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => { });
+      });
+    }
+  </script>
+  <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

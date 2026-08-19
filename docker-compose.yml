@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # ── PostgreSQL (Production Database) ────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: gpa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gpa_study_hub
+      POSTGRES_USER: gpa_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gpa_admin -d gpa_study_hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gpa-network
+
+  # ── Redis (Cache + Session Store) ──────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: gpa-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gpa-network
+
+  # ── Backend Server (Node.js) ───────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gpa-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://gpa_admin:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/gpa_study_hub
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-random-secret}
+      ADMIN_CODE: ${ADMIN_CODE:-GTU-ADMIN-2025}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gpa-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # ── Nginx (Reverse Proxy + Load Balancer) ──────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: gpa-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/letsencrypt:ro
+    depends_on:
+      - server
+    networks:
+      - gpa-network
+
+  # ── Prometheus (Metrics) ───────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gpa-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - gpa-network
+
+  # ── Grafana (Dashboards) ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gpa-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - gpa-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  gpa-network:
+    driver: bridge

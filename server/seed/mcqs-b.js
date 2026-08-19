@@ -1,0 +1,74 @@
+module.exports = {
+  DCM501: [
+    { q: 'The Nyquist sampling rate for a signal of bandwidth fm is:', opts: ['fm', '2fm', 'fm/2', '4fm'], a: 1, e: 'fs ≥ 2fm to avoid aliasing', unit: 1, diff: 'Easy', bloom: 'Remember', co: 'CO1' },
+    { q: 'In PCM, each sample is:', opts: ['converted to n-bit code', 'sent as analog pulse', 'multiplied by carrier', 'differentiated'], a: 0, e: 'PCM encodes samples digitally', unit: 2, diff: 'Easy', bloom: 'Understand', co: 'CO2' },
+    { q: 'The quantization SNR in dB for n-bit PCM is:', opts: ['6.02n + 1.76', '2n', '10n', 'n/2'], a: 0, e: 'SQNR = 6.02n + 1.76 dB', unit: 1, diff: 'Medium', bloom: 'Remember', co: 'CO1' },
+    { q: 'Slope overload occurs in:', opts: ['PCM', 'delta modulation', 'PAM', 'PWM'], a: 1, e: 'DM cannot follow steep signal changes', unit: 2, diff: 'Medium', bloom: 'Understand', co: 'CO2' },
+    { q: 'BPSK transmits how many bits per symbol?', opts: ['1', '2', '3', '4'], a: 0, e: 'BPSK = 1 bit per symbol', unit: 4, diff: 'Easy', bloom: 'Remember', co: 'CO4' },
+    { q: 'QPSK transmits how many bits per symbol?', opts: ['1', '2', '4', '8'], a: 1, e: 'QPSK = 2 bits per symbol', unit: 4, diff: 'Easy', bloom: 'Remember', co: 'CO4' }
+  ],
+  EBS502: [
+    { q: 'An embedded system is best described as:', opts: ['a general purpose computer', 'a dedicated computer in a larger system', 'a supercomputer', 'a network device'], a: 1, e: 'Dedicated function, constrained resources', unit: 1, diff: 'Easy', bloom: 'Understand', co: 'CO1' },
+    { q: 'The UART in 8051 is used for:', opts: ['serial communication', 'parallel port', 'ADC conversion', 'memory addressing'], a: 0, e: 'UART handles asynchronous serial data', unit: 2, diff: 'Easy', bloom: 'Understand', co: 'CO2' },
+    { q: 'Which timer mode of 8051 is 16-bit?', opts: ['mode 0', 'mode 1', 'mode 2', 'mode 3'], a: 1, e: 'Mode 1 is 16-bit timer', unit: 2, diff: 'Medium', bloom: 'Remember', co: 'CO2' },
+    { q: 'A watchdog timer is used to:', opts: ['increase clock speed', 'recover from software hangs', 'store data', 'convert analog signals'], a: 1, e: 'Resets system if software stops responding', unit: 4, diff: 'Medium', bloom: 'Understand', co: 'CO4' },
+    { q: 'Stepper motor rotation is controlled by:', opts: ['sequence of coil energization', 'input voltage only', 'light intensity', 'temperature'], a: 0, e: 'Step sequence drives rotation', unit: 3, diff: 'Medium', bloom: 'Understand', co: 'CO3' },
+    { q: 'Which tool compiles 8051 embedded C code?', opts: ['Keil', 'Photoshop', 'Excel', 'VLC'], a: 0, e: 'Keil uVision is a common 8051 IDE', unit: 5, diff: 'Easy', bloom: 'Remember', co: 'CO5' }
+  ],
+  MIN503: [
+    { q: 'Accuracy of an instrument refers to:', opts: ['closeness to true value', 'repeatability', 'resolution', 'speed'], a: 0, e: 'Accuracy = closeness to the true value', unit: 1, diff: 'Easy', bloom: 'Understand', co: 'CO1' },
+    { q: 'PMMC instruments work on:', opts: ['electrostatic principle', 'permanent magnet moving coil', 'electromagnetic induction', 'thermoelectric effect'], a: 1, e: 'PMMC uses magnet + moving coil', unit: 2, diff: 'Easy', bloom: 'Remember', co: 'CO2' },
+    { q: 'The Wheatstone bridge measures:', opts: ['inductance', 'resistance', 'capacitance', 'frequency'], a: 1, e: 'DC bridge for resistance', unit: 3, diff: 'Easy', bloom: 'Remember', co: 'CO3' },
+    { q: 'LVDT measures:', opts: ['temperature', 'displacement', 'pressure', 'humidity'], a: 1, e: 'Linear variable differential transformer', unit: 4, diff: 'Easy', bloom: 'Remember', co: 'CO4' },
+    { q: 'A thermocouple converts temperature to:', opts: ['resistance', 'voltage', 'current', 'frequency'], a: 1, e: 'Seebeck effect produces emf', unit: 4, diff: 'Easy', bloom: 'Understand', co: 'CO4' },
+    { q: 'Lissajous patterns are displayed on:', opts: ['wattmeter', 'CRO', 'multimeter', 'Q meter'], a: 1, e: 'Used for frequency/phase comparison', unit: 5, diff: 'Medium', bloom: 'Understand', co: 'CO5' }
+  ],
+  MOC601: [
+    { q: 'Frequency reuse means:', opts: ['same frequencies used in distant cells', 'no frequencies reused', 'each cell has unique frequency', 'only one frequency total'], a: 0, e: 'Reuse distance keeps co-channel interference low', unit: 1, diff: 'Easy', bloom: 'Understand', co: 'CO1' },
+    { q: 'GSM operates in which frequency band?', opts: ['900 MHz', '60 Hz', '100 GHz', '2.4 MHz'], a: 0, e: 'GSM uses 900/1800 MHz bands', unit: 2, diff: 'Easy', bloom: 'Remember', co: 'CO2' },
+    { q: 'Handoff is:', opts: ['transfer of call between cells', 'charging the phone', 'network shutdown', 'data encryption'], a: 0, e: 'Maintains call continuity while moving', unit: 1, diff: 'Easy', bloom: 'Understand', co: 'CO1' },
+    { q: 'CDMA separates users using:', opts: ['time slots', 'unique codes', 'frequency bands only', 'different antennas'], a: 1, e: 'Orthogonal spreading codes', unit: 3, diff: 'Medium', bloom: 'Understand', co: 'CO3' },
+    { q: 'LTE uses which multiple access on downlink?', opts: ['FDMA', 'OFDMA', 'CDMA', 'SDMA'], a: 1, e: 'OFDMA with subcarriers', unit: 4, diff: 'Medium', bloom: 'Remember', co: 'CO4' },
+    { q: 'Which technology is used for IoT over long distances?', opts: ['Bluetooth', 'LoRa', 'NFC', 'Infrared'], a: 1, e: 'LPWAN like LoRa covers kilometers', unit: 5, diff: 'Medium', bloom: 'Understand', co: 'CO5' }
+  ],
+  OFC602: [
+    { q: 'Light is confined in an optical fiber due to:', opts: ['diffraction', 'total internal reflection', 'refraction only', 'absorption'], a: 1, e: 'TIR at core-cladding boundary', unit: 1, diff: 'Easy', bloom: 'Understand', co: 'CO1' },
+    { q: 'Numerical aperture depends on:', opts: ['refractive indices of core and cladding', 'fiber length', 'source power', 'connector type'], a: 0, e: 'NA = √(n1^2 - n2^2)', unit: 1, diff: 'Medium', bloom: 'Understand', co: 'CO1' },
+    { q: 'The unit of fiber attenuation is:', opts: ['dB/km', 'dB', 'km', 'W/m'], a: 0, e: 'Attenuation per unit length', unit: 2, diff: 'Easy', bloom: 'Remember', co: 'CO2' },
+    { q: 'Which source is used for long distance high bit rate links?', opts: ['LED', 'laser diode', 'bulb', 'fluorescent lamp'], a: 1, e: 'Laser = coherent, high power, narrow spectrum', unit: 3, diff: 'Easy', bloom: 'Understand', co: 'CO3' },
+    { q: 'APD stands for:', opts: ['Avalanche Photodiode', 'Analog Photo Detector', 'Active Pulse Device', 'Amplitude Phase Diode'], a: 0, e: 'APD provides internal gain', unit: 4, diff: 'Easy', bloom: 'Remember', co: 'CO4' },
+    { q: 'WDM allows:', opts: ['multiple wavelengths on one fiber', 'only one wavelength', 'faster electrons', 'shorter cables'], a: 0, e: 'Wavelength division multiplexing', unit: 5, diff: 'Easy', bloom: 'Understand', co: 'CO5' }
+  ],
+  INE603: [
+    { q: 'An SCR is a:', opts: ['two terminal device', 'four layer three terminal device', 'three layer device', 'two layer device'], a: 1, e: 'PNPN structure with gate terminal', unit: 1, diff: 'Medium', bloom: 'Remember', co: 'CO1' },
+    { q: 'An SCR turns off when its current falls below:', opts: ['holding current', 'gate current', 'breakover voltage', 'leakage current'], a: 0, e: 'Below holding current SCR latches off', unit: 1, diff: 'Medium', bloom: 'Understand', co: 'CO1' },
+    { q: 'A triac can conduct:', opts: ['only in one direction', 'in both directions', 'only with AC', 'only with DC'], a: 1, e: 'Bidirectional thyristor', unit: 1, diff: 'Easy', bloom: 'Remember', co: 'CO1' },
+    { q: 'The output of a step-down chopper is:', opts: ['Vout = D × Vin', 'Vout = Vin/D', 'Vout = Vin', 'Vout = Vin^2'], a: 0, e: 'Duty cycle controls output', unit: 3, diff: 'Medium', bloom: 'Apply', co: 'CO3' },
+    { q: 'An inverter converts:', opts: ['DC to AC', 'AC to DC', 'AC to AC', 'DC to DC'], a: 0, e: 'Inverter produces AC from DC', unit: 3, diff: 'Easy', bloom: 'Remember', co: 'CO3' },
+    { q: 'PLC programming commonly uses:', opts: ['ladder logic', 'BASIC only', 'assembly only', 'machine code only'], a: 0, e: 'Ladder diagrams mimic relay logic', unit: 5, diff: 'Easy', bloom: 'Remember', co: 'CO5' }
+  ],
+  DSU301: [
+    { q: 'The time complexity of binary search is:', opts: ['O(n)', 'O(log n)', 'O(n^2)', 'O(1)'], a: 1, e: 'Halves search space each step', unit: 5, diff: 'Medium', bloom: 'Apply', co: 'CO5' },
+    { q: 'A stack follows which principle?', opts: ['FIFO', 'LIFO', 'random access', 'priority order'], a: 1, e: 'Last In First Out', unit: 3, diff: 'Easy', bloom: 'Remember', co: 'CO3' },
+    { q: 'A queue follows which principle?', opts: ['LIFO', 'FIFO', 'LIFO and FIFO both', 'no order'], a: 1, e: 'First In First Out', unit: 3, diff: 'Easy', bloom: 'Remember', co: 'CO3' },
+    { q: 'Infix expression A+B converted to postfix is:', opts: ['AB+', 'A+B', 'BA+', '+AB'], a: 0, e: 'Operators after operands', unit: 3, diff: 'Easy', bloom: 'Apply', co: 'CO3' },
+    { q: 'In a binary search tree, left child is always:', opts: ['greater than parent', 'smaller than parent', 'equal to parent', 'any value'], a: 1, e: 'BST property', unit: 4, diff: 'Easy', bloom: 'Understand', co: 'CO4' },
+    { q: 'Which sorting algorithm has O(n log n) average time?', opts: ['bubble sort', 'merge sort', 'insertion sort', 'selection sort'], a: 1, e: 'Divide and conquer sorting', unit: 5, diff: 'Medium', bloom: 'Understand', co: 'CO5' }
+  ],
+  COA302: [
+    { q: 'The von Neumann architecture stores:', opts: ['only data in memory', 'programs and data in same memory', 'programs in separate memory', 'nothing in memory'], a: 1, e: 'Stored program concept', unit: 1, diff: 'Easy', bloom: 'Understand', co: 'CO1' },
+    { q: 'In the addressing mode where operand is in the instruction itself:', opts: ['direct', 'immediate', 'indirect', 'register'], a: 1, e: 'Immediate data in instruction', unit: 2, diff: 'Easy', bloom: 'Remember', co: 'CO2' },
+    { q: 'Cache memory is:', opts: ['slower than main memory', 'faster and smaller than main memory', 'same speed as disk', 'always larger than RAM'], a: 1, e: 'Fast SRAM near CPU', unit: 4, diff: 'Easy', bloom: 'Understand', co: 'CO4' },
+    { q: 'Pipelining increases:', opts: ['instruction latency', 'throughput', 'memory size', 'power only'], a: 1, e: 'Overlaps execution stages', unit: 3, diff: 'Medium', bloom: 'Understand', co: 'CO3' },
+    { q: 'DMA stands for:', opts: ['Direct Memory Access', 'Digital Memory Allocation', 'Data Mainframe Access', 'Dynamic Memory Array'], a: 0, e: 'Transfers data without CPU', unit: 4, diff: 'Easy', bloom: 'Remember', co: 'CO4' },
+    { q: 'RISC processors typically use:', opts: ['complex instructions', 'simple fixed-length instructions', 'no registers', 'only memory operands'], a: 1, e: 'Reduced instruction set computing', unit: 2, diff: 'Easy', bloom: 'Understand', co: 'CO2' }
+  ],
+  DBM401: [
+    { q: 'Which is a primary key property?', opts: ['duplicate values allowed', 'unique and not null', 'can be null', 'multiple per table'], a: 1, e: 'Primary key = unique + not null', unit: 2, diff: 'Easy', bloom: 'Remember', co: 'CO2' },
+    { q: 'SQL stands for:', opts: ['Structured Query Language', 'Simple Query Language', 'Sequential Query Language', 'Standard Quality Language'], a: 0, e: 'Standard database language', unit: 3, diff: 'Easy', bloom: 'Remember', co: 'CO3' },
+    { q: 'Which SQL statement retrieves data?', opts: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'], a: 0, e: 'SELECT queries data', unit: 3, diff: 'Easy', bloom: 'Remember', co: 'CO3' },
+    { q: 'A table is in 2NF if it is in 1NF and:', opts: ['no partial dependency', 'no transitive dependency', 'no redundancy', 'all keys single'], a: 0, e: '2NF removes partial dependencies', unit: 4, diff: 'Medium', bloom: 'Understand', co: 'CO4' },
+    { q: 'ACID property A stands for:', opts: ['Atomicity', 'Availability', 'Accuracy', 'Accessibility'], a: 0, e: 'Transactions are all-or-nothing', unit: 5, diff: 'Easy', bloom: 'Remember', co: 'CO5' },
+    { q: 'A foreign key is used to:', opts: ['create indexes', 'link tables', 'speed up queries', 'encrypt data'], a: 1, e: 'References primary key of another table', unit: 2, diff: 'Easy', bloom: 'Understand', co: 'CO2' }
+  ]
+};
