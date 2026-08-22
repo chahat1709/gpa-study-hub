@@ -12,7 +12,10 @@
     "test:unit": "vitest run --pool=forks --maxWorkers=1",
     "test:ai": "vitest run __tests__/aiProviderService.test.ts __tests__/geminiService.test.ts --pool=forks --maxWorkers=1",
     "test:e2e": "playwright test",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "desktop:dev": "npm run build && electron desktop/main.cjs",
+    "desktop:build": "npm run build && electron-builder --win portable",
+    "desktop:installer": "npm run build && electron-builder --config desktop/electron-builder-installer.yml --win nsis"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
@@ -43,11 +46,39 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.5.4",
+    "electron": "^38.8.6",
+    "electron-builder": "^26.15.3",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.23",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^4.1.10"
+  },
+  "main": "desktop/main.cjs",
+  "build": {
+    "appId": "com.gpastudyhub.desktop",
+    "productName": "GPA Study Hub",
+    "artifactName": "GPA-Study-Hub-${version}-${arch}.${ext}",
+    "directories": { "output": "release" },
+    "files": [
+      "desktop/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "public/gpa_hub_logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GPA Study Hub"
+    }
   }
 }
