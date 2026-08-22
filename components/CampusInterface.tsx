@@ -1,9 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Building2, GraduationCap, Bell, Box,
-  ShieldCheck, ArrowRight, Clock, AlertCircle,
-  Mail, Phone, Award, Target, Book, Calendar, MessageCircle
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, Bell, BookOpen, Building2, CalendarDays, CheckCircle2, Clock3, GraduationCap, Mail, MessageCircle, Phone, ShieldCheck, Sparkles, Target, Users, WandSparkles } from 'lucide-react';
 import { campusService } from '../services/campusService';
 import { socialService } from '../services/socialService';
 import { Notice, DirectoryContact, AppMode, Participant } from '../types';
@@ -11,271 +7,67 @@ import { useAuth } from './AuthContext';
 import { useToast } from './ToastProvider';
 import { attendanceService } from '../services/attendanceService';
 
-interface CampusInterfaceProps {
-  onNavigate?: (mode: AppMode) => void;
-}
+interface CampusInterfaceProps { onNavigate?: (mode: AppMode) => void; }
+type CampusTab = 'DASHBOARD' | 'DIRECTORY' | 'INFO';
 
 const CampusInterface: React.FC<CampusInterfaceProps> = ({ onNavigate }) => {
   const { user } = useAuth();
   const { error, info } = useToast();
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'DIRECTORY' | 'INFO'>('DASHBOARD');
-
+  const [activeTab, setActiveTab] = useState<CampusTab>('DASHBOARD');
   const [notices, setNotices] = useState<Notice[]>(campusService.getNotices());
   const [faculty, setFaculty] = useState<DirectoryContact[]>([]);
-  const [stats, setStats] = useState({
-    overall: 0,
-    totalClasses: 0,
-    attendedClasses: 0,
-    subjectWise: [] as any[]
-  });
+  const [stats, setStats] = useState({ overall: 0, totalClasses: 0, attendedClasses: 0, subjectWise: [] as any[] });
 
   useEffect(() => {
     setNotices(campusService.getNotices());
-
-    const loadStats = async () => {
-      if (user?.id) {
-        const studentStats = await attendanceService.getStudentStats(user.id);
-        setStats(studentStats);
-      }
-    };
-
-    const loadFaculty = async () => {
-      const data = await campusService.getFacultyForNode(user?.branch, user?.semester);
-      setFaculty(data);
-    };
-
-    loadStats();
-    loadFaculty();
+    if (user?.id) attendanceService.getStudentStats(user.id).then(setStats);
+    campusService.getFacultyForNode(user?.branch, user?.semester).then(setFaculty);
   }, [user]);
 
-  const safeOverall = isNaN(stats.overall) ? 0 : stats.overall;
+  const safeOverall = Number.isFinite(stats.overall) ? stats.overall : 0;
+  const attended = stats.attendedClasses || 0;
+  const total = stats.totalClasses || 0;
+  const attendanceStatus = safeOverall < 75 ? 'Needs attention' : 'On track';
 
   const handleInitiateChat = async (contact: DirectoryContact) => {
     if (!user) return;
-    info(`Connecting...`);
+    info('Connecting to your conversation…');
     try {
-      const targetUser: Participant = {
-        id: contact.id || `fac-${contact.name.replace(/\s+/g, '-').toLowerCase()}`,
-        name: contact.name
-      };
-
-      const chatSession = await socialService.startChatWithUser(
-        { id: user.id, name: user.name, avatar: user.photoURL },
-        targetUser
-      );
-
-      if (chatSession && onNavigate) {
-        onNavigate(AppMode.SOCIAL);
-      }
-    } catch (err) {
-      error("Failed to connect to direct message node.");
-    }
+      const targetUser: Participant = { id: contact.id || `fac-${contact.name.replace(/\s+/g, '-').toLowerCase()}`, name: contact.name };
+      const chatSession = await socialService.startChatWithUser({ id: user.id, name: user.name, avatar: user.photoURL }, targetUser);
+      if (chatSession && onNavigate) onNavigate(AppMode.SOCIAL);
+    } catch { error('Could not open this conversation.'); }
   };
 
+  const quickActions = [
+    { mode: AppMode.EXAM_HUB, icon: BookOpen, label: 'Prepare for exams', desc: 'Timed quizzes and past papers', tone: 'mint' },
+    { mode: AppMode.PLANNER, icon: CalendarDays, label: 'Plan the week', desc: 'Tasks, reminders, and deadlines', tone: 'violet' },
+    { mode: AppMode.TUTOR, icon: WandSparkles, label: 'Ask the AI Tutor', desc: 'Get help with a difficult topic', tone: 'coral' },
+    { mode: AppMode.LIBRARY, icon: Target, label: 'Open the Library', desc: 'Notes, resources, and references', tone: 'blue' },
+  ];
+
   const DashboardView = () => (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-2 border-b border-white/10">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Welcome, {user?.name || 'Student'}!</h1>
-          <p className="text-slate-400 text-xs mt-1">
-            {user?.branch || 'Diploma EC'} • Semester {user?.semester || '4'} • GTU Node
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => onNavigate?.(AppMode.PLANNER)} className="px-4 py-2.5 min-h-[44px] bg-white/5 backdrop-blur-md border border-white/15 text-slate-200 rounded-[12px] text-xs font-bold hover:bg-white/10 transition-all flex items-center justify-center active:scale-95">
-            Planner
-          </button>
-          <button onClick={() => onNavigate?.(AppMode.PROFILE)} className="px-4 py-2 bg-gradient-to-tr from-primary to-secondary rounded-[12px] shadow-[0_0_15px_rgba(192,193,255,0.4)] font-label-md text-surface transition-all flex items-center justify-center font-bold">
-            My Profile
-          </button>
-        </div>
-      </div>
+    <div className="campus-dashboard">
+      <section className="campus-welcome">
+        <div><p className="campus-eyebrow"><Sparkles /> Your academic command center</p><h1>Good to see you, {user?.name?.split(' ')[0] || 'student'}.</h1><p>Here is what deserves your attention today.</p></div>
+        <div className="campus-context"><span className="campus-context-dot" /><span>{user?.branch || 'EC'} · Semester {user?.semester || '4'}</span><span className="campus-context-divider" /><span>GTU</span></div>
+      </section>
 
-      {/* 3D EXAM HUB HERO BANNER */}
-      <div 
-        onClick={() => onNavigate?.(AppMode.EXAM_HUB)}
-        className="glass-card bg-surface/80 text-white p-6 border border-primary/30 cursor-pointer transform transition-all duration-300 flex justify-between items-center relative overflow-hidden group"
-      >
-        <div className="absolute -right-8 -top-8 w-40 h-40 bg-primary/20 rounded-full blur-[30px] pointer-events-none group-hover:scale-125 transition-transform"></div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 px-3 py-1 bg-primary/20 border border-primary/30 rounded-full text-secondary text-xs font-bold w-fit mb-2">
-            <GraduationCap className="w-4 h-4 text-primary" /> GTU Examinations Portal
-          </div>
-          <h2 className="text-xl font-display-lg font-black text-white">Examinations & Quiz Hub</h2>
-          <p className="text-slate-300 text-xs mt-1">Timed AI Mock Tests • GTU Solution Keys • AI Written Answer Grader</p>
-        </div>
-        <div className="bg-primary/20 group-hover:bg-primary/40 text-white p-3.5 min-h-[44px] min-w-[44px] rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.2),_0_0_15px_rgba(192,193,255,0.3)] flex items-center justify-center shrink-0 z-10 transition-colors">
-          <ArrowRight className="w-5 h-5" />
-        </div>
-      </div>
+      <section className="campus-focus-grid">
+        <article className="campus-focus-card campus-focus-primary" onClick={() => onNavigate?.(AppMode.EXAM_HUB)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onNavigate?.(AppMode.EXAM_HUB)}>
+          <div className="campus-focus-top"><span className="campus-badge campus-badge-mint"><BookOpen /> Exam Hub</span><ArrowRight /></div><div className="campus-focus-main"><h2>Build exam confidence.</h2><p>Practice a timed quiz, review GTU papers, or submit a written answer for feedback.</p></div><div className="campus-focus-meta"><span><Clock3 /> Start a 20-minute session</span><span className="campus-arrow-link">Open Exam Hub <ArrowRight /></span></div>
+        </article>
+        <article className="campus-attendance-card"><div className="campus-card-heading"><div><span className="campus-card-kicker">Attendance</span><h3>Keep your eligibility safe.</h3></div><div className={safeOverall < 75 ? 'campus-status campus-status-warn' : 'campus-status campus-status-good'}>{attendanceStatus}</div></div><div className="campus-attendance-number"><strong>{safeOverall}%</strong><span>overall presence</span></div><div className="campus-progress"><span style={{ width: `${Math.min(100, Math.max(0, safeOverall))}%` }} /></div><div className="campus-attendance-foot"><span>{attended} of {total || '—'} classes attended</span><button onClick={() => onNavigate?.(AppMode.ATTENDANCE)}>View details <ArrowRight /></button></div></article>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Stats & Tools */}
-        <div className="space-y-6">
-          {/* Attendance Card */}
-          <div className="glass-card bg-white/5 p-6 border border-white/10 relative overflow-hidden group hover:shadow-[0_0_20px_rgba(47,217,244,0.1)] transition-all">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="font-bold font-display text-white">Attendance</h3>
-                <p className="text-xs text-slate-400 mt-1">Aggregate Performance</p>
-              </div>
-              <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${safeOverall < 75 ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}`}>
-                {safeOverall < 75 ? 'Low Attendance' : 'Good Standing'}
-              </div>
-            </div>
+      <section className="campus-section-heading"><div><p className="campus-eyebrow">Next actions</p><h2>Make progress in one tap.</h2></div><span>Most used this week</span></section>
+      <section className="campus-action-grid">{quickActions.map(action => { const Icon = action.icon; return <button key={action.label} className={`campus-action campus-action-${action.tone}`} onClick={() => onNavigate?.(action.mode)}><span className="campus-action-icon"><Icon /></span><span className="campus-action-copy"><strong>{action.label}</strong><small>{action.desc}</small></span><ArrowRight className="campus-action-arrow" /></button>; })}</section>
 
-            <div className="flex items-end gap-2 mb-4">
-              <span className="text-5xl font-display font-black text-white tracking-tight">{safeOverall}%</span>
-              <span className="text-sm text-slate-400 mb-1.5 font-bold">present</span>
-            </div>
-
-            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden mb-4">
-              <div className={`h-full rounded-full transition-all duration-1000 ${safeOverall < 75 ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-tertiary shadow-[0_0_15px_rgba(233,196,0,0.5)]'}`} style={{ width: `${safeOverall}%` }}></div>
-            </div>
-
-            <button onClick={() => onNavigate?.(AppMode.ATTENDANCE)} className="w-full flex items-center justify-between text-xs font-bold text-primary hover:text-primary/80 transition-colors min-h-[44px]">
-              <span>View Attendance Details</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Quick Access Tools Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => onNavigate?.(AppMode.TUTOR)} className="glass-card bg-white/5 p-5 border border-white/10 hover:border-primary/40 transition-all text-left group hover:shadow-[0_0_15px_rgba(192,193,255,0.15)] active:scale-95">
-              <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-[inset_0_0_10px_rgba(192,193,255,0.3)]">
-                <GraduationCap className="w-5 h-5" />
-              </div>
-              <h4 className="font-bold text-white text-sm">AI Tutor</h4>
-              <p className="text-xs text-slate-400 mt-0.5">Instant help</p>
-            </button>
-            <button onClick={() => onNavigate?.(AppMode.HOMEWORK)} className="glass-card bg-white/5 p-5 border border-white/10 hover:border-amber-400/40 transition-all text-left group hover:shadow-[0_0_15px_rgba(251,191,36,0.15)] active:scale-95">
-              <div className="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-[inset_0_0_10px_rgba(251,191,36,0.3)]">
-                <Box className="w-5 h-5" />
-              </div>
-              <h4 className="font-bold text-white text-sm">Assignments</h4>
-              <p className="text-xs text-slate-400 mt-0.5">2 Pending</p>
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column: Notices List */}
-        <div className="lg:col-span-2 glass-card bg-white/5 backdrop-blur-[30px] rounded-[24px] border border-white/10 flex flex-col overflow-hidden h-[500px] max-h-[calc(100vh-280px)] lg:max-h-[500px]">
-          <div className="p-5 border-b border-white/10 flex justify-between items-center bg-[rgba(15,23,42,0.6)] backdrop-blur-md sticky top-0 z-10">
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-primary" />
-              <h3 className="font-bold text-white text-sm font-display-lg">Official Notices</h3>
-            </div>
-            <span className="text-xs font-bold text-primary bg-primary/20 border border-primary/30 px-2.5 py-1 rounded-full shadow-inner">{notices.length} Active</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-0 no-scrollbar">
-            {notices.length > 0 ? (
-              <div className="divide-y divide-white/5">
-                {notices.map((notice) => (
-                  <div key={notice.id} className="p-5 hover:bg-white/5 transition-colors group">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${notice.priority === 'high' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
-                        'bg-secondary/10 text-secondary border-secondary/30'
-                        }`}>
-                        {notice.priority} Priority
-                      </span>
-                      <span className="text-xs text-slate-400 font-mono">{new Date(notice.date).toLocaleDateString()}</span>
-                    </div>
-                    <h4 className="font-bold font-display-lg text-white text-sm mb-1 group-hover:text-primary transition-colors">{notice.title}</h4>
-                    <p className="text-xs text-slate-300 leading-relaxed">{notice.content}</p>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-                      <span>By {notice.author}</span>
-                      <span>•</span>
-                      <span>{notice.category}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                <Box className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm font-medium">No active notices</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <section className="campus-lower-grid"><article className="campus-list-card"><div className="campus-list-head"><div><p className="campus-eyebrow">Updates</p><h2>Official notices</h2></div><span className="campus-count">{notices.length} active</span></div>{notices.length ? <div className="campus-notice-list">{notices.slice(0, 4).map(notice => <div key={notice.id} className="campus-notice"><span className={`campus-notice-dot ${notice.priority === 'high' ? 'is-high' : ''}`} /><div><div className="campus-notice-meta"><span>{notice.category}</span><time>{new Date(notice.date).toLocaleDateString()}</time></div><strong>{notice.title}</strong><p>{notice.content}</p></div></div>)}</div> : <div className="campus-empty"><Bell /><span>No new notices</span><small>You are up to date.</small></div>}</article><article className="campus-list-card campus-today-card"><div className="campus-list-head"><div><p className="campus-eyebrow">Your rhythm</p><h2>Today at a glance</h2></div><CalendarDays /></div><div className="campus-today-row"><span className="campus-today-time">09:30</span><span className="campus-today-line" /><span><strong>Study block</strong><small>Choose a topic in Planner</small></span></div><div className="campus-today-row"><span className="campus-today-time">12:15</span><span className="campus-today-line" /><span><strong>Check attendance</strong><small>Review subject-wise status</small></span></div><div className="campus-today-row"><span className="campus-today-time">18:00</span><span className="campus-today-line" /><span><strong>Exam practice</strong><small>Take one timed quiz</small></span></div><button className="campus-text-button" onClick={() => onNavigate?.(AppMode.PLANNER)}>Open planner <ArrowRight /></button></article></section>
     </div>
   );
 
-  return (
-    <div className="h-full flex flex-col" style={{ background: 'transparent' }}>
-      {/* Sub-Header Tabs */}
-      <div className="shrink-0 border-b border-white/10 glass-panel">
-        <div className="flex px-6 gap-6" role="tablist">
-          {[
-            { id: 'DASHBOARD', label: 'Dashboard' },
-            { id: 'DIRECTORY', label: 'Faculty Directory' },
-            { id: 'INFO', label: 'Campus Info' }
-          ].map((tab) => (
-            <button
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-3 min-h-[44px] flex items-center text-xs font-bold border-b-2 transition-colors ${activeTab === tab.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto no-scrollbar relative">
-        {activeTab === 'DASHBOARD' && <div role="tabpanel"><DashboardView /></div>}
-
-        {activeTab === 'DIRECTORY' && (
-          <div role="tabpanel" className="p-6 md:p-8 max-w-4xl mx-auto">
-            <div className="grid gap-4">
-              {faculty.map(contact => (
-                <div key={contact.id} className="glass-card bg-white/5 p-5 rounded-2xl border border-white/10 flex items-center gap-5 hover:border-primary/40 hover:shadow-[0_0_15px_rgba(192,193,255,0.15)] transition-all group">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30 rounded-full flex items-center justify-center font-bold font-display-lg text-primary text-lg group-hover:from-primary/30 group-hover:to-secondary/30 transition-colors shadow-inner">
-                    {contact.name.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold font-display-lg text-white text-sm">{contact.name}</h4>
-                    <p className="text-xs text-slate-400">{contact.designation} • {contact.department}</p>
-                    <div className="flex gap-4 mt-2 text-xs text-slate-400">
-                      <span className="flex items-center gap-1"><Mail className="w-3 h-3 text-slate-400" /> {contact.email}</span>
-                      <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-slate-400" /> {contact.phone}</span>
-                    </div>
-                  </div>
-                  <button onClick={() => handleInitiateChat(contact)} className="px-4 py-2 bg-gradient-to-tr from-primary to-secondary text-surface shadow-[0_0_15px_rgba(192,193,255,0.4)] min-h-[44px] flex items-center justify-center rounded-[12px] text-xs font-bold transition-all">
-                    Message
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'INFO' && (
-          <div role="tabpanel" className="p-12 max-w-xl mx-auto text-center">
-            <div className="w-16 h-16 glass-card bg-white/5 border border-primary/20 rounded-[20px] flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(192,193,255,0.15)]">
-              <Building2 className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="font-bold font-display-lg text-white text-lg mb-2">Secure Campus Node</h3>
-            <p className="text-xs text-slate-400 leading-relaxed mb-6">
-              Authorized access only. Connected to the central University Matrix.
-              <br />System version 2.4.0 (Stable).
-            </p>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/30">
-              <ShieldCheck className="w-3 h-3" /> E2EE Enabled
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return <div className="campus-page"><div className="campus-tabs" role="tablist">{[{ id: 'DASHBOARD', label: 'Overview' }, { id: 'DIRECTORY', label: 'Faculty directory' }, { id: 'INFO', label: 'Campus info' }].map(tab => <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'is-active' : ''} onClick={() => setActiveTab(tab.id as CampusTab)}>{tab.label}</button>)}</div><div className="campus-scroll">{activeTab === 'DASHBOARD' && <DashboardView />}{activeTab === 'DIRECTORY' && <div className="campus-directory"><div className="campus-section-heading"><div><p className="campus-eyebrow">People who can help</p><h2>Faculty directory</h2></div></div><div className="campus-directory-grid">{faculty.map(contact => <article key={contact.id} className="campus-faculty-card"><div className="campus-avatar">{contact.name.charAt(0)}</div><div className="campus-faculty-copy"><strong>{contact.name}</strong><span>{contact.designation} · {contact.department}</span><small><Mail /> {contact.email}</small><small><Phone /> {contact.phone}</small></div><button onClick={() => handleInitiateChat(contact)}><MessageCircle /> Message</button></article>)}</div></div>}{activeTab === 'INFO' && <div className="campus-info"><div className="campus-info-icon"><Building2 /></div><p className="campus-eyebrow">Platform status</p><h2>Secure campus node</h2><p>GPA Study Hub is running locally on your device. Your academic workspace remains available even when the network is unavailable.</p><span><ShieldCheck /> Offline-first · Community edition</span></div>}</div></div>;
 };
 
 export default CampusInterface;

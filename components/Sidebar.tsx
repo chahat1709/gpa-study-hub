@@ -45,9 +45,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMode, onModeChange }) => {
   };
 
   return (
-    <div className="w-[280px] flex flex-col h-full shrink-0 z-50 glass-panel">
+    <div className="ui-sidebar w-[280px] flex flex-col h-full shrink-0 z-50">
       {/* Brand Header */}
-      <div className="h-20 flex items-center px-6 border-b border-white/10 relative overflow-hidden">
+      <div className="ui-brand h-20 flex items-center px-6 relative overflow-hidden">
         <div className="flex items-center gap-4 relative z-10">
           <div className="w-12 h-12 rounded-[16px] overflow-hidden p-0.5 bg-gradient-to-br from-primary to-secondary shadow-[0_0_15px_rgba(192,193,255,0.3)] shrink-0 transform hover:rotate-3 transition-transform">
             <img src="/gpa_hub_logo.png" className="w-full h-full object-cover rounded-[14px]" alt="GPA Study Hub Logo" />
@@ -65,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMode, onModeChange }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto no-scrollbar">
+      <nav className="ui-nav flex-1 space-y-2 overflow-y-auto no-scrollbar" aria-label="Primary navigation">
         {menuItems.map((item, idx) => {
           if (item.type === 'divider') {
             return <div key={idx} className="my-4 border-t border-white/5" />;
@@ -78,10 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMode, onModeChange }) => {
             <button
               key={item.mode}
               onClick={() => item.mode && onModeChange(item.mode)}
-              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-[12px] transition-all duration-300 group active:scale-95 ${isActive
-                  ? 'text-surface font-bold bg-gradient-to-r from-primary to-secondary shadow-[0_8px_20px_rgba(192,193,255,0.3)]'
-                  : 'text-white/60 hover:text-white font-medium hover:bg-white/5 border border-transparent'
-                }`}
+className={`ui-nav-item w-full flex items-center justify-between px-4 py-3 transition-all duration-300 group active:scale-95 ${isActive ? 'is-active font-bold' : 'font-medium'}`}
             >
               <div className="flex items-center gap-4">
                 <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-surface' : 'text-white/60 group-hover:text-primary'}`} />
@@ -98,8 +95,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMode, onModeChange }) => {
       </nav>
 
       {/* User Identity Footer */}
-      <div className="p-4 border-t border-white/10 bg-white/5">
-        <div className="flex items-center gap-3 p-2 rounded-xl transition-all cursor-pointer group hover:bg-white/5 border border-transparent hover:border-white/10" onClick={() => fileInputRef.current?.click()}>
+      <div className="border-t border-white/10">
+        <div className="ui-user-panel flex items-center gap-3 transition-all cursor-pointer group hover:bg-white/5" onClick={() => fileInputRef.current?.click()}>
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 relative border-2 border-primary/30 shadow-md group-hover:border-primary transition-colors">
             {isUploading ? (
               <div className="w-full h-full flex items-center justify-center bg-surface">

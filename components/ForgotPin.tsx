@@ -71,7 +71,7 @@ export const ForgotPin: React.FC<ForgotPinProps> = ({ onBack, onSuccess }) => {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3 mb-2">
-        <button onClick={onBack} className="p-2 rounded-xl text-slate-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+        <button type="button" aria-label="Back to sign in" onClick={onBack} className="p-2 rounded-xl text-slate-400 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           style={{ background: 'rgba(255,255,255,0.06)' }}>
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -84,11 +84,11 @@ export const ForgotPin: React.FC<ForgotPinProps> = ({ onBack, onSuccess }) => {
       {step === 'ENROLL' && (
         <form onSubmit={handleCheckEnroll} className="space-y-4">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-widest">
+<label htmlFor="forgot-pin-enrollment" className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-widest">
               Your Enrollment Number
             </label>
             <input
-              type="text" required value={enrollment}
+              id="forgot-pin-enrollment" type="text" required value={enrollment}
               onChange={e => setEnrollment(e.target.value.toUpperCase())}
               className={inputCls} style={inputStyle}
               placeholder="e.g. 236080307001" autoFocus
@@ -110,9 +110,9 @@ export const ForgotPin: React.FC<ForgotPinProps> = ({ onBack, onSuccess }) => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-widest">New PIN</label>
+              <label htmlFor="forgot-pin-new" className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-widest">New PIN</label>
               <div className="relative">
-                <input type={showPin ? 'text' : 'password'} inputMode="numeric" maxLength={4}
+                <input id="forgot-pin-new" type={showPin ? 'text' : 'password'} inputMode="numeric" maxLength={4}
                   value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   className={`${inputCls} pr-10 text-center text-xl tracking-widest font-black`} style={inputStyle}
                   placeholder="••••" autoFocus />
@@ -124,8 +124,8 @@ export const ForgotPin: React.FC<ForgotPinProps> = ({ onBack, onSuccess }) => {
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-widest">Confirm PIN</label>
-              <input type="password" inputMode="numeric" maxLength={4}
+              <label htmlFor="forgot-pin-confirm" className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-widest">Confirm PIN</label>
+              <input id="forgot-pin-confirm" type="password" inputMode="numeric" maxLength={4}
                 value={confirmPin} onChange={e => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 className={`${inputCls} text-center text-xl tracking-widest font-black`} style={inputStyle}
                 placeholder="••••" />

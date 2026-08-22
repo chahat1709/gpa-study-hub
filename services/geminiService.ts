@@ -1,18 +1,8 @@
 
 import { GoogleGenAI, GenerateContentResponse, Chat } from "@google/genai";
+import { getStoredApiKey } from './aiKeyStorage';
 
 const MODEL_PRO = 'gemini-3-pro-preview';
-
-export const getStoredApiKey = (): string => {
-  // 1. Try Environment Variable (For dev/hosting)
-  if (import.meta.env.VITE_GEMINI_API_KEY) return import.meta.env.VITE_GEMINI_API_KEY;
-  
-  // 2. Try Local Storage (For manual user entry)
-  const stored = localStorage.getItem('USER_GEMINI_API_KEY');
-  if (stored) return stored;
-
-  return '';
-};
 
 export const createChatSession = (systemInstruction?: string): Chat => {
   const apiKey = getStoredApiKey();

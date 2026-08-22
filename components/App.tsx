@@ -9,7 +9,7 @@ import { SocketProvider } from './SocketContext';
 import { NotificationProvider, useNotifications } from './NotificationContext';
 import { AuthPage } from './AuthPage';
 import { Onboarding } from './Onboarding';
-import { Loader2, Bell, ChevronLeft, User as UserIcon, WifiOff, Download, Server, Cloud } from 'lucide-react';
+import { Loader2, Bell, ChevronLeft, User as UserIcon, WifiOff, Download, Server, Cloud, Search, X, Command, ArrowRight, CalendarDays, BookOpen, Award, Sparkles } from 'lucide-react';
 import AdminDashboard from './AdminDashboard';
 import NexusAgent from './NexusAgent';
 import { examService } from '../services/examService';
@@ -22,11 +22,7 @@ import { useSafeAreaInsets, useIsMobile } from '../hooks/useMobile';
 import { updateService } from '../services/updateService';
 import { checkServerHealth } from '../services/apiClient';
 
-// 3D Design Components
-import WebGLBackground from './3d/WebGLBackground';
-import MagneticCursor from './3d/MagneticCursor';
-import ScrollAnimations from './3d/ScrollAnimations';
-import LoadingScreen from './3d/LoadingScreen';
+// The web shell opens directly into the workspace after essential startup checks.
 
 const ONBOARDED_KEY = 'gpa_hub_onboarded_v1';
 
@@ -43,7 +39,24 @@ const ProfileInterface = React.lazy(() => import('./ProfileInterface'));
 const AttendanceInterface = React.lazy(() => import('./AttendanceInterface'));
 const ExamHubInterface = React.lazy(() => import('./ExamHubInterface'));
 
+const CommandPalette: React.FC<{ onNavigate: (mode: AppMode) => void; onClose: () => void }> = ({ onNavigate, onClose }) => {
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const actions = [
+    { mode: AppMode.CAMPUS, label: 'Open overview', detail: 'See what needs your attention', icon: Search },
+    { mode: AppMode.EXAM_HUB, label: 'Prepare for an exam', detail: 'Quizzes, papers, and grading', icon: Award },
+    { mode: AppMode.PLANNER, label: 'Plan my week', detail: 'Tasks, deadlines, and study blocks', icon: CalendarDays },
+    { mode: AppMode.LIBRARY, label: 'Find study material', detail: 'Notes, resources, and references', icon: BookOpen },
+    { mode: AppMode.TUTOR, label: 'Ask the tutor', detail: 'Get contextual help with a topic', icon: Sparkles },
+  ];
+  const filtered = actions.filter(action => `${action.label} ${action.detail}`.toLowerCase().includes(query.toLowerCase()));
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKeyDown); return () => window.removeEventListener('keydown', onKeyDown); }, [onClose]);
+  return <div className="command-overlay" role="presentation" onMouseDown={event => event.target === event.currentTarget && onClose()}><section className="command-dialog" role="dialog" aria-modal="true" aria-label="Search and commands"><div className="command-heading"><div><p className="command-kicker">Quick switcher</p><h2>Where do you want to go?</h2></div><button onClick={onClose} aria-label="Close command palette"><X /></button></div><div className="command-input-wrap"><Search /><input ref={inputRef} value={query} onChange={event => setQuery(event.target.value)} placeholder="Search features or actions…" aria-label="Search features or actions" /><kbd>Esc</kbd></div><div className="command-results">{filtered.length ? filtered.map(action => { const Icon = action.icon; return <button key={action.label} className="command-result" onClick={() => { onNavigate(action.mode); onClose(); }}><span className="command-result-icon"><Icon /></span><span><strong>{action.label}</strong><small>{action.detail}</small></span><ArrowRight /></button>; }) : <div className="command-empty">No matching action. Try “exam”, “plan”, or “library”.</div>}</div><p className="command-footnote"><Command /> K to open anytime <span>·</span> Arrow keys to explore</p></section></div>;
+};
+
 const LoadingFallback: React.FC = () => (
+
   <div className="flex-1 flex items-center justify-center h-full" style={{ background: 'transparent' }}>
     <div className="flex flex-col items-center gap-4">
       <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
@@ -74,7 +87,7 @@ const OfflineBanner: React.FC = () => {
 const AppShell: React.FC = () => {
   const { user, isLoading, serverOnline } = useAuth();
   const { success } = useToast();
-  const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.EXAM_HUB);
+  const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.CAMPUS);
   const { hasKey: isAiActive } = useApiKeyCheck(5000);
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDED_KEY));
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit'>('enter');
@@ -84,9 +97,19 @@ const AppShell: React.FC = () => {
   const isMobile = useIsMobile();
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<null | Awaited<ReturnType<typeof updateService.checkForUpdate>>>({ version: '', versionCode: 0, apkUrl: '', changelog: '', mandatory: false });
-  const [showLoading, setShowLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+
+    useEffect(() => {
+    const onShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setCommandOpen(true); }
+    };
+    window.addEventListener('keydown', onShortcut);
+    return () => window.removeEventListener('keydown', onShortcut);
+  }, []);
 
   // Check for app updates (native only)
+
   useEffect(() => {
     const checkUpdate = async () => {
       const info = await updateService.checkForUpdate();
@@ -158,7 +181,7 @@ const AppShell: React.FC = () => {
   }, [success]);
 
   if (showOnboarding) return <Onboarding onComplete={() => { localStorage.setItem(ONBOARDED_KEY, '1'); setShowOnboarding(false); }} />;
-  if (showLoading) return <LoadingScreen onComplete={() => setShowLoading(false)} />;
+  if (showLoading) return null;
   if (isLoading || !license) return <LoadingFallback />;
 
 
@@ -203,15 +226,8 @@ const AppShell: React.FC = () => {
   const bottomNavHeight = 85 + insets.bottom;
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden font-sans relative antialiased min-h-screen">
-      {/* 3D WebGL Background */}
-      <WebGLBackground />
+    <div className="ui-app-shell flex h-[100dvh] w-full overflow-hidden font-sans relative antialiased min-h-screen">
       
-      {/* Magnetic Custom Cursor */}
-      <MagneticCursor />
-      
-      {/* GSAP Scroll Animations */}
-      <ScrollAnimations />
 
       {/* Atmospheric Backgrounds */}
       <div className="bg-blob-1"></div>
@@ -251,7 +267,7 @@ const AppShell: React.FC = () => {
         )}
 
         {/* Mobile Native Header */}
-        <header className="lg:hidden shrink-0 flex items-center justify-between px-4 z-40 sticky top-0 pt-[env(safe-area-inset-top)] box-content bg-transparent backdrop-blur-md transition-all duration-300" style={{ height: 52 + insets.top }}>
+        <header className="ui-mobile-header lg:hidden shrink-0 flex items-center justify-between px-4 z-40 sticky top-0 pt-[env(safe-area-inset-top)] box-content transition-all duration-300" style={{ height: 52 + insets.top }}>
           <div className="flex items-center gap-2.5">
             {currentMode !== AppMode.CAMPUS ? (
               <button
@@ -294,23 +310,15 @@ const AppShell: React.FC = () => {
         </header>
 
         {/* Desktop Header */}
-        <header className="hidden lg:flex h-16 shrink-0 items-center justify-between px-8 z-40 bg-[rgba(15,23,42,0.8)] backdrop-blur-[20px] border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-slate-400">Academic Year 2024-25</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
-              <div className={`w-2 h-2 rounded-full ${isAiActive ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-              <span className="text-xs font-medium text-slate-300">{isAiActive ? 'Online' : 'API Key Needed'}</span>
-            </div>
-            <NotificationBell />
-          </div>
+        <header className="ui-topbar hidden lg:flex h-16 shrink-0 items-center justify-between px-8 z-40">
+          <div className="topbar-context"><span className="topbar-overline">GTU academic workspace</span><span className="topbar-divider" /><span>Academic Year 2024–25</span></div>
+          <div className="topbar-actions"><button className="command-trigger" onClick={() => setCommandOpen(true)}><Search /><span>Search or jump to…</span><kbd>⌘ K</kbd></button><div className={`topbar-status ${isAiActive ? 'is-ready' : 'is-muted'}`}><span />{isAiActive ? 'Tutor ready' : 'Tutor setup'}</div><NotificationBell /></div>
         </header>
 
-        <main className={`flex-1 overflow-y-auto overflow-x-hidden native-scroll relative w-full ${!isNavHidden ? `pb-[${bottomNavHeight}px] lg:pb-0` : ''}`}>
+        <main className={`ui-main-scroll flex-1 overflow-y-auto overflow-x-hidden native-scroll relative w-full ${!isNavHidden ? `pb-[${bottomNavHeight}px] lg:pb-0` : ''}`}>
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
-              <div className={`h-full w-full ${pageTransition === 'exit' ? 'page-exit' : 'page-enter'}`}>
+              <div className={`h-full w-full ${pageTransition === 'exit' ? 'ui-page-exit' : 'ui-page-enter'}`}>
                 {renderContent()}
               </div>
             </Suspense>
@@ -323,7 +331,9 @@ const AppShell: React.FC = () => {
           </div>
         )}
 
-        <NexusAgent forceLower={isNavHidden} />
+                <NexusAgent forceLower={isNavHidden} />
+        {commandOpen && <CommandPalette onNavigate={setCurrentMode} onClose={() => setCommandOpen(false)} />}
+
       </div>
     </div>
   );
@@ -350,7 +360,7 @@ const NotificationBell: React.FC = () => {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50">
+          <div className="ui-notification-popover absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50">
             <div className="p-3 border-b border-white/10">
               <h3 className="text-sm font-bold text-white">Notifications</h3>
             </div>

@@ -1,40 +1,63 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastProvider';
 import { ForgotPin } from './ForgotPin';
 import {
-  GraduationCap, Loader2, User, Building2, Shield,
-  ChevronRight, Eye, EyeOff, KeyRound, UserPlus,
-  LogIn, Fingerprint, BookOpen, Brain, Zap
+  ArrowRight, BookOpen, Brain, Building2, Check, Eye, EyeOff,
+  Fingerprint, GraduationCap, KeyRound, Loader2, LogIn, Shield,
+  Sparkles, User, UserPlus, Users, Zap,
 } from 'lucide-react';
-import { inputCls, inputStyle, btnPrimary } from '../utils/authStyles';
 
 const BRANCHES = ['EC', 'ICT'];
 const SEMESTERS = ['1', '2', '3', '4', '5', '6'];
-const SECTIONS: Record<string, string[]> = {
-  EC: ['A', 'B', 'C'],
-  ICT: ['A', 'B'],
-};
-
+const SECTIONS: Record<string, string[]> = { EC: ['A', 'B', 'C'], ICT: ['A', 'B'] };
 type RoleTab = 'STUDENT' | 'FACULTY' | 'ADMIN';
 type StudentView = 'LOGIN' | 'REGISTER';
 type FacultyView = 'LOGIN' | 'REGISTER';
 
-const features = [
-  { icon: Brain, label: 'AI Tutor', color: '#00f2fe' },
-  { icon: BookOpen, label: 'GTU Exam Hub', color: '#fbbf24' },
-  { icon: Zap, label: '100% Offline', color: '#10b981' },
-];
+const roleCopy = {
+  STUDENT: { eyebrow: 'Student workspace', title: 'Your academic day, organized.', desc: 'Open your schedule, attendance, study tools, and exam preparation from one focused workspace.', icon: GraduationCap, accent: 'mint' },
+  FACULTY: { eyebrow: 'Faculty workspace', title: 'Keep your class moving.', desc: 'Manage attendance, notices, resources, and student communication from a single secure dashboard.', icon: Building2, accent: 'violet' },
+  ADMIN: { eyebrow: 'GTU administration', title: 'Operate the academic network.', desc: 'Access system controls, configuration, and institutional tools with protected administrator access.', icon: Shield, accent: 'coral' },
+} as const;
+
+const Field = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
+  <label className="auth-field">
+    <span className="auth-label">{label}</span>
+    {children}
+    {hint && <span className="auth-hint">{hint}</span>}
+  </label>
+);
+
+interface PinInputsProps {
+  register?: boolean;
+  showRegPin: boolean;
+  setShowRegPin: React.Dispatch<React.SetStateAction<boolean>>;
+  regPin: string;
+  setRegPin: React.Dispatch<React.SetStateAction<string>>;
+  regPinConfirm: string;
+  setRegPinConfirm: React.Dispatch<React.SetStateAction<string>>;
+  stuPin: string[];
+  pinRefs: React.MutableRefObject<(HTMLInputElement | null)[]>;
+  handlePinDigit: (idx: number, value: string) => void;
+}
+
+const PinInputs: React.FC<PinInputsProps> = ({ register = false, showRegPin, setShowRegPin, regPin, setRegPin, regPinConfirm, setRegPinConfirm, stuPin, pinRefs, handlePinDigit }) => {
+  if (register) return (
+    <div className="auth-pin-row auth-pin-row-compact">
+      <div className="auth-pin-wrap"><input className="auth-input auth-pin-input" type={showRegPin ? 'text' : 'password'} inputMode="numeric" maxLength={4} value={regPin} onChange={e => setRegPin(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" aria-label="Set four digit PIN" /><button type="button" className="auth-input-action" onClick={() => setShowRegPin(p => !p)} aria-label={showRegPin ? 'Hide PIN' : 'Show PIN'}>{showRegPin ? <EyeOff /> : <Eye />}</button></div>
+      <input className="auth-input auth-pin-input" type="password" inputMode="numeric" maxLength={4} value={regPinConfirm} onChange={e => setRegPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" aria-label="Confirm four digit PIN" />
+    </div>
+  );
+  return <div className="auth-pin-row">{stuPin.map((digit, idx) => <input key={idx} ref={el => { pinRefs.current[idx] = el; }} className="auth-input auth-pin-digit" type="password" inputMode="numeric" maxLength={1} value={digit} onChange={e => handlePinDigit(idx, e.target.value)} onKeyDown={e => { if (e.key === 'Backspace' && !digit && idx > 0) pinRefs.current[idx - 1]?.focus(); }} aria-label={`PIN digit ${idx + 1}`} />)}</div>;
+};
 
 export const AuthPage: React.FC = () => {
   const { studentLogin, studentRegister, facultyLogin, facultyRegister, adminLogin } = useAuth();
   const { error: showError, success: showSuccess } = useToast();
-
   const [role, setRole] = useState<RoleTab>('STUDENT');
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPin, setShowForgotPin] = useState(false);
-
-  // Student
   const [stuView, setStuView] = useState<StudentView>('LOGIN');
   const [stuEnroll, setStuEnroll] = useState('');
   const [stuName, setStuName] = useState('');
@@ -46,384 +69,85 @@ export const AuthPage: React.FC = () => {
   const [showRegPin, setShowRegPin] = useState(false);
   const [regPin, setRegPin] = useState('');
   const [regPinConfirm, setRegPinConfirm] = useState('');
-
-  // Faculty
   const [facView, setFacView] = useState<FacultyView>('LOGIN');
   const [facEmail, setFacEmail] = useState('');
   const [facPassword, setFacPassword] = useState('');
   const [facName, setFacName] = useState('');
   const [facBranch, setFacBranch] = useState('EC');
   const [showPw, setShowPw] = useState(false);
-
-  // Admin
   const [adminCode, setAdminCode] = useState('');
   const [showAdminCode, setShowAdminCode] = useState(false);
 
-  // Carousel
-  const [fi, setFi] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setFi(i => (i + 1) % features.length), 2800);
-    return () => clearInterval(t);
-  }, []);
+  const copy = roleCopy[role];
+  const RoleIcon = copy.icon;
 
-  // PIN digit input (4-digit)
-  const handlePinDigit = (idx: number, val: string) => {
-    const d = val.replace(/\D/g, '').slice(0, 1);
-    const next = [...stuPin];
-    next[idx] = d;
-    setStuPin(next);
-    if (d && idx < 3) pinRefs.current[idx + 1]?.focus();
-    if (!d && idx > 0) pinRefs.current[idx - 1]?.focus();
+  const handlePinDigit = (idx: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(0, 1);
+    const next = [...stuPin]; next[idx] = digit; setStuPin(next);
+    if (digit && idx < 3) pinRefs.current[idx + 1]?.focus();
+    if (!digit && idx > 0) pinRefs.current[idx - 1]?.focus();
   };
 
   const run = async (fn: () => Promise<void>) => {
     setIsLoading(true);
-    try { await fn(); }
-    catch (e: any) { showError(e.message || 'Something went wrong'); }
-    finally { setIsLoading(false); }
+    try { await fn(); } catch (e: any) { showError(e.message || 'Something went wrong'); } finally { setIsLoading(false); }
   };
 
-  // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleStudentLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const pin = stuPin.join('');
+    e.preventDefault(); const pin = stuPin.join('');
     if (!stuEnroll.trim()) return showError('Enter enrollment number');
     if (pin.length < 4) return showError('Enter your 4-digit PIN');
-    run(() => studentLogin(stuEnroll.trim().toUpperCase(), pin).then(() => showSuccess('Welcome back! 🎓')));
+    run(() => studentLogin(stuEnroll.trim().toUpperCase(), pin).then(() => showSuccess('Welcome back!')));
   };
-
   const handleStudentRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stuName.trim() || !stuEnroll.trim()) return showError('Name and Enrollment Number required');
+    if (!stuName.trim() || !stuEnroll.trim()) return showError('Name and enrollment number required');
     if (!/^\d{4}$/.test(regPin)) return showError('PIN must be exactly 4 digits');
     if (regPin !== regPinConfirm) return showError('PINs do not match');
-    run(() => studentRegister(stuName.trim(), stuEnroll.trim(), regPin, stuBranch, stuSem, stuSec)
-      .then(() => showSuccess('Account created! Welcome 🎓')));
+    run(() => studentRegister(stuName.trim(), stuEnroll.trim(), regPin, stuBranch, stuSem, stuSec).then(() => showSuccess('Account created!')));
   };
+  const handleFacultyLogin = (e: React.FormEvent) => { e.preventDefault(); if (!facEmail || !facPassword) return showError('Email and password required'); run(() => facultyLogin(facEmail, facPassword).then(() => showSuccess('Welcome back!'))); };
+  const handleFacultyRegister = (e: React.FormEvent) => { e.preventDefault(); if (!facName || !facEmail || !facPassword) return showError('All fields required'); if (facPassword.length < 6) return showError('Password must be at least 6 characters'); run(() => facultyRegister(facName, facEmail, facPassword, facBranch).then(() => showSuccess('Faculty account created'))); };
+  const handleAdminLogin = (e: React.FormEvent) => { e.preventDefault(); if (!adminCode) return showError('Admin code required'); run(() => adminLogin(adminCode).then(() => showSuccess('Administrator access granted'))); };
 
-  const handleFacultyLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!facEmail || !facPassword) return showError('Email and password required');
-    run(() => facultyLogin(facEmail, facPassword).then(() => showSuccess('Admin access granted ✓')));
-  };
-
-  const handleFacultyRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!facName || !facEmail || !facPassword) return showError('All fields required');
-    if (facPassword.length < 6) return showError('Password min 6 characters');
-    run(() => facultyRegister(facName, facEmail, facPassword, facBranch)
-      .then(() => showSuccess('Faculty account created ✓')));
-  };
-
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminCode) return showError('Admin code required');
-    run(() => adminLogin(adminCode).then(() => showSuccess('GTU Admin access granted 🔐')));
-  };
-
-  // ── Styles (shared) ─────────────────────────────────────────────────────────
-  const Feat = features[fi] || features[0]!;
-  const FeatIcon = Feat.icon;
+  useEffect(() => { setShowForgotPin(false); }, [role, stuView]);
 
   return (
-    <div className="min-h-screen w-full flex relative overflow-hidden bg-transparent">
-      {/* Background orbs from index.css */}
-      <div className="glow-orb glow-orb-1" />
-      <div className="glow-orb glow-orb-2" />
-      <div className="glow-orb glow-orb-3" />
-
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col lg:flex-row relative z-10 w-full h-full">
-        
-        {/* Left panel — desktop hero */}
-        <div className="hidden lg:flex w-[45%] flex-col justify-between p-12 relative overflow-hidden border-r border-white/10 glass-panel">
-          {/* Logo */}
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_15px_rgba(192,193,255,0.3)] bg-gradient-to-br from-primary to-secondary">
-              <GraduationCap className="w-8 h-8 text-on-primary" />
-            </div>
-            <div>
-              <div className="text-3xl font-display-lg font-black text-white tracking-tight">GPA Study Hub</div>
-              <div className="text-sm font-mono text-tertiary mt-1">GTU Diploma Platform</div>
-            </div>
+    <main className="auth-page">
+      <div className="auth-shell">
+        <section className={`auth-story auth-story-${copy.accent}`} aria-label="GPA Study Hub introduction">
+          <div className="auth-brand"><div className="auth-logo"><GraduationCap /></div><div><strong>GPA Study Hub</strong><span>GTU academic workspace</span></div></div>
+          <div className="auth-story-main">
+            <p className="auth-kicker"><Sparkles /> {copy.eyebrow}</p>
+            <h1>{copy.title}</h1>
+            <p className="auth-story-copy">{copy.desc}</p>
+            <div className="auth-story-list"><div><Check /> <span><b>One calm home</b><small>Everything important is visible at a glance.</small></span></div><div><Check /> <span><b>Built for GTU</b><small>EC and ICT students, faculty, and administrators.</small></span></div><div><Check /> <span><b>Works offline</b><small>Your study flow continues when the network does not.</small></span></div></div>
           </div>
+          <div className="auth-story-footer"><span className="auth-live-dot" /> Community edition · No subscription required</div>
+        </section>
 
-          {/* Hero text */}
-          <div className="space-y-8">
-            <h1 className="text-6xl font-display-lg font-black text-white leading-[1.1] tracking-tight">
-              Secure.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-                Role-Based.
-              </span><br />
-              Powerful.
-            </h1>
-            <p className="text-slate-400 text-xl leading-relaxed max-w-md">
-              A private, offline-first ecosystem tailored for GTU EC & ICTET students.
-            </p>
-
-            <div className="space-y-4">
-              {[
-                { role: 'STUDENT', color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20', icon: User, desc: 'Exams, Library, AI Tutor, Planner' },
-                { role: 'FACULTY', color: 'text-secondary', bg: 'bg-secondary/10', border: 'border-secondary/20', icon: Building2, desc: 'Attendance, Notices, Resources' },
-                { role: 'GTU ADMIN', color: 'text-tertiary', bg: 'bg-tertiary/10', border: 'border-tertiary/20', icon: Shield, desc: 'Full System Access & Config' },
-              ].map(r => {
-                const RIcon = r.icon;
-                return (
-                  <div key={r.role} className={`flex items-center gap-4 p-4 rounded-2xl border ${r.bg} ${r.border} backdrop-blur-sm transition-transform hover:scale-[1.02] duration-300`}>
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white/5`}>
-                      <RIcon className={`w-5 h-5 ${r.color}`} />
-                    </div>
-                    <div>
-                      <div className={`text-sm font-black tracking-wider ${r.color}`}>{r.role}</div>
-                      <div className="text-sm text-slate-400 mt-0.5">{r.desc}</div>
-                    </div>
-                  </div>
-                );
-              })}
+        <section className="auth-panel">
+          <div className="auth-mobile-brand"><div className="auth-logo"><GraduationCap /></div><div><strong>GPA Study Hub</strong><span>GTU academic workspace</span></div></div>
+          <div className="auth-form-wrap">
+            <div className="auth-form-heading"><p className="auth-overline">Welcome back</p><h2>Sign in to continue</h2><p>Choose your workspace and enter your details.</p></div>
+            <div className="auth-role-tabs" role="tablist" aria-label="Choose workspace">
+              {(['STUDENT', 'FACULTY', 'ADMIN'] as RoleTab[]).map(item => { const ItemIcon = roleCopy[item].icon; return <button key={item} role="tab" aria-selected={role === item} className={role === item ? 'is-active' : ''} onClick={() => setRole(item)}><ItemIcon /><span>{item === 'STUDENT' ? 'Student' : item === 'FACULTY' ? 'Faculty' : 'Admin'}</span></button>; })}
             </div>
+
+            {role === 'STUDENT' && <div className="auth-form-body" role="tabpanel">
+              <div className="auth-subtabs"><button className={stuView === 'LOGIN' ? 'is-active' : ''} onClick={() => setStuView('LOGIN')}><LogIn /> Sign in</button><button className={stuView === 'REGISTER' ? 'is-active' : ''} onClick={() => setStuView('REGISTER')}><UserPlus /> Create account</button></div>
+              {stuView === 'LOGIN' && !showForgotPin && <form className="auth-form" onSubmit={handleStudentLogin}><Field label="Enrollment number" hint="Use the number on your GTU identity card"><input className="auth-input" type="text" value={stuEnroll} onChange={e => setStuEnroll(e.target.value)} placeholder="236080307001" autoCapitalize="characters" aria-required="true" /></Field><Field label="4-digit PIN"><div className="auth-pin-label"><Fingerprint /><span>Enter your secure campus PIN</span></div><PinInputs showRegPin={showRegPin} setShowRegPin={setShowRegPin} regPin={regPin} setRegPin={setRegPin} regPinConfirm={regPinConfirm} setRegPinConfirm={setRegPinConfirm} stuPin={stuPin} pinRefs={pinRefs} handlePinDigit={handlePinDigit} /></Field><button className="auth-submit auth-submit-mint" type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="spin" /> : <><span>Enter campus</span><ArrowRight /></>}</button><button className="auth-link-row" type="button" onClick={() => setShowForgotPin(true)}>Forgot your PIN? <span>Reset access</span></button></form>}
+              {stuView === 'LOGIN' && showForgotPin && <ForgotPin onBack={() => setShowForgotPin(false)} onSuccess={() => setShowForgotPin(false)} />}
+              {stuView === 'REGISTER' && <form className="auth-form" onSubmit={handleStudentRegister}><Field label="Full name"><input className="auth-input" required type="text" value={stuName} onChange={e => setStuName(e.target.value)} placeholder="Rahul Patel" /></Field><Field label="Enrollment number"><input className="auth-input" required type="text" value={stuEnroll} onChange={e => setStuEnroll(e.target.value.toUpperCase())} placeholder="236080307001" /></Field><div className="auth-grid-3"><Field label="Branch"><select className="auth-input" value={stuBranch} onChange={e => { setStuBranch(e.target.value); setStuSec(SECTIONS[e.target.value]?.[0] || ''); }}>{BRANCHES.map(o => <option key={o}>{o}</option>)}</select></Field><Field label="Semester"><select className="auth-input" value={stuSem} onChange={e => setStuSem(e.target.value)}>{SEMESTERS.map(o => <option key={o}>{o}</option>)}</select></Field><Field label="Section"><select className="auth-input" value={stuSec} onChange={e => setStuSec(e.target.value)}>{SECTIONS[stuBranch]?.map(o => <option key={o}>{o}</option>)}</select></Field></div><Field label="Create a 4-digit PIN"><PinInputs register showRegPin={showRegPin} setShowRegPin={setShowRegPin} regPin={regPin} setRegPin={setRegPin} regPinConfirm={regPinConfirm} setRegPinConfirm={setRegPinConfirm} stuPin={stuPin} pinRefs={pinRefs} handlePinDigit={handlePinDigit} /></Field>{regPin.length === 4 && regPinConfirm.length === 4 && <div className={regPin === regPinConfirm ? 'auth-validation ok' : 'auth-validation error'}>{regPin === regPinConfirm ? 'PINs match' : 'PINs do not match'}</div>}<button className="auth-submit auth-submit-mint" type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="spin" /> : <><span>Create student account</span><ArrowRight /></>}</button></form>}
+            </div>}
+
+            {role === 'FACULTY' && <div className="auth-form-body" role="tabpanel"><div className="auth-subtabs"><button className={facView === 'LOGIN' ? 'is-active' : ''} onClick={() => setFacView('LOGIN')}><LogIn /> Sign in</button><button className={facView === 'REGISTER' ? 'is-active' : ''} onClick={() => setFacView('REGISTER')}><UserPlus /> Create account</button></div><form className="auth-form" onSubmit={facView === 'LOGIN' ? handleFacultyLogin : handleFacultyRegister}>{facView === 'REGISTER' && <Field label="Full name"><input className="auth-input" type="text" value={facName} onChange={e => setFacName(e.target.value)} placeholder="Prof. Sharma" /></Field>}<Field label="Work email"><input className="auth-input" type="email" required value={facEmail} onChange={e => setFacEmail(e.target.value)} placeholder="faculty@gtu.edu" /></Field><Field label="Password"><div className="auth-pin-wrap"><input className="auth-input" aria-label="Password" type={showPw ? 'text' : 'password'} required value={facPassword} onChange={e => setFacPassword(e.target.value)} placeholder={facView === 'LOGIN' ? 'Enter password' : 'At least 6 characters'} /><button type="button" className="auth-input-action" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'}>{showPw ? <EyeOff /> : <Eye />}</button></div></Field>{facView === 'REGISTER' && <Field label="Department"><select className="auth-input" value={facBranch} onChange={e => setFacBranch(e.target.value)}>{BRANCHES.map(b => <option key={b}>{b}</option>)}</select></Field>}<button className="auth-submit auth-submit-violet" type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="spin" /> : <><span>{facView === 'LOGIN' ? 'Access faculty workspace' : 'Create faculty account'}</span><ArrowRight /></>}</button></form></div>}
+
+            {role === 'ADMIN' && <div className="auth-form-body" role="tabpanel"><div className="auth-admin-callout"><div className="auth-admin-icon"><Shield /></div><div><strong>Protected administrator access</strong><span>This area is reserved for GTU system operators.</span></div></div><form className="auth-form" onSubmit={handleAdminLogin}><Field label="Admin access code"><div className="auth-pin-wrap"><input className="auth-input" type={showAdminCode ? 'text' : 'password'} value={adminCode} onChange={e => setAdminCode(e.target.value)} placeholder="GTU-ADMIN-XXXX" /><button type="button" className="auth-input-action" onClick={() => setShowAdminCode(p => !p)} aria-label={showAdminCode ? 'Hide access code' : 'Show access code'}>{showAdminCode ? <EyeOff /> : <Eye />}</button></div></Field><button className="auth-submit auth-submit-coral" type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="spin" /> : <><span>Enter admin workspace</span><ArrowRight /></>}</button></form></div>}
           </div>
-
-          {/* Feature Carousel */}
-          <div className="glass-card p-5 mt-8 flex items-center gap-5">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 shrink-0">
-              <FeatIcon className="w-6 h-6" style={{ color: Feat.color }} />
-            </div>
-            <div className="flex-1">
-              <div className="font-bold font-display-lg text-white text-lg">{Feat.label}</div>
-              <div className="flex gap-2 mt-3">
-                {features.map((_, i) => (
-                  <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === fi ? 'w-8 bg-primary' : 'w-2 bg-white/20'}`} style={{ backgroundColor: i === fi ? Feat.color : undefined }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right panel — Form area */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12 relative overflow-y-auto auth-scroll-container">
-          
-          {/* Mobile Header */}
-          <div className="lg:hidden flex flex-col items-center gap-3 mb-8 text-center">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-br from-primary to-secondary shadow-primary-container/20">
-              <GraduationCap className="w-8 h-8 text-on-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display-lg font-black text-white tracking-tight">GPA Study Hub</h1>
-              <p className="text-sm font-mono text-tertiary mt-1">GTU Diploma</p>
-            </div>
-          </div>
-
-          {/* Glass Form Card */}
-          <div className="glass-card w-full max-w-[400px] p-8 card-3d">
-            
-            {/* Elegant Segmented Control */}
-            <div className="flex p-1.5 glass-panel rounded-2xl mb-8 shadow-inner">
-              {([
-                { id: 'STUDENT', label: 'Student', color: 'text-primary', activeBg: 'bg-primary/20' },
-                { id: 'FACULTY', label: 'Faculty', color: 'text-secondary', activeBg: 'bg-secondary/20' },
-                { id: 'ADMIN', label: 'Admin', color: 'text-tertiary', activeBg: 'bg-tertiary/20' },
-              ] as const).map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setRole(t.id as RoleTab)}
-                  className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${role === t.id ? `${t.activeBg} ${t.color} shadow-sm border border-white/10` : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'}`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Content Based on Role */}
-            {role === 'STUDENT' && (
-              <div role="tabpanel" className="animate-fade-in">
-                <div className="flex gap-2 mb-6" role="tablist">
-                  {(['LOGIN', 'REGISTER'] as StudentView[]).map(v => (
-                    <button key={v} onClick={() => setStuView(v)}
-                      className={`flex-1 flex items-center justify-center gap-2 text-xs py-3 rounded-xl font-bold transition-all ${stuView === v ? 'bg-primary/20 border-primary/30 text-primary border' : 'bg-white/5 border-white/10 text-slate-400 border'}`}>
-                      {v === 'LOGIN' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                      {v === 'LOGIN' ? 'Login' : 'Register'}
-                    </button>
-                  ))}
-                </div>
-
-                {stuView === 'LOGIN' && !showForgotPin && (
-                  <form onSubmit={handleStudentLogin} className="space-y-6">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Enrollment Number</label>
-                      <input type="text" required value={stuEnroll} onChange={e => setStuEnroll(e.target.value)}
-                        className={inputCls} style={inputStyle} placeholder="e.g. 236080307001" autoFocus autoCapitalize="characters" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest flex items-center gap-2">
-                        <Fingerprint className="w-4 h-4 text-primary" />
-                        4-Digit PIN
-                      </label>
-                      <div className="flex gap-4 justify-center">
-                        {stuPin.map((d, i) => (
-                           <input key={i} ref={el => { pinRefs.current[i] = el; }}
-                             type="password" inputMode="numeric" maxLength={1} value={d}
-                             onChange={e => handlePinDigit(i, e.target.value)}
-                             onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) pinRefs.current[i - 1]?.focus(); }}
-                             className="w-[60px] h-[68px] text-center text-3xl font-black rounded-2xl outline-none transition-all duration-300 focus:scale-105"
-                             style={{ ...inputStyle, border: d ? '2px solid var(--neon-cyan)' : '1px solid rgba(255,255,255,0.12)', color: 'var(--neon-cyan)' }}
-                           />
-                        ))}
-                      </div>
-                    </div>
-                    <button type="submit" disabled={isLoading} className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-secondary text-surface shadow-[0_8px_20px_rgba(192,193,255,0.3)] hover:scale-[1.02] transition-transform">
-                      {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><KeyRound className="w-4 h-4" /> Enter Campus</>}
-                    </button>
-                    <p className="text-center text-xs text-slate-500 pt-2">
-                      <button type="button" onClick={() => setStuView('REGISTER')} className="text-primary font-bold hover:text-primary/80 transition-colors">Register</button>
-                      {' · '}
-                      <button type="button" onClick={() => setShowForgotPin(true)} className="text-tertiary font-bold hover:text-tertiary/80 transition-colors">Forgot PIN?</button>
-                    </p>
-                  </form>
-                )}
-
-                {stuView === 'LOGIN' && showForgotPin && (
-                  <ForgotPin onBack={() => setShowForgotPin(false)} onSuccess={() => setShowForgotPin(false)} />
-                )}
-
-                {stuView === 'REGISTER' && (
-                  <form onSubmit={handleStudentRegister} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Full Name</label>
-                      <input required type="text" value={stuName} onChange={e => setStuName(e.target.value)} className={inputCls} style={inputStyle} placeholder="e.g. Rahul Patel" autoFocus />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Enrollment Number</label>
-                      <input required type="text" value={stuEnroll} onChange={e => setStuEnroll(e.target.value.toUpperCase())} className={inputCls} style={inputStyle} placeholder="236080307001" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Branch</label>
-                        <select value={stuBranch} onChange={e => { setStuBranch(e.target.value); setStuSec(SECTIONS[e.target.value]?.[0] || ''); }} className={inputCls} style={{ ...inputStyle, padding: '0 12px' }}>
-                          {BRANCHES.map(o => <option key={o} value={o} className="bg-slate-900">{o}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Sem</label>
-                        <select value={stuSem} onChange={e => setStuSem(e.target.value)} className={inputCls} style={{ ...inputStyle, padding: '0 12px' }}>
-                          {SEMESTERS.map(o => <option key={o} value={o} className="bg-slate-900">{o}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Sec</label>
-                        <select value={stuSec} onChange={e => setStuSec(e.target.value)} className={inputCls} style={{ ...inputStyle, padding: '0 12px' }}>
-                          {SECTIONS[stuBranch]?.map(o => <option key={o} value={o} className="bg-slate-900">{o}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Set PIN</label>
-                        <div className="relative">
-                          <input type={showRegPin ? 'text' : 'password'} inputMode="numeric" maxLength={4} value={regPin} onChange={e => setRegPin(e.target.value.replace(/\D/g, '').slice(0, 4))} className={`${inputCls} pr-10 text-center text-xl tracking-[0.2em] font-black`} style={inputStyle} placeholder="••••" />
-                          <button type="button" onClick={() => setShowRegPin(p => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors">
-                            {showRegPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Confirm</label>
-                        <input type="password" inputMode="numeric" maxLength={4} value={regPinConfirm} onChange={e => setRegPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))} className={`${inputCls} text-center text-xl tracking-[0.2em] font-black`} style={inputStyle} placeholder="••••" />
-                      </div>
-                    </div>
-                    {regPin.length === 4 && regPinConfirm.length === 4 && (
-                      <div className={`text-xs text-center font-bold mt-2 ${regPin === regPinConfirm ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {regPin === regPinConfirm ? '✓ PINs match' : '✗ PINs do not match'}
-                      </div>
-                    )}
-                    <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 text-slate-950 mt-4 btn-3d" style={btnPrimary('#22d3ee', '#10b981', 'rgba(34,211,238,0.4)')}>
-                      {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><UserPlus className="w-4 h-4" /> Create Account</>}
-                    </button>
-                  </form>
-                )}
-              </div>
-            )}
-
-            {/* Content Based on Role: FACULTY */}
-            {role === 'FACULTY' && (
-              <div role="tabpanel" className="animate-fade-in">
-                <div className="flex gap-2 mb-6" role="tablist">
-                  {(['LOGIN', 'REGISTER'] as FacultyView[]).map(v => (
-                    <button key={v} onClick={() => setFacView(v)}
-                      className={`flex-1 flex items-center justify-center gap-2 text-xs py-3 rounded-xl font-bold transition-all ${facView === v ? 'bg-secondary/20 border-secondary/30 text-secondary border' : 'bg-white/5 border-white/10 text-slate-400 border'}`}>
-                      {v === 'LOGIN' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                      {v === 'LOGIN' ? 'Login' : 'Register'}
-                    </button>
-                  ))}
-                </div>
-                <form onSubmit={facView === 'LOGIN' ? handleFacultyLogin : handleFacultyRegister} className="space-y-5">
-                  {facView === 'REGISTER' && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Full Name</label>
-                      <input type="text" value={facName} onChange={e => setFacName(e.target.value)} className={inputCls} style={inputStyle} placeholder="Prof. Sharma" autoFocus />
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Work Email</label>
-                    <input type="email" required value={facEmail} onChange={e => setFacEmail(e.target.value)} className={inputCls} style={inputStyle} placeholder="faculty@gtu.edu" autoFocus={facView === 'LOGIN'} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Password</label>
-                    <div className="relative">
-                      <input type={showPw ? 'text' : 'password'} required value={facPassword} onChange={e => setFacPassword(e.target.value)} className={`${inputCls} pr-12`} style={inputStyle} placeholder={facView === 'LOGIN' ? '••••••••' : 'Min 6 characters'} />
-                      <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-secondary transition-colors">
-                        {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  {facView === 'REGISTER' && (
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Department</label>
-                      <select value={facBranch} onChange={e => setFacBranch(e.target.value)} className={inputCls} style={{ ...inputStyle, padding: '0 12px' }}>
-                        {BRANCHES.map(b => <option key={b} value={b} className="bg-slate-900">{b}</option>)}
-                      </select>
-                    </div>
-                  )}
-                  <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 text-surface mt-4 shadow-[0_8px_20px_rgba(192,193,255,0.3)] bg-gradient-to-r from-secondary to-primary hover:scale-[1.02]">
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{facView === 'LOGIN' ? 'Access Dashboard' : 'Create Faculty Account'}</>}
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* Content Based on Role: ADMIN */}
-            {role === 'ADMIN' && (
-              <div role="tabpanel" className="animate-fade-in">
-                <div className="text-center mb-8 space-y-2">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/20">
-                    <Shield className="w-8 h-8 text-white" />
-                  </div>
-                  <h2 className="text-lg font-black text-white">GTU Administrator</h2>
-                </div>
-                <form onSubmit={handleAdminLogin} className="space-y-6">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Admin Access Code</label>
-                    <div className="relative">
-                      <input type={showAdminCode ? 'text' : 'password'} value={adminCode} onChange={e => setAdminCode(e.target.value)} className={`${inputCls} pr-12 font-mono tracking-wider`} style={inputStyle} placeholder="GTU-ADMIN-XXXX" autoFocus />
-                      <button type="button" onClick={() => setShowAdminCode(p => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 transition-colors">
-                        {showAdminCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  <button type="submit" disabled={isLoading} className="w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 text-surface mt-4 shadow-[0_8px_20px_rgba(233,196,0,0.3)] bg-gradient-to-r from-tertiary to-amber-500 hover:scale-[1.02]">
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Shield className="w-4 h-4" /> Access GTU Admin</>}
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="mt-8 text-center opacity-60">
-            <p className="text-xs text-slate-400 font-medium">GTU Diploma · EC & ICTET · Semesters 1–6</p>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest">Secured Locally · SHA-256 · Offline First</p>
-          </div>
-        </div>
+          <div className="auth-security-note"><Shield /><span>Local-first access · Your credentials stay on this device</span></div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 };

@@ -47,14 +47,22 @@ export const licenseService = {
   getStatus: async (): Promise<LicenseStatus> => {
     if (isConfigValid && db) {
       try {
-        const snap = await getDoc(doc(db, 'system_config', 'license'));
-        if (snap.exists()) {
+        const snap = await Promise.race([
+          getDoc(doc(db, 'system_config', 'license')),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+        ]);
+        if (snap && snap.exists()) {
           const data = snap.data() as LicenseStatus;
           // Always ensure the license is active (free community model)
           currentLicense = { ...data, isActive: true, tier: 'COMMUNITY_FREE', monthlyFee: 0 };
+        } else if (snap) {
+          // Seed initial free license when Firestore responds with no record.
+          await Promise.race([
+            setDoc(doc(db, 'system_config', 'license'), currentLicense),
+            new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+          ]);
         } else {
-          // Seed initial free license
-          await setDoc(doc(db, 'system_config', 'license'), currentLicense);
+          console.warn('License service timed out; continuing with local community license.');
         }
       } catch (err) {
         console.warn("Failed to fetch license from Firestore, using local:", err);

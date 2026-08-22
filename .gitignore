@@ -26,3 +26,10 @@ playwright-report/
 
 # playwright auth state
 e2e/.auth/
+
+# local backend and Android machine configuration
+server/.env
+android/local.properties
+android/*.keystore
+android/*.jks
+*.aab

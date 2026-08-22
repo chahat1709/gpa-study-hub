@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getStoredApiKey } from '../services/geminiService';
+import { getStoredApiKey } from '../services/aiKeyStorage';
 
 describe('geminiService', () => {
   describe('getStoredApiKey', () => {

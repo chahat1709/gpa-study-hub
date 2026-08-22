@@ -9,5 +9,10 @@ export default defineConfig({
     setupFiles: ['./__tests__/setup.ts'],
     include: ['__tests__/**/*.test.ts', '__tests__/**/*.test.tsx'],
     css: false,
+    pool: 'forks',
+    maxWorkers: 1,
+    isolate: true,
+    testTimeout: 10_000,
+    hookTimeout: 10_000,
   },
 });

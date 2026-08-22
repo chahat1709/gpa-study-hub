@@ -1,0 +1,11 @@
+# Browser UI Audit — 19 Aug 2026
+
+The first authenticated dashboard preview exposed a severe responsive utility failure: the mobile header logo rendered at approximately 1024px square and covered the main dashboard. DOM inspection showed the parent carrying `w-8 h-8` computed to 1024px because the production stylesheet did not contain the expected `.w-8` utility. The active Tailwind configuration defined a custom spacing map and the generated stylesheet also lacked responsive selectors such as `lg:hidden`.
+
+The authentication redesign rendered correctly in the browser with a two-panel desktop composition, clear role tabs, readable labels, and a mint primary action. The dashboard itself still showed the oversized logo artifact, so the remediation added explicit shell sizing safeguards and escaped responsive selectors in the global stylesheet, alongside restoring spacing and screen tokens in `tailwind.config.js`.
+
+Next validation must confirm that the logo is constrained, the mobile header is hidden at desktop widths, the sidebar is visible at desktop widths, and the dashboard content is readable without any artwork covering it.
+
+After restoring explicit spacing and breakpoint safeguards, the desktop preview showed the sidebar and content shell in their intended positions, and the oversized logo artifact was removed. The remaining dashboard was still visually too sparse and inherited the old “Exam Hub hero plus empty notices” hierarchy, so the dashboard was replaced with a command-center layout: welcome context, primary exam focus card, attendance eligibility card, four next-action tiles, official updates, and a today-at-a-glance timeline. The directory and campus info views were also retained with simpler row-based styling.
+
+Final browser review after the dashboard rewrite: the layout now presents a compact desktop rail, top context bar, Overview/Faculty directory/Campus info tabs, a clear welcome block, an Exam Hub focus card, attendance eligibility status, four next actions, official notices, and a Today at a glance timeline. The previous oversized logo/artwork failure is gone. The visual hierarchy is now content-led and scannable, with the primary action visible above the fold and secondary information below.
