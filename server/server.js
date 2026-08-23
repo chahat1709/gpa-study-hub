@@ -18,21 +18,23 @@ const jwt = require('jsonwebtoken');
 const pino = require('pino');
 const cluster = require('cluster');
 const os = require('os');
+const { z } = require('zod');
 
 // ── JWT Config ──────────────────────────────────────────────────────────────────
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required. Set a strong random string (64+ chars).');
 }
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES = '30d';
+const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
+const JWT_ISSUER = 'gpa-study-hub';
 
 function generateToken(user) {
-  return jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+  return jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: JWT_EXPIRES, issuer: JWT_ISSUER });
 }
 
 function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, JWT_SECRET, { issuer: JWT_ISSUER });
   } catch {
     return null;
   }
@@ -75,6 +77,40 @@ function requireOwnershipOrAdmin(paramName = 'userId') {
   };
 }
 
+// ── Validation Schemas (zod) ────────────────────────────────────────────────────
+const signupSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  enrollmentNumber: z.string().trim().min(5).max(20).regex(/^[A-Za-z0-9/-]+$/),
+  pin: z.string().regex(/^\d{4,8}$/, 'PIN must be 4-8 digits'),
+  branch: z.enum(['EC', 'ICT']).optional().default('EC'),
+  semester: z.string().regex(/^[1-6]$/).optional().default('1'),
+  section: z.string().max(5).optional().default('A'),
+  university: z.string().max(100).optional().default(''),
+});
+
+const loginSchema = z.object({
+  enrollmentNumber: z.string().trim().min(1),
+  pin: z.string().regex(/^\d{4,8}$/),
+});
+
+const facultySignupSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  email: z.string().trim().email().max(254),
+  password: z.string().min(8).max(128),
+  branch: z.enum(['EC', 'ICT']).optional().default('EC'),
+});
+
+function validate(schema) {
+  return (req, res, next) => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      return jsonResponse(res, { error: result.error.issues[0].message, details: result.error.issues }, 400);
+    }
+    req.body = result.data;
+    next();
+  };
+}
+
 // ── Logger ──────────────────────────────────────────────────────────────────────
 const log = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -101,9 +137,10 @@ function trackRequest(durationMs) {
   if (metrics.responseTimes.length > 1000) metrics.responseTimes.shift();
   const now = Date.now();
   if (now - metrics.lastMinuteStart >= 60000) {
-    metrics.lastMinuteRequests = metrics.lastMinuteRequests;
+    metrics.lastMinuteRequests = 0;
     metrics.lastMinuteStart = now;
   }
+  metrics.lastMinuteRequests++;
 }
 
 function trackError() {
@@ -115,9 +152,8 @@ function getMetrics() {
   const avgResponseTime = metrics.responseTimes.length > 0
     ? Math.round(metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length)
     : 0;
-  const p95 = metrics.responseTimes.length > 0
-    ? metrics.responseTimes.sort((a, b) => a - b)[Math.floor(metrics.responseTimes.length * 0.95)]
-    : 0;
+  const sorted = [...metrics.responseTimes].sort((a, b) => a - b);
+  const p95 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.95)] : 0;
   return {
     uptime,
     totalRequests: metrics.requests,
@@ -125,6 +161,7 @@ function getMetrics() {
     errorRate: metrics.requests > 0 ? ((metrics.errors / metrics.requests) * 100).toFixed(2) + '%' : '0%',
     avgResponseTimeMs: avgResponseTime,
     p95ResponseTimeMs: p95,
+    requestsLastMinute: metrics.lastMinuteRequests,
     memoryUsage: process.memoryUsage(),
     cpuUsage: process.cpuUsage(),
     dbSize: getDbSize(),
@@ -355,11 +392,12 @@ app.use(trackAIUsage);
 // ── Input Sanitization ─────────────────────────────────────────────────────────
 function sanitize(input) {
   if (typeof input !== 'string') return input;
+  // Encode HTML delimiters instead of stripping (preserves "x < y" semantics)
   return input
-    .replace(/[<>]/g, '')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .replace(/javascript:/gi, '')
     .replace(/on\w+\s*=/gi, '')
-    .replace(/data:/gi, '')
     .trim()
     .substring(0, 5000);
 }
@@ -743,158 +781,19 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
 
-// Migration: ensure users.is_active exists (required by authMiddleware)
-const userCols = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
-if (!userCols.includes('is_active')) {
-  db.exec('ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1');
-}
+// Migrations: ensure evolved columns exist
+(() => {
+  const cols = new Set(db.prepare('PRAGMA table_info(users)').all().map((c) => c.name));
+  if (!cols.has('is_active')) db.exec('ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1');
+  if (!cols.has('last_login_at')) db.exec("ALTER TABLE users ADD COLUMN last_login_at TEXT");
+  if (!cols.has('password_hash') && cols.has('pin_hash')) {
+    // legacy check - no action, both coexist for role separation
+  }
+})();
 
-// ── Academic Schema (separate to isolate issues) ──────────────────────────────────
-function initAcademicSchema() {
+// ── Academic Indexes (tables are created in main schema above) ────────────────────
+function initAcademicIndexes() {
   db.exec(`
-    CREATE TABLE IF NOT EXISTS subjects (
-      id TEXT PRIMARY KEY,
-      code TEXT NOT NULL,
-      name TEXT NOT NULL,
-      branch TEXT NOT NULL CHECK (branch IN ('EC', 'ICT')),
-      semester INTEGER NOT NULL CHECK (semester BETWEEN 1 AND 6),
-      credits INTEGER DEFAULT 3,
-      is_lab INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now')),
-      UNIQUE(code, branch, semester)
-    );
-
-    CREATE TABLE IF NOT EXISTS units (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      unit_number INTEGER NOT NULL,
-      title TEXT NOT NULL,
-      topics TEXT,
-      weightage INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now')),
-      UNIQUE(subject_id, unit_number)
-    );
-
-    CREATE TABLE IF NOT EXISTS syllabus (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      unit_id TEXT NOT NULL,
-      topic TEXT NOT NULL,
-      subtopics TEXT,
-      learning_outcomes TEXT,
-      bloom_level TEXT CHECK (bloom_level IN ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
-      hours_allocated INTEGER DEFAULT 1,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS question_banks (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      unit_id TEXT,
-      question_text TEXT NOT NULL,
-      question_type TEXT NOT NULL CHECK (question_type IN ('MCQ', 'DESCRIPTIVE', 'NUMERICAL', 'TRUE_FALSE')),
-      options TEXT,
-      correct_answer TEXT NOT NULL,
-      explanation TEXT,
-      marks INTEGER DEFAULT 1,
-      difficulty TEXT CHECK (difficulty IN ('Easy', 'Medium', 'Hard')) DEFAULT 'Medium',
-      bloom_level TEXT CHECK (bloom_level IN ('Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create')),
-      co_code TEXT,
-      source TEXT DEFAULT 'manual',
-      is_active INTEGER DEFAULT 1,
-      created_by TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS pyqs (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      year INTEGER NOT NULL,
-      semester INTEGER NOT NULL,
-      exam_type TEXT CHECK (exam_type IN ('WINTER', 'SUMMER', 'REMID', 'IMPROVEMENT')),
-      question_number INTEGER,
-      question_text TEXT NOT NULL,
-      question_type TEXT NOT NULL CHECK (question_type IN ('MCQ', 'DESCRIPTIVE', 'NUMERICAL')),
-      options TEXT,
-      correct_answer TEXT,
-      solution TEXT,
-      marks INTEGER DEFAULT 1,
-      unit_id TEXT,
-      co_code TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS notes (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      unit_id TEXT NOT NULL,
-      title TEXT NOT NULL,
-      content TEXT NOT NULL,
-      content_type TEXT CHECK (content_type IN ('THEORY', 'FORMULA', 'DERIVATION', 'DIAGRAM', 'SUMMARY', 'MNEMONIC')) DEFAULT 'THEORY',
-      file_url TEXT,
-      tags TEXT,
-      is_verified INTEGER DEFAULT 0,
-      created_by TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS labs (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      experiment_number INTEGER NOT NULL,
-      title TEXT NOT NULL,
-      aim TEXT NOT NULL,
-      apparatus TEXT,
-      theory TEXT,
-      procedure TEXT NOT NULL,
-      observations TEXT,
-      calculations TEXT,
-      result TEXT,
-      viva_questions TEXT,
-      precautions TEXT,
-      reference_material TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      UNIQUE(subject_id, experiment_number)
-    );
-
-    CREATE TABLE IF NOT EXISTS projects (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT,
-      branch TEXT NOT NULL CHECK (branch IN ('EC', 'ICT', 'COMMON')),
-      semester INTEGER CHECK (semester BETWEEN 1 AND 6),
-      title TEXT NOT NULL,
-      type TEXT CHECK (type IN ('MINI', 'MAJOR', 'RESEARCH', 'INDUSTRY')) DEFAULT 'MINI',
-      description TEXT,
-      objectives TEXT,
-      technologies TEXT,
-      prerequisites TEXT,
-      timeline_weeks INTEGER,
-      deliverables TEXT,
-      difficulty TEXT CHECK (difficulty IN ('Beginner', 'Intermediate', 'Advanced')),
-      github_url TEXT,
-      report_url TEXT,
-      created_by TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS student_progress (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      subject_id TEXT NOT NULL,
-      unit_id TEXT,
-      questions_attempted INTEGER DEFAULT 0,
-      questions_correct INTEGER DEFAULT 0,
-      pyqs_attempted INTEGER DEFAULT 0,
-      pyqs_correct INTEGER DEFAULT 0,
-      notes_read INTEGER DEFAULT 0,
-      labs_completed INTEGER DEFAULT 0,
-      last_activity TEXT DEFAULT (datetime('now')),
-      mastery_level TEXT CHECK (mastery_level IN ('Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert')) DEFAULT 'Novice',
-      UNIQUE(user_id, subject_id, unit_id)
-    );
-
     CREATE INDEX IF NOT EXISTS idx_subjects_branch_sem ON subjects(branch, semester);
     CREATE INDEX IF NOT EXISTS idx_units_subject ON units(subject_id);
     CREATE INDEX IF NOT EXISTS idx_syllabus_subject_unit ON syllabus(subject_id, unit_id);
@@ -908,8 +807,8 @@ function initAcademicSchema() {
   `);
 }
 
-// Initialize academic schema after main schema
-initAcademicSchema();
+// Initialize academic indexes after main schema
+initAcademicIndexes();
 
 // ─── AI Rate Limiting Table ──────────────────────────────────────────────────────
 function initAIRateLimitTable() {
@@ -995,8 +894,21 @@ async function sendResetEmail(email, token, name) {
 }
 
 function hashPin(pin) {
-  const salt = 'gpa_hub_salt_v2';
-  return crypto.createHash('sha256').update(pin + salt).digest('hex');
+  return bcrypt.hashSync(pin, 12);
+}
+
+function verifyPin(pin, hash) {
+  if (!hash) return false;
+  if (hash.startsWith('$2b$') || hash.startsWith('$2a$')) {
+    return bcrypt.compareSync(pin, hash);
+  }
+  // Legacy SHA256 migration path
+  const legacy = crypto.createHash('sha256').update(pin + 'gpa_hub_salt_v2').digest('hex');
+  return legacy === hash;
+}
+
+function needsRehash(hash) {
+  return !(hash && (hash.startsWith('$2b$') || hash.startsWith('$2a$')));
 }
 
 // Bcrypt for faculty passwords
@@ -1027,15 +939,9 @@ function auditLog(action, userId, details, ip) {
 }
 
 // ── Auth Routes ─────────────────────────────────────────────────────────────────
-app.post('/api/auth/signup', (req, res) => {
+app.post('/api/auth/signup', validate(signupSchema), (req, res) => {
   try {
     const { name, enrollmentNumber, pin, branch, semester, section, university } = req.body;
-    if (!name || !enrollmentNumber || !pin) {
-      return jsonResponse(res, { error: 'Name, enrollment number, and PIN required' }, 400);
-    }
-    if (pin.length < 4 || pin.length > 8 || !/^\d+$/.test(pin)) {
-      return jsonResponse(res, { error: 'PIN must be 4-8 digits' }, 400);
-    }
 
     const existing = db.prepare('SELECT id FROM users WHERE enrollment_number = ?').get(enrollmentNumber);
     if (existing) {
@@ -1060,26 +966,29 @@ app.post('/api/auth/signup', (req, res) => {
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', validate(loginSchema), (req, res) => {
   try {
     const { enrollmentNumber, pin } = req.body;
-    if (!enrollmentNumber || !pin) {
-      return jsonResponse(res, { error: 'Enrollment number and PIN required' }, 400);
-    }
 
-    const pinHash = hashPin(pin);
     const user = db.prepare(`
-      SELECT id, name, enrollment_number, role, branch, semester, section, university, photo_url, email
-      FROM users WHERE enrollment_number = ? AND pin_hash = ?
-    `).get(enrollmentNumber, pinHash);
+      SELECT id, name, enrollment_number, pin_hash, role, branch, semester, section, university, photo_url, email
+      FROM users WHERE enrollment_number = ?
+    `).get(enrollmentNumber);
 
-    if (!user) {
+    if (!user || !verifyPin(pin, user.pin_hash)) {
       auditLog('LOGIN_FAILED', '', `Failed login: ${enrollmentNumber}`, req.ip);
       return jsonResponse(res, { error: 'Invalid enrollment number or PIN' }, 401);
     }
 
+    // Transparent migration: re-hash legacy SHA256 to bcrypt
+    if (needsRehash(user.pin_hash)) {
+      try { db.prepare('UPDATE users SET pin_hash = ? WHERE id = ?').run(hashPin(pin), user.id); } catch {}
+    }
+    try { db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(user.id); } catch {}
+
+    const { pin_hash, ...safeUser } = user;
     auditLog('LOGIN_SUCCESS', user.id, '', req.ip);
-    jsonResponse(res, { success: true, user, token: generateToken(user) });
+    jsonResponse(res, { success: true, user: safeUser, token: generateToken(safeUser) });
   } catch (e) {
     log.error({ err: e }, 'Login error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -1099,8 +1008,8 @@ app.post('/api/auth/forgot-pin', forgotPinLimiter, async (req, res) => {
       return jsonResponse(res, { success: true, message: 'If the enrollment exists, a reset link has been sent' });
     }
 
-    if (user.email !== email) {
-      return jsonResponse(res, { error: 'Email does not match enrollment' }, 400);
+    if (!user.email || user.email.toLowerCase() !== email.toLowerCase()) {
+      return jsonResponse(res, { success: true, message: 'If the enrollment exists, a reset link has been sent' });
     }
 
     // Generate reset token
@@ -1210,7 +1119,7 @@ app.post('/api/auth/change-pin', authMiddleware, (req, res) => {
 
     const userId = req.user.id;
     const user = db.prepare('SELECT pin_hash FROM users WHERE id = ?').get(userId);
-    if (!user || user.pin_hash !== hashPin(oldPin)) {
+    if (!user || !verifyPin(oldPin, user.pin_hash)) {
       auditLog('PIN_CHANGE_FAILED', userId, 'Incorrect old PIN', req.ip);
       return jsonResponse(res, { error: 'Current PIN is incorrect' }, 401);
     }
@@ -1250,17 +1159,9 @@ app.post('/api/auth/faculty-login', (req, res) => {
   }
 });
 
-app.post('/api/auth/faculty-signup', authMiddleware, requireRole('GTU_ADMIN'), (req, res) => {
+app.post('/api/auth/faculty-signup', authMiddleware, requireRole('GTU_ADMIN'), validate(facultySignupSchema), (req, res) => {
   try {
     const { name, email, password, branch } = req.body;
-    if (!name || !email || !password) {
-      return jsonResponse(res, { error: 'All fields required' }, 400);
-    }
-
-    // Password strength validation
-    if (password.length < 8) {
-      return jsonResponse(res, { error: 'Password must be at least 8 characters' }, 400);
-    }
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
       return jsonResponse(res, { error: 'Password must contain uppercase, lowercase, and number' }, 400);
     }
