@@ -32,14 +32,6 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             react: ['react', 'react-dom'],
             firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
-            three: [
-              'three',
-              '@react-three/fiber',
-              '@react-three/drei',
-              '@react-three/postprocessing',
-              'postprocessing',
-            ],
-            animation: ['gsap', 'lenis'],
             icons: ['lucide-react'],
           },
         },

@@ -253,6 +253,8 @@ function checkAlerts() {
 // ── App Setup ───────────────────────────────────────────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3000;
+const { requestId } = require('./src/middleware/requestId');
+app.use(requestId);
 
 // ── Security Middleware ─────────────────────────────────────────────────────────
 app.use(

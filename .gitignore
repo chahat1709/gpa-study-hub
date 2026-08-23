@@ -44,3 +44,10 @@ release-*.zip
 
 .agents/
 
+
+# ephemeral build outputs
+*-output.txt
+CORE_WORKFLOW*
+core-*.txt
+git-diff-review.txt
+
