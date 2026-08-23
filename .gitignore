@@ -33,3 +33,14 @@ android/local.properties
 android/*.keystore
 android/*.jks
 *.aab
+
+backups/
+logs/
+release/
+release-*/
+release-*.zip
+*.exe
+*.msi
+
+.agents/
+

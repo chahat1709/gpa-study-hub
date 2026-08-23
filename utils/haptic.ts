@@ -12,7 +12,7 @@ const patterns: Record<HapticPattern, number | number[]> = {
   heavy: 40,
   success: [10, 50, 10],
   error: [30, 50, 30],
-  selection: 5
+  selection: 5,
 };
 
 /**
@@ -27,7 +27,7 @@ export function isHapticSupported(): boolean {
  */
 export function hapticFeedback(pattern: HapticPattern = 'light'): void {
   if (!isHapticSupported()) return;
-  
+
   try {
     navigator.vibrate(patterns[pattern]);
   } catch {
@@ -61,6 +61,6 @@ export function useHaptic() {
     success: () => hapticFeedback('success'),
     error: () => hapticFeedback('error'),
     selection: () => hapticFeedback('selection'),
-    isSupported: isHapticSupported()
+    isSupported: isHapticSupported(),
   };
 }

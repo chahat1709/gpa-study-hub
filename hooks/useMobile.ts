@@ -48,7 +48,8 @@ export function useOrientation() {
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
   useEffect(() => {
-    const check = () => setOrientation(window.innerHeight > window.innerWidth ? 'portrait' : 'landscape');
+    const check = () =>
+      setOrientation(window.innerHeight > window.innerWidth ? 'portrait' : 'landscape');
     check();
     window.addEventListener('resize', check);
     window.addEventListener('orientationchange', () => setTimeout(check, 100));

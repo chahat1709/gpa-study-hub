@@ -1,4 +1,3 @@
-
 export enum AppMode {
   CAMPUS = 'CAMPUS',
   TUTOR = 'TUTOR',
@@ -9,7 +8,7 @@ export enum AppMode {
   PLANNER = 'PLANNER',
   PROFILE = 'PROFILE',
   ATTENDANCE = 'ATTENDANCE',
-  EXAM_HUB = 'EXAM_HUB'
+  EXAM_HUB = 'EXAM_HUB',
 }
 
 export type UserRole = 'STUDENT' | 'FACULTY' | 'GTU_ADMIN';
@@ -66,9 +65,9 @@ export interface LibraryResource {
   category?: string;
 
   // New Fields for Syllabus/Assignment tracking
-  unit?: string;         // e.g., "Unit 1", "Module 3"
+  unit?: string; // e.g., "Unit 1", "Module 3"
   academicYear?: string; // e.g., "Winter 2023" for Papers
-  deadline?: string;     // For Assignments
+  deadline?: string; // For Assignments
 
   searchKeywords?: string[];
 }
@@ -152,6 +151,27 @@ export interface TimeSlot {
   facultyName: string; // "JAC"
   room?: string;
   batch?: string; // "A1", "A2" or "ALL"
+}
+
+export type AttendanceStatus = 'PRESENT' | 'ABSENT';
+
+export interface AttendanceRosterStudent {
+  id: string;
+  name: string;
+  enrollmentNumber: string;
+  branch?: string;
+  semester?: string;
+  section?: string;
+}
+
+export interface AttendanceRosterRecord {
+  id: string;
+  slotId: string;
+  subject: string;
+  date: string; // Format: YYYY-MM-DD
+  facultyId: string;
+  statuses: Record<string, AttendanceStatus>;
+  updatedAt: string;
 }
 
 export interface AttendanceRecord {

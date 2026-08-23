@@ -26,7 +26,9 @@ describe('aiProviderService', () => {
     });
 
     it('opencode-zen should have correct endpoint', () => {
-      expect(PROVIDERS['opencode-zen'].endpoint).toBe('https://opencode.ai/zen/v1/chat/completions');
+      expect(PROVIDERS['opencode-zen'].endpoint).toBe(
+        'https://opencode.ai/zen/v1/chat/completions'
+      );
       expect(PROVIDERS['opencode-zen'].model).toBe('mimo-v2.5-free');
     });
   });

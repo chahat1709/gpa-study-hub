@@ -3,7 +3,7 @@
  * Supports: Gemini (Google) + OpenCode Zen (MiMo V2.5 Free) + any OpenAI-compatible API
  */
 
-import { GoogleGenAI, GenerateContentResponse, Chat } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Chat } from '@google/genai';
 
 export type AIProvider = 'gemini' | 'opencode-zen' | 'custom';
 
@@ -97,10 +97,14 @@ export function hasAnyApiKey(): boolean {
 export function getCurrentApiKey(): string {
   const provider = getSelectedProvider();
   switch (provider) {
-    case 'gemini': return getGeminiApiKey();
-    case 'opencode-zen': return getZenApiKey();
-    case 'custom': return getCustomConfig().key;
-    default: return '';
+    case 'gemini':
+      return getGeminiApiKey();
+    case 'opencode-zen':
+      return getZenApiKey();
+    case 'custom':
+      return getCustomConfig().key;
+    default:
+      return '';
   }
 }
 
@@ -140,7 +144,7 @@ async function fetchOpenAICompatible(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model,
@@ -178,10 +182,7 @@ export async function sendChatMessage(
   return sendOpenAIMessage(messages, systemPrompt);
 }
 
-async function sendGeminiMessage(
-  messages: ChatMessage[],
-  systemPrompt?: string
-): Promise<string> {
+async function sendGeminiMessage(messages: ChatMessage[], systemPrompt?: string): Promise<string> {
   try {
     const apiKey = getGeminiApiKey();
     if (!apiKey && !window.aistudio) throw new Error('No Gemini API key');
@@ -190,7 +191,7 @@ async function sendGeminiMessage(
     const contents = messages
       .filter(m => m.role !== 'system')
       .map(m => ({
-        role: m.role === 'assistant' ? 'model' as const : 'user' as const,
+        role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
         parts: [{ text: m.content }],
       }));
 
@@ -198,22 +199,21 @@ async function sendGeminiMessage(
       model: PROVIDERS.gemini.model!,
       contents,
       config: {
-        systemInstruction: systemPrompt || 'You are a professional study tutor for GTU diploma students. Be helpful, concise, and academic.',
+        systemInstruction:
+          systemPrompt ||
+          'You are a professional study tutor for GTU diploma students. Be helpful, concise, and academic.',
         thinkingConfig: { thinkingBudget: 2048 },
       },
     });
     return response.text || '';
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    if (msg.includes('429')) return "System Busy: Rate limit exceeded. Try again shortly.";
-    return "AI Tutor is temporarily unavailable. Please try again.";
+    if (msg.includes('429')) return 'System Busy: Rate limit exceeded. Try again shortly.';
+    return 'AI Tutor is temporarily unavailable. Please try again.';
   }
 }
 
-async function sendOpenAIMessage(
-  messages: ChatMessage[],
-  systemPrompt?: string
-): Promise<string> {
+async function sendOpenAIMessage(messages: ChatMessage[], systemPrompt?: string): Promise<string> {
   const provider = getSelectedProvider();
 
   let endpoint = '';
@@ -232,7 +232,7 @@ async function sendOpenAIMessage(
   }
 
   if (!endpoint || !apiKey || !model) {
-    return "AI configuration incomplete. Please check your settings.";
+    return 'AI configuration incomplete. Please check your settings.';
   }
 
   try {
@@ -247,16 +247,13 @@ async function sendOpenAIMessage(
     return await fetchOpenAICompatible(endpoint, apiKey, model, openMessages);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    if (msg.includes('429')) return "Rate limit exceeded. Please try again shortly.";
-    return "AI Tutor is temporarily unavailable. Please try again.";
+    if (msg.includes('429')) return 'Rate limit exceeded. Please try again shortly.';
+    return 'AI Tutor is temporarily unavailable. Please try again.';
   }
 }
 
 // ─── Image Analysis ────────────────────────────────────────────────────────
-export async function analyzeImage(
-  base64Image: string,
-  prompt: string
-): Promise<string> {
+export async function analyzeImage(base64Image: string, prompt: string): Promise<string> {
   const provider = getSelectedProvider();
 
   if (provider === 'gemini') {
@@ -265,42 +262,51 @@ export async function analyzeImage(
       if (!apiKey && !window.aistudio) throw new Error('No Gemini API key');
 
       const ai = new GoogleGenAI({ apiKey: apiKey || 'dummy_key' });
-      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
 
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: PROVIDERS.gemini.model!,
         contents: {
-          parts: [
-            { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
-            { text: prompt },
-          ],
+          parts: [{ inlineData: { mimeType: 'image/jpeg', data: base64Data } }, { text: prompt }],
         },
         config: {
           maxOutputTokens: 1000,
           thinkingConfig: { thinkingBudget: 500 },
         },
       });
-      return response.text || "No analysis generated.";
+      return response.text || 'No analysis generated.';
     } catch {
-      return "Visual analysis failed. Ensure image is clear.";
+      return 'Visual analysis failed. Ensure image is clear.';
     }
   }
 
   // OpenAI-compatible vision
-  const config = provider === 'opencode-zen'
-    ? { endpoint: PROVIDERS['opencode-zen'].endpoint!, key: getZenApiKey(), model: PROVIDERS['opencode-zen'].model! }
-    : { endpoint: getCustomConfig().url, key: getCustomConfig().key, model: getCustomConfig().model };
+  const config =
+    provider === 'opencode-zen'
+      ? {
+          endpoint: PROVIDERS['opencode-zen'].endpoint!,
+          key: getZenApiKey(),
+          model: PROVIDERS['opencode-zen'].model!,
+        }
+      : {
+          endpoint: getCustomConfig().url,
+          key: getCustomConfig().key,
+          model: getCustomConfig().model,
+        };
 
   try {
     const messages: OpenAIMessage[] = [
-      { role: 'user', content: [
-        { type: 'image_url', image_url: { url: base64Image } },
-        { type: 'text', text: prompt },
-      ]},
+      {
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: base64Image } },
+          { type: 'text', text: prompt },
+        ],
+      },
     ];
     return await fetchOpenAICompatible(config.endpoint, config.key, config.model, messages, 1000);
   } catch {
-    return "Visual analysis failed. Ensure image is clear.";
+    return 'Visual analysis failed. Ensure image is clear.';
   }
 }
 
@@ -319,7 +325,7 @@ User Message: "${userMessage}"`;
   try {
     return await sendChatMessage([{ role: 'user', content: socialPrompt }]);
   } catch {
-    return "Campus Agent is currently syncing.";
+    return 'Campus Agent is currently syncing.';
   }
 }
 
@@ -328,6 +334,6 @@ export async function generateTextContent(prompt: string): Promise<string> {
   try {
     return await sendChatMessage([{ role: 'user', content: prompt }]);
   } catch {
-    return "Unable to generate content at this time.";
+    return 'Unable to generate content at this time.';
   }
 }

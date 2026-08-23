@@ -22,14 +22,19 @@ const { z } = require('zod');
 
 // ── JWT Config ──────────────────────────────────────────────────────────────────
 if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required. Set a strong random string (64+ chars).');
+  throw new Error(
+    'JWT_SECRET environment variable is required. Set a strong random string (64+ chars).'
+  );
 }
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const JWT_ISSUER = 'gpa-study-hub';
 
 function generateToken(user) {
-  return jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: JWT_EXPIRES, issuer: JWT_ISSUER });
+  return jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES,
+    issuer: JWT_ISSUER,
+  });
 }
 
 function verifyToken(token) {
@@ -70,7 +75,11 @@ function requireRole(...roles) {
 function requireOwnershipOrAdmin(paramName = 'userId') {
   return (req, res, next) => {
     const resourceUserId = req.params[paramName] || req.body[paramName];
-    if (req.user.role === 'GTU_ADMIN' || req.user.role === 'FACULTY' || req.user.id === resourceUserId) {
+    if (
+      req.user.role === 'GTU_ADMIN' ||
+      req.user.role === 'FACULTY' ||
+      req.user.id === resourceUserId
+    ) {
       return next();
     }
     return jsonResponse(res, { error: 'Access denied' }, 403);
@@ -80,10 +89,19 @@ function requireOwnershipOrAdmin(paramName = 'userId') {
 // ── Validation Schemas (zod) ────────────────────────────────────────────────────
 const signupSchema = z.object({
   name: z.string().trim().min(2).max(100),
-  enrollmentNumber: z.string().trim().min(5).max(20).regex(/^[A-Za-z0-9/-]+$/),
+  enrollmentNumber: z
+    .string()
+    .trim()
+    .min(5)
+    .max(20)
+    .regex(/^[A-Za-z0-9/-]+$/),
   pin: z.string().regex(/^\d{4,8}$/, 'PIN must be 4-8 digits'),
   branch: z.enum(['EC', 'ICT']).optional().default('EC'),
-  semester: z.string().regex(/^[1-6]$/).optional().default('1'),
+  semester: z
+    .string()
+    .regex(/^[1-6]$/)
+    .optional()
+    .default('1'),
   section: z.string().max(5).optional().default('A'),
   university: z.string().max(100).optional().default(''),
 });
@@ -104,7 +122,11 @@ function validate(schema) {
   return (req, res, next) => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
-      return jsonResponse(res, { error: result.error.issues[0].message, details: result.error.issues }, 400);
+      return jsonResponse(
+        res,
+        { error: result.error.issues[0].message, details: result.error.issues },
+        400
+      );
     }
     req.body = result.data;
     next();
@@ -114,10 +136,18 @@ function validate(schema) {
 // ── Logger ──────────────────────────────────────────────────────────────────────
 const log = pino({
   level: process.env.LOG_LEVEL || 'info',
-  transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:HH:MM:ss' } } : undefined,
+  transport:
+    process.env.NODE_ENV !== 'production'
+      ? { target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:HH:MM:ss' } }
+      : undefined,
   serializers: {
-    req: (req) => ({ method: req.method, url: req.url, ip: req.ip, userAgent: req.headers['user-agent'] }),
-    res: (res) => ({ statusCode: res.statusCode }),
+    req: req => ({
+      method: req.method,
+      url: req.url,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    }),
+    res: res => ({ statusCode: res.statusCode }),
   },
 });
 
@@ -149,16 +179,18 @@ function trackError() {
 
 function getMetrics() {
   const uptime = Math.floor((Date.now() - metrics.startTime) / 1000);
-  const avgResponseTime = metrics.responseTimes.length > 0
-    ? Math.round(metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length)
-    : 0;
+  const avgResponseTime =
+    metrics.responseTimes.length > 0
+      ? Math.round(metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length)
+      : 0;
   const sorted = [...metrics.responseTimes].sort((a, b) => a - b);
   const p95 = sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.95)] : 0;
   return {
     uptime,
     totalRequests: metrics.requests,
     totalErrors: metrics.errors,
-    errorRate: metrics.requests > 0 ? ((metrics.errors / metrics.requests) * 100).toFixed(2) + '%' : '0%',
+    errorRate:
+      metrics.requests > 0 ? ((metrics.errors / metrics.requests) * 100).toFixed(2) + '%' : '0%',
     avgResponseTimeMs: avgResponseTime,
     p95ResponseTimeMs: p95,
     requestsLastMinute: metrics.lastMinuteRequests,
@@ -175,7 +207,9 @@ function getDbSize() {
       const stats = fs.statSync(dbPath);
       return `${(stats.size / 1024).toFixed(1)} KB`;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return 'unknown';
 }
 
@@ -191,17 +225,26 @@ function checkAlerts() {
   if (metrics.requests > 100) {
     const errorRate = (metrics.errors / metrics.requests) * 100;
     if (errorRate > ALERTS.errorRateThreshold) {
-      alerts.push({ level: 'critical', message: `Error rate ${errorRate.toFixed(1)}% exceeds threshold ${ALERTS.errorRateThreshold}%` });
+      alerts.push({
+        level: 'critical',
+        message: `Error rate ${errorRate.toFixed(1)}% exceeds threshold ${ALERTS.errorRateThreshold}%`,
+      });
     }
   }
   const memMB = process.memoryUsage().heapUsed / 1024 / 1024;
   if (memMB > ALERTS.memoryThresholdMB) {
-    alerts.push({ level: 'warning', message: `Memory usage ${memMB.toFixed(0)}MB exceeds threshold ${ALERTS.memoryThresholdMB}MB` });
+    alerts.push({
+      level: 'warning',
+      message: `Memory usage ${memMB.toFixed(0)}MB exceeds threshold ${ALERTS.memoryThresholdMB}MB`,
+    });
   }
   if (metrics.responseTimes.length > 0) {
     const avg = metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length;
     if (avg > ALERTS.responseTimeThreshold) {
-      alerts.push({ level: 'warning', message: `Avg response time ${avg.toFixed(0)}ms exceeds threshold ${ALERTS.responseTimeThreshold}ms` });
+      alerts.push({
+        level: 'warning',
+        message: `Avg response time ${avg.toFixed(0)}ms exceeds threshold ${ALERTS.responseTimeThreshold}ms`,
+      });
     }
   }
   return alerts;
@@ -212,39 +255,48 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Security Middleware ─────────────────────────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 app.use(hpp());
 
-app.use(cors({
-  origin: function (origin, callback) {
-    const allowed = [
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://localhost:3000',
-      'http://localhost:4173',
-      'http://localhost:4174',
-      'capacitor://localhost',
-    ];
-    // Allow requests with no origin (mobile apps, curl, server-to-server)
-    if (!origin) return callback(null, true);
-    if (allowed.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    // Allow local network IPs in development
-    if (process.env.NODE_ENV !== 'production') {
-      const ip = origin.match(/\/\/([\d.]+):/);
-      if (ip && (/^192\.168\./.test(ip[1]) || /^10\./.test(ip[1]) || /^172\.(1[6-9]|2\d|3[01])\./.test(ip[1]))) {
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      const allowed = [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:3000',
+        'http://localhost:4173',
+        'http://localhost:4174',
+        'capacitor://localhost',
+      ];
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowed.indexOf(origin) !== -1) {
         return callback(null, true);
       }
-    }
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
+      // Allow local network IPs in development
+      if (process.env.NODE_ENV !== 'production') {
+        const ip = origin.match(/\/\/([\d.]+):/);
+        if (
+          ip &&
+          (/^192\.168\./.test(ip[1]) ||
+            /^10\./.test(ip[1]) ||
+            /^172\.(1[6-9]|2\d|3[01])\./.test(ip[1]))
+        ) {
+          return callback(null, true);
+        }
+      }
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -252,7 +304,7 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later' },
-  keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+  keyGenerator: req => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
 });
 
 const authLimiter = rateLimit({
@@ -261,7 +313,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts, please wait 15 minutes' },
-  keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+  keyGenerator: req => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
 });
 
 const forgotPinLimiter = rateLimit({
@@ -270,7 +322,7 @@ const forgotPinLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many PIN reset attempts, please wait 15 minutes' },
-  keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+  keyGenerator: req => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
 });
 
 const uploadLimiter = rateLimit({
@@ -285,19 +337,21 @@ const aiLimiter = rateLimit({
   max: 50, // 50 requests per hour per user
   standardHeaders: true,
   legacyHeaders: false,
-  message: { 
+  message: {
     error: 'AI rate limit exceeded. Try again later or use offline mode.',
     fallback: true,
-    retryAfter: 3600
+    retryAfter: 3600,
   },
-  keyGenerator: (req) => req.user?.id || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+  keyGenerator: req =>
+    req.user?.id || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
 });
 
 const aiStrictLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10, // stricter for grading (expensive)
   message: { error: 'Grading limit exceeded', fallback: true, retryAfter: 3600 },
-  keyGenerator: (req) => req.user?.id || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
+  keyGenerator: req =>
+    req.user?.id || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip,
 });
 
 app.use(generalLimiter);
@@ -331,22 +385,33 @@ app.use((req, res, next) => {
     });
   }
   req.csrfToken = csrfToken;
-  
+
   // Expose token for frontend
   res.locals.csrfToken = csrfToken;
-  
+
   // Validate CSRF token on state-changing requests
   const stateChangingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
   const isApiRoute = req.path.startsWith('/api/');
-  const isExempt = ['/api/auth/login', '/api/auth/signup', '/api/auth/forgot-pin', '/api/auth/verify-reset-token', '/api/auth/reset-pin-with-token', '/api/auth/faculty-login', '/api/auth/faculty-signup', '/api/auth/admin-login', '/api/ai/mock', '/api/health'].some(p => req.path.startsWith(p));
-  
+  const isExempt = [
+    '/api/auth/login',
+    '/api/auth/signup',
+    '/api/auth/forgot-pin',
+    '/api/auth/verify-reset-token',
+    '/api/auth/reset-pin-with-token',
+    '/api/auth/faculty-login',
+    '/api/auth/faculty-signup',
+    '/api/auth/admin-login',
+    '/api/ai/mock',
+    '/api/health',
+  ].some(p => req.path.startsWith(p));
+
   if (isApiRoute && stateChangingMethods.includes(req.method) && !isExempt) {
     const headerToken = req.headers['x-csrf-token'] || req.body?.csrf_token;
     if (!headerToken || headerToken !== csrfToken) {
       return jsonResponse(res, { error: 'Invalid CSRF token' }, 403);
     }
   }
-  
+
   next();
 });
 
@@ -371,14 +436,23 @@ function trackAIUsage(req, res, next) {
   if (!req.user) return next();
   const provider = req.body?.provider || 'unknown';
   const type = req.body?.type || req.path.split('/').pop() || 'chat';
-  
+
   res.on('finish', () => {
     if (res.statusCode < 400) {
       try {
-        db.prepare(`
+        db.prepare(
+          `
           INSERT INTO ai_usage (id, user_id, provider, request_type, tokens_used, success)
           VALUES (?, ?, ?, ?, ?, ?)
-        `).run(generateId(), req.user.id, provider, type, req.body?.tokens || 0, res.statusCode < 400 ? 1 : 0);
+        `
+        ).run(
+          generateId(),
+          req.user.id,
+          provider,
+          type,
+          req.body?.tokens || 0,
+          res.statusCode < 400 ? 1 : 0
+        );
       } catch (e) {
         log.error({ err: e }, 'AI usage tracking failed');
       }
@@ -435,10 +509,15 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', authMiddleware, express.static(uploadsDir));
 
 const ALLOWED_MIME = new Set([
-  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-  'application/pdf', 'application/msword',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain', 'application/zip',
+  'text/plain',
+  'application/zip',
 ]);
 
 const storage = multer.diskStorage({
@@ -783,9 +862,14 @@ db.exec(`
 
 // Migrations: ensure evolved columns exist
 (() => {
-  const cols = new Set(db.prepare('PRAGMA table_info(users)').all().map((c) => c.name));
+  const cols = new Set(
+    db
+      .prepare('PRAGMA table_info(users)')
+      .all()
+      .map(c => c.name)
+  );
   if (!cols.has('is_active')) db.exec('ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1');
-  if (!cols.has('last_login_at')) db.exec("ALTER TABLE users ADD COLUMN last_login_at TEXT");
+  if (!cols.has('last_login_at')) db.exec('ALTER TABLE users ADD COLUMN last_login_at TEXT');
   if (!cols.has('password_hash') && cols.has('pin_hash')) {
     // legacy check - no action, both coexist for role separation
   }
@@ -859,7 +943,7 @@ const emailTransporter = nodemailer.createTransport({
 
 async function sendResetEmail(email, token, name) {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-pin?token=${token}`;
-  
+
   const mailOptions = {
     from: `"GPA Study Hub" <${process.env.SMTP_USER}>`,
     to: email,
@@ -883,7 +967,7 @@ async function sendResetEmail(email, token, name) {
       </div>
     `,
   };
-  
+
   try {
     await emailTransporter.sendMail(mailOptions);
     return { success: true };
@@ -903,7 +987,10 @@ function verifyPin(pin, hash) {
     return bcrypt.compareSync(pin, hash);
   }
   // Legacy SHA256 migration path
-  const legacy = crypto.createHash('sha256').update(pin + 'gpa_hub_salt_v2').digest('hex');
+  const legacy = crypto
+    .createHash('sha256')
+    .update(pin + 'gpa_hub_salt_v2')
+    .digest('hex');
   return legacy === hash;
 }
 
@@ -930,9 +1017,9 @@ function jsonResponse(res, data, status = 200) {
 
 function auditLog(action, userId, details, ip) {
   try {
-    db.prepare('INSERT INTO audit_log (id, action, user_id, details, ip) VALUES (?, ?, ?, ?, ?)').run(
-      generateId(), action, userId || '', details || '', ip || ''
-    );
+    db.prepare(
+      'INSERT INTO audit_log (id, action, user_id, details, ip) VALUES (?, ?, ?, ?, ?)'
+    ).run(generateId(), action, userId || '', details || '', ip || '');
   } catch (e) {
     log.error({ err: e }, 'Failed to write audit log');
   }
@@ -943,7 +1030,9 @@ app.post('/api/auth/signup', validate(signupSchema), (req, res) => {
   try {
     const { name, enrollmentNumber, pin, branch, semester, section, university } = req.body;
 
-    const existing = db.prepare('SELECT id FROM users WHERE enrollment_number = ?').get(enrollmentNumber);
+    const existing = db
+      .prepare('SELECT id FROM users WHERE enrollment_number = ?')
+      .get(enrollmentNumber);
     if (existing) {
       return jsonResponse(res, { error: 'Enrollment number already registered' }, 409);
     }
@@ -951,14 +1040,29 @@ app.post('/api/auth/signup', validate(signupSchema), (req, res) => {
     const id = generateId();
     const pinHash = hashPin(pin);
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO users (id, name, enrollment_number, pin_hash, branch, semester, section, university, role)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'STUDENT')
-    `).run(id, name, enrollmentNumber, pinHash, branch || 'EC', semester || '1', section || 'A', university || '');
+    `
+    ).run(
+      id,
+      name,
+      enrollmentNumber,
+      pinHash,
+      branch || 'EC',
+      semester || '1',
+      section || 'A',
+      university || ''
+    );
 
     auditLog('USER_SIGNUP', id, `New student: ${name} (${enrollmentNumber})`, req.ip);
 
-    const user = db.prepare('SELECT id, name, enrollment_number, role, branch, semester, section, university, photo_url FROM users WHERE id = ?').get(id);
+    const user = db
+      .prepare(
+        'SELECT id, name, enrollment_number, role, branch, semester, section, university, photo_url FROM users WHERE id = ?'
+      )
+      .get(id);
     jsonResponse(res, { success: true, user, token: generateToken(user) }, 201);
   } catch (e) {
     log.error({ err: e }, 'Signup error');
@@ -970,10 +1074,14 @@ app.post('/api/auth/login', validate(loginSchema), (req, res) => {
   try {
     const { enrollmentNumber, pin } = req.body;
 
-    const user = db.prepare(`
+    const user = db
+      .prepare(
+        `
       SELECT id, name, enrollment_number, pin_hash, role, branch, semester, section, university, photo_url, email
       FROM users WHERE enrollment_number = ?
-    `).get(enrollmentNumber);
+    `
+      )
+      .get(enrollmentNumber);
 
     if (!user || !verifyPin(pin, user.pin_hash)) {
       auditLog('LOGIN_FAILED', '', `Failed login: ${enrollmentNumber}`, req.ip);
@@ -982,9 +1090,13 @@ app.post('/api/auth/login', validate(loginSchema), (req, res) => {
 
     // Transparent migration: re-hash legacy SHA256 to bcrypt
     if (needsRehash(user.pin_hash)) {
-      try { db.prepare('UPDATE users SET pin_hash = ? WHERE id = ?').run(hashPin(pin), user.id); } catch {}
+      try {
+        db.prepare('UPDATE users SET pin_hash = ? WHERE id = ?').run(hashPin(pin), user.id);
+      } catch {}
     }
-    try { db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(user.id); } catch {}
+    try {
+      db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(user.id);
+    } catch {}
 
     const { pin_hash, ...safeUser } = user;
     auditLog('LOGIN_SUCCESS', user.id, '', req.ip);
@@ -1002,30 +1114,43 @@ app.post('/api/auth/forgot-pin', forgotPinLimiter, async (req, res) => {
       return jsonResponse(res, { error: 'Enrollment number and email required' }, 400);
     }
 
-    const user = db.prepare('SELECT id, name, email FROM users WHERE enrollment_number = ?').get(enrollmentNumber);
+    const user = db
+      .prepare('SELECT id, name, email FROM users WHERE enrollment_number = ?')
+      .get(enrollmentNumber);
     if (!user) {
       // Don't reveal if enrollment exists
-      return jsonResponse(res, { success: true, message: 'If the enrollment exists, a reset link has been sent' });
+      return jsonResponse(res, {
+        success: true,
+        message: 'If the enrollment exists, a reset link has been sent',
+      });
     }
 
     if (!user.email || user.email.toLowerCase() !== email.toLowerCase()) {
-      return jsonResponse(res, { success: true, message: 'If the enrollment exists, a reset link has been sent' });
+      return jsonResponse(res, {
+        success: true,
+        message: 'If the enrollment exists, a reset link has been sent',
+      });
     }
 
     // Generate reset token
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO pin_reset_tokens (id, user_id, token, email, expires_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run(generateId(), user.id, token, email, expiresAt);
+    `
+    ).run(generateId(), user.id, token, email, expiresAt);
 
     // Send reset email
     await sendResetEmail(email, token, user.name);
 
     auditLog('PIN_RESET_REQUESTED', user.id, `Reset requested for ${email}`, req.ip);
-    jsonResponse(res, { success: true, message: 'If the enrollment exists, a reset link has been sent' });
+    jsonResponse(res, {
+      success: true,
+      message: 'If the enrollment exists, a reset link has been sent',
+    });
   } catch (e) {
     log.error({ err: e }, 'Forgot PIN error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -1040,10 +1165,14 @@ app.post('/api/auth/verify-reset-token', (req, res) => {
       return jsonResponse(res, { error: 'Token required' }, 400);
     }
 
-    const resetToken = db.prepare(`
+    const resetToken = db
+      .prepare(
+        `
       SELECT id, user_id, email, expires_at, used
       FROM pin_reset_tokens WHERE token = ?
-    `).get(token);
+    `
+      )
+      .get(token);
 
     if (!resetToken) {
       return jsonResponse(res, { error: 'Invalid token' }, 400);
@@ -1075,10 +1204,14 @@ app.post('/api/auth/reset-pin-with-token', (req, res) => {
       return jsonResponse(res, { error: 'PIN must be 4-8 digits' }, 400);
     }
 
-    const resetToken = db.prepare(`
+    const resetToken = db
+      .prepare(
+        `
       SELECT id, user_id, email, expires_at, used
       FROM pin_reset_tokens WHERE token = ?
-    `).get(token);
+    `
+      )
+      .get(token);
 
     if (!resetToken) {
       return jsonResponse(res, { error: 'Invalid token' }, 400);
@@ -1140,10 +1273,14 @@ app.post('/api/auth/faculty-login', (req, res) => {
       return jsonResponse(res, { error: 'Email and password required' }, 400);
     }
 
-    const user = db.prepare(`
+    const user = db
+      .prepare(
+        `
       SELECT id, name, email, role, branch, photo_url, pin_hash
       FROM users WHERE email = ? AND role IN ('FACULTY', 'GTU_ADMIN')
-    `).get(email);
+    `
+      )
+      .get(email);
 
     if (!user || !verifyPassword(password, user.pin_hash)) {
       auditLog('FACULTY_LOGIN_FAILED', '', `Failed faculty login: ${email}`, req.ip);
@@ -1152,42 +1289,60 @@ app.post('/api/auth/faculty-login', (req, res) => {
 
     auditLog('FACULTY_LOGIN', user.id, '', req.ip);
     const { pin_hash, ...userWithoutHash } = user;
-    jsonResponse(res, { success: true, user: userWithoutHash, token: generateToken(userWithoutHash) });
+    jsonResponse(res, {
+      success: true,
+      user: userWithoutHash,
+      token: generateToken(userWithoutHash),
+    });
   } catch (e) {
     log.error({ err: e }, 'Faculty login error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
   }
 });
 
-app.post('/api/auth/faculty-signup', authMiddleware, requireRole('GTU_ADMIN'), validate(facultySignupSchema), (req, res) => {
-  try {
-    const { name, email, password, branch } = req.body;
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-      return jsonResponse(res, { error: 'Password must contain uppercase, lowercase, and number' }, 400);
-    }
+app.post(
+  '/api/auth/faculty-signup',
+  authMiddleware,
+  requireRole('GTU_ADMIN'),
+  validate(facultySignupSchema),
+  (req, res) => {
+    try {
+      const { name, email, password, branch } = req.body;
+      if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+        return jsonResponse(
+          res,
+          { error: 'Password must contain uppercase, lowercase, and number' },
+          400
+        );
+      }
 
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existing) {
-      return jsonResponse(res, { error: 'Email already registered' }, 409);
-    }
+      const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+      if (existing) {
+        return jsonResponse(res, { error: 'Email already registered' }, 409);
+      }
 
-    const id = generateId();
-    const pinHash = hashPassword(password);
+      const id = generateId();
+      const pinHash = hashPassword(password);
 
-    db.prepare(`
+      db.prepare(
+        `
       INSERT INTO users (id, name, email, pin_hash, role, branch)
       VALUES (?, ?, ?, ?, 'FACULTY', ?)
-    `).run(id, name, email, pinHash, branch || 'EC');
+    `
+      ).run(id, name, email, pinHash, branch || 'EC');
 
-    auditLog('FACULTY_SIGNUP', id, `New faculty: ${name} (created by ${req.user.id})`, req.ip);
+      auditLog('FACULTY_SIGNUP', id, `New faculty: ${name} (created by ${req.user.id})`, req.ip);
 
-    const user = db.prepare('SELECT id, name, email, role, branch, photo_url FROM users WHERE id = ?').get(id);
-    jsonResponse(res, { success: true, user }, 201);
-  } catch (e) {
-    log.error({ err: e }, 'Faculty signup error');
-    jsonResponse(res, { error: 'Internal server error' }, 500);
+      const user = db
+        .prepare('SELECT id, name, email, role, branch, photo_url FROM users WHERE id = ?')
+        .get(id);
+      jsonResponse(res, { success: true, user }, 201);
+    } catch (e) {
+      log.error({ err: e }, 'Faculty signup error');
+      jsonResponse(res, { error: 'Internal server error' }, 500);
+    }
   }
-});
+);
 
 app.post('/api/auth/admin-login', (req, res) => {
   try {
@@ -1205,11 +1360,15 @@ app.post('/api/auth/admin-login', (req, res) => {
       return jsonResponse(res, { error: 'Invalid admin code' }, 401);
     }
 
-    let user = db.prepare(`SELECT id, name, role FROM users WHERE role = 'GTU_ADMIN' LIMIT 1`).get();
+    let user = db
+      .prepare(`SELECT id, name, role FROM users WHERE role = 'GTU_ADMIN' LIMIT 1`)
+      .get();
     if (!user) {
       const id = generateId();
       const adminPin = crypto.randomBytes(4).readUInt32BE(0).toString().substring(0, 6);
-      db.prepare(`INSERT INTO users (id, name, email, pin_hash, role) VALUES (?, 'GTU Admin', 'admin@gtu.edu', ?, 'GTU_ADMIN')`).run(id, hashPin(adminPin));
+      db.prepare(
+        `INSERT INTO users (id, name, email, pin_hash, role) VALUES (?, 'GTU Admin', 'admin@gtu.edu', ?, 'GTU_ADMIN')`
+      ).run(id, hashPin(adminPin));
       log.info({ adminId: id }, 'Admin account created');
       user = { id, name: 'GTU Admin', role: 'GTU_ADMIN', initialPin: adminPin };
     }
@@ -1231,7 +1390,11 @@ app.put('/api/auth/profile/:id', authMiddleware, requireOwnershipOrAdmin('id'), 
     if (photo_url) {
       db.prepare('UPDATE users SET photo_url = ? WHERE id = ?').run(photo_url, req.params.id);
     }
-    const user = db.prepare('SELECT id, name, enrollment_number, role, branch, semester, section, university, photo_url, email FROM users WHERE id = ?').get(req.params.id);
+    const user = db
+      .prepare(
+        'SELECT id, name, enrollment_number, role, branch, semester, section, university, photo_url, email FROM users WHERE id = ?'
+      )
+      .get(req.params.id);
     jsonResponse(res, { success: true, user, token: generateToken(user) });
   } catch (e) {
     log.error({ err: e }, 'Profile update error');
@@ -1240,15 +1403,22 @@ app.put('/api/auth/profile/:id', authMiddleware, requireOwnershipOrAdmin('id'), 
 });
 
 // ── Attendance Routes ───────────────────────────────────────────────────────────
-app.get('/api/attendance/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
-  try {
-    const records = db.prepare('SELECT * FROM attendance_records WHERE user_id = ? ORDER BY date DESC').all(req.params.userId);
-    jsonResponse(res, { records });
-  } catch (e) {
-    log.error({ err: e }, 'Get attendance error');
-    jsonResponse(res, { error: 'Internal server error' }, 500);
+app.get(
+  '/api/attendance/:userId',
+  authMiddleware,
+  requireOwnershipOrAdmin('userId'),
+  (req, res) => {
+    try {
+      const records = db
+        .prepare('SELECT * FROM attendance_records WHERE user_id = ? ORDER BY date DESC')
+        .all(req.params.userId);
+      jsonResponse(res, { records });
+    } catch (e) {
+      log.error({ err: e }, 'Get attendance error');
+      jsonResponse(res, { error: 'Internal server error' }, 500);
+    }
   }
-});
+);
 
 app.post('/api/attendance', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
   try {
@@ -1259,7 +1429,9 @@ app.post('/api/attendance', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'),
     const validStatuses = ['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'];
     const finalStatus = validStatuses.includes(status) ? status : 'PRESENT';
     const id = generateId();
-    db.prepare('INSERT INTO attendance_records (id, user_id, subject, date, status, slot_id) VALUES (?, ?, ?, ?, ?, ?)').run(id, userId, subject, date, finalStatus, slotId || '');
+    db.prepare(
+      'INSERT INTO attendance_records (id, user_id, subject, date, status, slot_id) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(id, userId, subject, date, finalStatus, slotId || '');
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Mark attendance error');
@@ -1267,30 +1439,47 @@ app.post('/api/attendance', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'),
   }
 });
 
-app.get('/api/attendance/stats/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
-  try {
-    const all = db.prepare('SELECT subject, status, COUNT(*) as count FROM attendance_records WHERE user_id = ? GROUP BY subject, status').all(req.params.userId);
-    const subjects = {};
-    all.forEach(r => {
-      if (!subjects[r.subject]) subjects[r.subject] = { subject: r.subject, total: 0, attended: 0, percentage: 0 };
-      subjects[r.subject].total += r.count;
-      if (r.status === 'PRESENT') subjects[r.subject].attended += r.count;
-    });
-    const subjectWise = Object.values(subjects).map(s => ({ ...s, percentage: s.total > 0 ? Math.round((s.attended / s.total) * 100) : 0 }));
-    const totalClasses = subjectWise.reduce((a, s) => a + s.total, 0);
-    const attendedClasses = subjectWise.reduce((a, s) => a + s.attended, 0);
-    const overall = totalClasses > 0 ? Math.round((attendedClasses / totalClasses) * 100) : 0;
-    jsonResponse(res, { overall, totalClasses, attendedClasses, subjectWise });
-  } catch (e) {
-    log.error({ err: e }, 'Attendance stats error');
-    jsonResponse(res, { error: 'Internal server error' }, 500);
+app.get(
+  '/api/attendance/stats/:userId',
+  authMiddleware,
+  requireOwnershipOrAdmin('userId'),
+  (req, res) => {
+    try {
+      const all = db
+        .prepare(
+          'SELECT subject, status, COUNT(*) as count FROM attendance_records WHERE user_id = ? GROUP BY subject, status'
+        )
+        .all(req.params.userId);
+      const subjects = {};
+      all.forEach(r => {
+        if (!subjects[r.subject])
+          subjects[r.subject] = { subject: r.subject, total: 0, attended: 0, percentage: 0 };
+        subjects[r.subject].total += r.count;
+        if (r.status === 'PRESENT') subjects[r.subject].attended += r.count;
+      });
+      const subjectWise = Object.values(subjects).map(s => ({
+        ...s,
+        percentage: s.total > 0 ? Math.round((s.attended / s.total) * 100) : 0,
+      }));
+      const totalClasses = subjectWise.reduce((a, s) => a + s.total, 0);
+      const attendedClasses = subjectWise.reduce((a, s) => a + s.attended, 0);
+      const overall = totalClasses > 0 ? Math.round((attendedClasses / totalClasses) * 100) : 0;
+      jsonResponse(res, { overall, totalClasses, attendedClasses, subjectWise });
+    } catch (e) {
+      log.error({ err: e }, 'Attendance stats error');
+      jsonResponse(res, { error: 'Internal server error' }, 500);
+    }
   }
-});
+);
 
 // ── Timetable Routes ────────────────────────────────────────────────────────────
 app.get('/api/timetable/:branch/:semester/:day', (req, res) => {
   try {
-    const slots = db.prepare('SELECT * FROM timetable WHERE branch = ? AND semester = ? AND day = ? ORDER BY slot_index').all(req.params.branch, req.params.semester, req.params.day);
+    const slots = db
+      .prepare(
+        'SELECT * FROM timetable WHERE branch = ? AND semester = ? AND day = ? ORDER BY slot_index'
+      )
+      .all(req.params.branch, req.params.semester, req.params.day);
     jsonResponse(res, { slots });
   } catch (e) {
     log.error({ err: e }, 'Get timetable error');
@@ -1300,12 +1489,45 @@ app.get('/api/timetable/:branch/:semester/:day', (req, res) => {
 
 app.post('/api/timetable', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
   try {
-    const { branch, semester, day, slotIndex, subject, type, startTime, endTime, facultyName, batch } = req.body;
-    if (!branch || !semester || !day || slotIndex === undefined || !subject || !startTime || !endTime) {
+    const {
+      branch,
+      semester,
+      day,
+      slotIndex,
+      subject,
+      type,
+      startTime,
+      endTime,
+      facultyName,
+      batch,
+    } = req.body;
+    if (
+      !branch ||
+      !semester ||
+      !day ||
+      slotIndex === undefined ||
+      !subject ||
+      !startTime ||
+      !endTime
+    ) {
       return jsonResponse(res, { error: 'Missing required fields' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO timetable (id, branch, semester, day, slot_index, subject, type, start_time, end_time, faculty_name, batch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, branch, semester, day, slotIndex, subject, type || 'LECTURE', startTime, endTime, facultyName || '', batch || 'ALL');
+    db.prepare(
+      'INSERT INTO timetable (id, branch, semester, day, slot_index, subject, type, start_time, end_time, faculty_name, batch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      id,
+      branch,
+      semester,
+      day,
+      slotIndex,
+      subject,
+      type || 'LECTURE',
+      startTime,
+      endTime,
+      facultyName || '',
+      batch || 'ALL'
+    );
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Add timetable error');
@@ -1316,7 +1538,9 @@ app.post('/api/timetable', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), 
 // ── Tasks Routes ────────────────────────────────────────────────────────────────
 app.get('/api/tasks/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
   try {
-    const tasks = db.prepare('SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC').all(req.params.userId);
+    const tasks = db
+      .prepare('SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC')
+      .all(req.params.userId);
     jsonResponse(res, { tasks });
   } catch (e) {
     log.error({ err: e }, 'Get tasks error');
@@ -1331,7 +1555,9 @@ app.post('/api/tasks', authMiddleware, (req, res) => {
       return jsonResponse(res, { error: 'title required' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO tasks (id, user_id, title, description, due_date, category) VALUES (?, ?, ?, ?, ?, ?)').run(id, req.user.id, title, description || '', dueDate || '', category || 'GENERAL');
+    db.prepare(
+      'INSERT INTO tasks (id, user_id, title, description, due_date, category) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(id, req.user.id, title, description || '', dueDate || '', category || 'GENERAL');
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Add task error');
@@ -1376,7 +1602,11 @@ app.get('/api/resources', (req, res) => {
     const { branch, semester } = req.query;
     let resources;
     if (branch && semester) {
-      resources = db.prepare('SELECT * FROM resources WHERE branch = ? AND semester = ? ORDER BY created_at DESC').all(branch, semester);
+      resources = db
+        .prepare(
+          'SELECT * FROM resources WHERE branch = ? AND semester = ? ORDER BY created_at DESC'
+        )
+        .all(branch, semester);
     } else {
       resources = db.prepare('SELECT * FROM resources ORDER BY created_at DESC').all();
     }
@@ -1394,7 +1624,19 @@ app.post('/api/resources', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), 
       return jsonResponse(res, { error: 'Title required' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO resources (id, title, description, url, type, branch, semester, subject, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(id, title, description || '', url || '', type || 'DOCUMENT', branch || 'EC', semester || '1', subject || '', uploadedBy || '');
+    db.prepare(
+      'INSERT INTO resources (id, title, description, url, type, branch, semester, subject, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      id,
+      title,
+      description || '',
+      url || '',
+      type || 'DOCUMENT',
+      branch || 'EC',
+      semester || '1',
+      subject || '',
+      uploadedBy || ''
+    );
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Add resource error');
@@ -1420,7 +1662,17 @@ app.post('/api/notices', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (r
       return jsonResponse(res, { error: 'Title and content required' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO notices (id, title, content, author, category, priority, branch) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, title, content, author || 'Administration', category || 'GENERAL', priority || 'normal', branch || 'ALL');
+    db.prepare(
+      'INSERT INTO notices (id, title, content, author, category, priority, branch) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      id,
+      title,
+      content,
+      author || 'Administration',
+      category || 'GENERAL',
+      priority || 'normal',
+      branch || 'ALL'
+    );
     auditLog('NOTICE_POSTED', '', `Notice: ${title}`, req.ip);
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
@@ -1432,7 +1684,9 @@ app.post('/api/notices', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (r
 // ── Chat Routes ─────────────────────────────────────────────────────────────────
 app.get('/api/chats/:userId', authMiddleware, requireOwnershipOrAdmin('userId'), (req, res) => {
   try {
-    const chats = db.prepare('SELECT * FROM chats WHERE participants LIKE ? ORDER BY last_timestamp DESC').all(`%${req.params.userId}%`);
+    const chats = db
+      .prepare('SELECT * FROM chats WHERE participants LIKE ? ORDER BY last_timestamp DESC')
+      .all(`%${req.params.userId}%`);
     jsonResponse(res, { chats });
   } catch (e) {
     log.error({ err: e }, 'Get chats error');
@@ -1447,7 +1701,9 @@ app.post('/api/chats', authMiddleware, (req, res) => {
       return jsonResponse(res, { error: 'Participants array required' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO chats (id, participants, is_group, group_name) VALUES (?, ?, ?, ?)').run(id, JSON.stringify(participants), isGroup ? 1 : 0, groupName || '');
+    db.prepare(
+      'INSERT INTO chats (id, participants, is_group, group_name) VALUES (?, ?, ?, ?)'
+    ).run(id, JSON.stringify(participants), isGroup ? 1 : 0, groupName || '');
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Create chat error');
@@ -1463,7 +1719,9 @@ app.get('/api/messages/:chatId', authMiddleware, (req, res) => {
     if (!participants.includes(req.user.id) && req.user.role !== 'GTU_ADMIN') {
       return jsonResponse(res, { error: 'Access denied' }, 403);
     }
-    const messages = db.prepare('SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC').all(req.params.chatId);
+    const messages = db
+      .prepare('SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC')
+      .all(req.params.chatId);
     jsonResponse(res, { messages });
   } catch (e) {
     log.error({ err: e }, 'Get messages error');
@@ -1487,8 +1745,12 @@ app.post('/api/messages', authMiddleware, (req, res) => {
       return jsonResponse(res, { error: 'Access denied' }, 403);
     }
     const id = generateId();
-    db.prepare('INSERT INTO messages (id, chat_id, sender_id, sender_name, content, is_encrypted) VALUES (?, ?, ?, ?, ?, ?)').run(id, chatId, req.user.id, req.user.name, sanitizeInput(content), isEncrypted ? 1 : 0);
-    db.prepare('UPDATE chats SET last_message = ?, last_timestamp = datetime("now") WHERE id = ?').run(content.substring(0, 100), chatId);
+    db.prepare(
+      'INSERT INTO messages (id, chat_id, sender_id, sender_name, content, is_encrypted) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(id, chatId, req.user.id, req.user.name, sanitizeInput(content), isEncrypted ? 1 : 0);
+    db.prepare(
+      'UPDATE chats SET last_message = ?, last_timestamp = datetime("now") WHERE id = ?'
+    ).run(content.substring(0, 100), chatId);
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Send message error');
@@ -1500,7 +1762,11 @@ app.get('/api/users/search', authMiddleware, (req, res) => {
   try {
     const { q } = req.query;
     if (!q || q.length < 2) return jsonResponse(res, { users: [] });
-    const users = db.prepare(`SELECT id, name, enrollment_number, branch, semester, section, photo_url FROM users WHERE name LIKE ? OR enrollment_number LIKE ? LIMIT 20`).all(`%${q}%`, `%${q}%`);
+    const users = db
+      .prepare(
+        `SELECT id, name, enrollment_number, branch, semester, section, photo_url FROM users WHERE name LIKE ? OR enrollment_number LIKE ? LIMIT 20`
+      )
+      .all(`%${q}%`, `%${q}%`);
     jsonResponse(res, { users });
   } catch (e) {
     log.error({ err: e }, 'User search error');
@@ -1514,9 +1780,17 @@ app.get('/api/exams', (req, res) => {
     const { branch, semester } = req.query;
     let exams;
     if (branch && semester) {
-      exams = db.prepare('SELECT id, title, branch, semester, subject, duration, total_marks, created_at FROM exams WHERE branch = ? AND semester = ? ORDER BY created_at DESC').all(branch, semester);
+      exams = db
+        .prepare(
+          'SELECT id, title, branch, semester, subject, duration, total_marks, created_at FROM exams WHERE branch = ? AND semester = ? ORDER BY created_at DESC'
+        )
+        .all(branch, semester);
     } else {
-      exams = db.prepare('SELECT id, title, branch, semester, subject, duration, total_marks, created_at FROM exams ORDER BY created_at DESC').all();
+      exams = db
+        .prepare(
+          'SELECT id, title, branch, semester, subject, duration, total_marks, created_at FROM exams ORDER BY created_at DESC'
+        )
+        .all();
     }
     jsonResponse(res, { exams });
   } catch (e) {
@@ -1532,7 +1806,18 @@ app.post('/api/exams', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req
       return jsonResponse(res, { error: 'Title required' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO exams (id, title, branch, semester, subject, questions, duration, total_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(id, title, branch || 'EC', semester || '1', subject || '', JSON.stringify(questions || []), duration || 60, totalMarks || 100);
+    db.prepare(
+      'INSERT INTO exams (id, title, branch, semester, subject, questions, duration, total_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      id,
+      title,
+      branch || 'EC',
+      semester || '1',
+      subject || '',
+      JSON.stringify(questions || []),
+      duration || 60,
+      totalMarks || 100
+    );
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Create exam error');
@@ -1542,7 +1827,11 @@ app.post('/api/exams', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req
 
 app.get('/api/exams/:id', (req, res) => {
   try {
-    const exam = db.prepare('SELECT id, title, branch, semester, subject, duration, total_marks, created_at FROM exams WHERE id = ?').get(req.params.id);
+    const exam = db
+      .prepare(
+        'SELECT id, title, branch, semester, subject, duration, total_marks, created_at FROM exams WHERE id = ?'
+      )
+      .get(req.params.id);
     if (!exam) return jsonResponse(res, { error: 'Exam not found' }, 404);
     jsonResponse(res, { exam });
   } catch (e) {
@@ -1571,7 +1860,9 @@ app.post('/api/exams/:id/submit', authMiddleware, (req, res) => {
     }
 
     const userId = req.user.id;
-    const exam = db.prepare('SELECT id, total_marks, questions FROM exams WHERE id = ?').get(req.params.id);
+    const exam = db
+      .prepare('SELECT id, total_marks, questions FROM exams WHERE id = ?')
+      .get(req.params.id);
     if (!exam) {
       return jsonResponse(res, { error: 'Exam not found' }, 404);
     }
@@ -1589,10 +1880,14 @@ app.post('/api/exams/:id/submit', authMiddleware, (req, res) => {
         }
         score = Math.round(score);
       }
-    } catch { /* default to 0 if questions parsing fails */ }
+    } catch {
+      /* default to 0 if questions parsing fails */
+    }
 
     const id = generateId();
-    db.prepare('INSERT INTO exam_results (id, user_id, exam_id, score, total, answers) VALUES (?, ?, ?, ?, ?, ?)').run(id, userId, req.params.id, score, total, JSON.stringify(answers));
+    db.prepare(
+      'INSERT INTO exam_results (id, user_id, exam_id, score, total, answers) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(id, userId, req.params.id, score, total, JSON.stringify(answers));
     jsonResponse(res, { success: true, resultId: id, score, total }, 201);
   } catch (e) {
     log.error({ err: e }, 'Submit exam error');
@@ -1624,7 +1919,9 @@ app.post('/api/faculty', authMiddleware, requireRole('GTU_ADMIN'), (req, res) =>
       return jsonResponse(res, { error: 'Name required' }, 400);
     }
     const id = generateId();
-    db.prepare('INSERT INTO faculty (id, name, designation, department, email, phone, branch) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, name, designation || '', department || '', email || '', phone || '', branch || 'EC');
+    db.prepare(
+      'INSERT INTO faculty (id, name, designation, department, email, phone, branch) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(id, name, designation || '', department || '', email || '', phone || '', branch || 'EC');
     jsonResponse(res, { success: true, id }, 201);
   } catch (e) {
     log.error({ err: e }, 'Add faculty error');
@@ -1674,51 +1971,56 @@ app.post('/api/settings', authMiddleware, requireRole('GTU_ADMIN'), (req, res) =
 app.post('/api/ai/chat', authMiddleware, aiLimiter, (req, res) => {
   const { message, context, provider } = req.body;
   if (!message) return jsonResponse(res, { error: 'Message required' }, 400);
-  
+
   // Server-side: return mock fallback immediately (real AI is client-side)
   const mockResponse = getMockAIResponse('chat', message, context);
-  jsonResponse(res, { 
+  jsonResponse(res, {
     response: mockResponse,
     fallback: true,
     provider: provider || 'mock',
-    tokensUsed: mockResponse.length / 4
+    tokensUsed: mockResponse.length / 4,
   });
 });
 
 app.post('/api/ai/grade', authMiddleware, aiStrictLimiter, (req, res) => {
   const { answers, questions, subject } = req.body;
-  if (!answers || !questions) return jsonResponse(res, { error: 'Answers and questions required' }, 400);
-  
+  if (!answers || !questions)
+    return jsonResponse(res, { error: 'Answers and questions required' }, 400);
+
   const mockGrading = getMockGrading(answers, questions);
-  jsonResponse(res, { 
+  jsonResponse(res, {
     score: mockGrading.score,
     total: mockGrading.total,
     feedback: mockGrading.feedback,
-    fallback: true
+    fallback: true,
   });
 });
 
 app.post('/api/ai/explain', authMiddleware, aiLimiter, (req, res) => {
   const { topic, subject, level } = req.body;
   if (!topic) return jsonResponse(res, { error: 'Topic required' }, 400);
-  
+
   const mockExplanation = getMockExplanation(topic, subject, level);
-  jsonResponse(res, { 
+  jsonResponse(res, {
     explanation: mockExplanation,
     fallback: true,
-    provider: 'mock'
+    provider: 'mock',
   });
 });
 
 app.get('/api/ai/usage', authMiddleware, (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
-    const usage = db.prepare(`
+    const usage = db
+      .prepare(
+        `
       SELECT provider, request_type, COUNT(*) as count, SUM(tokens_used) as tokens
       FROM ai_usage 
       WHERE user_id = ? AND created_at >= datetime('now', ?)
       GROUP BY provider, request_type
-    `).all(req.user.id, `-${days} days`);
+    `
+      )
+      .all(req.user.id, `-${days} days`);
     jsonResponse(res, { usage });
   } catch (e) {
     log.error({ err: e }, 'AI usage error');
@@ -1730,13 +2032,26 @@ app.post('/api/ai/mock', (req, res) => {
   // Public mock endpoint (no auth) for offline mode
   const { type, message, topic, answers, questions } = req.body;
   try {
-    console.log('AI Mock Request:', { type, hasAnswers: !!answers, hasQuestions: !!questions, questionsType: typeof questions, isArray: Array.isArray(questions) });
+    console.log('AI Mock Request:', {
+      type,
+      hasAnswers: !!answers,
+      hasQuestions: !!questions,
+      questionsType: typeof questions,
+      isArray: Array.isArray(questions),
+    });
     let mock;
     switch (type) {
-      case 'chat': mock = { response: getMockAIResponse('chat', message) }; break;
-      case 'grade': mock = getMockGrading(answers, questions); break;
-      case 'explain': mock = { explanation: getMockExplanation(message) }; break;
-      default: mock = { response: 'Mock response available for chat, grade, explain' };
+      case 'chat':
+        mock = { response: getMockAIResponse('chat', message) };
+        break;
+      case 'grade':
+        mock = getMockGrading(answers, questions);
+        break;
+      case 'explain':
+        mock = { explanation: getMockExplanation(message) };
+        break;
+      default:
+        mock = { response: 'Mock response available for chat, grade, explain' };
     }
     jsonResponse(res, { ...mock, fallback: true, provider: 'mock' });
   } catch (e) {
@@ -1748,9 +2063,21 @@ app.post('/api/ai/mock', (req, res) => {
 // ─── Academic Content Routes (seeded GTU 2024-25 data) ─────────────────────────
 app.get('/api/academic/meta', (req, res) => {
   try {
-    const branches = db.prepare('SELECT DISTINCT branch FROM subjects ORDER BY branch').all().map((r) => r.branch);
-    const semesters = db.prepare('SELECT DISTINCT semester FROM subjects ORDER BY semester').all().map((r) => r.semester);
-    jsonResponse(res, { branches, semesters, updated_at: db.prepare("SELECT value FROM settings WHERE key = 'seed_gtu_2024_25_v1'").get()?.value || null });
+    const branches = db
+      .prepare('SELECT DISTINCT branch FROM subjects ORDER BY branch')
+      .all()
+      .map(r => r.branch);
+    const semesters = db
+      .prepare('SELECT DISTINCT semester FROM subjects ORDER BY semester')
+      .all()
+      .map(r => r.semester);
+    jsonResponse(res, {
+      branches,
+      semesters,
+      updated_at:
+        db.prepare("SELECT value FROM settings WHERE key = 'seed_gtu_2024_25_v1'").get()?.value ||
+        null,
+    });
   } catch (e) {
     log.error({ err: e }, 'Academic meta error');
     jsonResponse(res, { error: 'Internal server error' }, 500);
@@ -1762,8 +2089,14 @@ app.get('/api/academic/subjects', (req, res) => {
     const { branch, semester } = req.query;
     let sql = 'SELECT id, code, name, branch, semester, credits, is_lab FROM subjects WHERE 1=1';
     const params = [];
-    if (branch) { sql += ' AND branch = ?'; params.push(branch); }
-    if (semester) { sql += ' AND semester = ?'; params.push(parseInt(semester)); }
+    if (branch) {
+      sql += ' AND branch = ?';
+      params.push(branch);
+    }
+    if (semester) {
+      sql += ' AND semester = ?';
+      params.push(parseInt(semester));
+    }
     sql += ' ORDER BY semester, is_lab, code';
     jsonResponse(res, { subjects: db.prepare(sql).all(...params) });
   } catch (e) {
@@ -1776,7 +2109,11 @@ app.get('/api/academic/subjects/:id', (req, res) => {
   try {
     const subject = db.prepare('SELECT * FROM subjects WHERE id = ?').get(req.params.id);
     if (!subject) return jsonResponse(res, { error: 'Subject not found' }, 404);
-    const units = db.prepare('SELECT id, unit_number, title, topics, weightage FROM units WHERE subject_id = ? ORDER BY unit_number').all(subject.id);
+    const units = db
+      .prepare(
+        'SELECT id, unit_number, title, topics, weightage FROM units WHERE subject_id = ? ORDER BY unit_number'
+      )
+      .all(subject.id);
     jsonResponse(res, { subject, units });
   } catch (e) {
     log.error({ err: e }, 'Academic subject detail error');
@@ -1788,7 +2125,11 @@ app.get('/api/academic/units/:id', (req, res) => {
   try {
     const unit = db.prepare('SELECT * FROM units WHERE id = ?').get(req.params.id);
     if (!unit) return jsonResponse(res, { error: 'Unit not found' }, 404);
-    const topics = db.prepare('SELECT id, topic, subtopics, learning_outcomes, bloom_level, hours_allocated FROM syllabus WHERE unit_id = ? ORDER BY rowid').all(unit.id);
+    const topics = db
+      .prepare(
+        'SELECT id, topic, subtopics, learning_outcomes, bloom_level, hours_allocated FROM syllabus WHERE unit_id = ? ORDER BY rowid'
+      )
+      .all(unit.id);
     jsonResponse(res, { unit, topics });
   } catch (e) {
     log.error({ err: e }, 'Academic unit detail error');
@@ -1799,12 +2140,25 @@ app.get('/api/academic/units/:id', (req, res) => {
 app.get('/api/academic/questions', authMiddleware, (req, res) => {
   try {
     const { subjectId, unitId, type, difficulty, limit } = req.query;
-    let sql = 'SELECT id, subject_id, unit_id, question_text, question_type, options, correct_answer, explanation, marks, difficulty, bloom_level, co_code, source FROM question_banks WHERE is_active = 1';
+    let sql =
+      'SELECT id, subject_id, unit_id, question_text, question_type, options, correct_answer, explanation, marks, difficulty, bloom_level, co_code, source FROM question_banks WHERE is_active = 1';
     const params = [];
-    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
-    if (unitId) { sql += ' AND unit_id = ?'; params.push(unitId); }
-    if (type) { sql += ' AND question_type = ?'; params.push(type); }
-    if (difficulty) { sql += ' AND difficulty = ?'; params.push(difficulty); }
+    if (subjectId) {
+      sql += ' AND subject_id = ?';
+      params.push(subjectId);
+    }
+    if (unitId) {
+      sql += ' AND unit_id = ?';
+      params.push(unitId);
+    }
+    if (type) {
+      sql += ' AND question_type = ?';
+      params.push(type);
+    }
+    if (difficulty) {
+      sql += ' AND difficulty = ?';
+      params.push(difficulty);
+    }
     sql += ' ORDER BY rowid';
     const max = Math.min(parseInt(limit) || 50, 200);
     sql += ' LIMIT ?';
@@ -1819,11 +2173,21 @@ app.get('/api/academic/questions', authMiddleware, (req, res) => {
 app.get('/api/academic/pyqs', authMiddleware, (req, res) => {
   try {
     const { subjectId, year, examType } = req.query;
-    let sql = 'SELECT id, subject_id, year, semester, exam_type, question_number, question_text, question_type, options, correct_answer, solution, marks, unit_id, co_code FROM pyqs WHERE 1=1';
+    let sql =
+      'SELECT id, subject_id, year, semester, exam_type, question_number, question_text, question_type, options, correct_answer, solution, marks, unit_id, co_code FROM pyqs WHERE 1=1';
     const params = [];
-    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
-    if (year) { sql += ' AND year = ?'; params.push(parseInt(year)); }
-    if (examType) { sql += ' AND exam_type = ?'; params.push(examType); }
+    if (subjectId) {
+      sql += ' AND subject_id = ?';
+      params.push(subjectId);
+    }
+    if (year) {
+      sql += ' AND year = ?';
+      params.push(parseInt(year));
+    }
+    if (examType) {
+      sql += ' AND exam_type = ?';
+      params.push(examType);
+    }
     sql += ' ORDER BY year DESC, question_number';
     jsonResponse(res, { pyqs: db.prepare(sql).all(...params) });
   } catch (e) {
@@ -1835,11 +2199,21 @@ app.get('/api/academic/pyqs', authMiddleware, (req, res) => {
 app.get('/api/academic/notes', authMiddleware, (req, res) => {
   try {
     const { subjectId, unitId, contentType } = req.query;
-    let sql = 'SELECT id, subject_id, unit_id, title, content, content_type, tags, is_verified FROM notes WHERE 1=1';
+    let sql =
+      'SELECT id, subject_id, unit_id, title, content, content_type, tags, is_verified FROM notes WHERE 1=1';
     const params = [];
-    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
-    if (unitId) { sql += ' AND unit_id = ?'; params.push(unitId); }
-    if (contentType) { sql += ' AND content_type = ?'; params.push(contentType); }
+    if (subjectId) {
+      sql += ' AND subject_id = ?';
+      params.push(subjectId);
+    }
+    if (unitId) {
+      sql += ' AND unit_id = ?';
+      params.push(unitId);
+    }
+    if (contentType) {
+      sql += ' AND content_type = ?';
+      params.push(contentType);
+    }
     sql += ' ORDER BY unit_id, content_type';
     jsonResponse(res, { notes: db.prepare(sql).all(...params) });
   } catch (e) {
@@ -1851,9 +2225,13 @@ app.get('/api/academic/notes', authMiddleware, (req, res) => {
 app.get('/api/academic/labs', authMiddleware, (req, res) => {
   try {
     const { subjectId } = req.query;
-    let sql = 'SELECT id, subject_id, experiment_number, title, aim, apparatus, theory, procedure, observations, calculations, result, viva_questions, precautions, reference_material FROM labs WHERE 1=1';
+    let sql =
+      'SELECT id, subject_id, experiment_number, title, aim, apparatus, theory, procedure, observations, calculations, result, viva_questions, precautions, reference_material FROM labs WHERE 1=1';
     const params = [];
-    if (subjectId) { sql += ' AND subject_id = ?'; params.push(subjectId); }
+    if (subjectId) {
+      sql += ' AND subject_id = ?';
+      params.push(subjectId);
+    }
     sql += ' ORDER BY experiment_number';
     jsonResponse(res, { labs: db.prepare(sql).all(...params) });
   } catch (e) {
@@ -1865,10 +2243,17 @@ app.get('/api/academic/labs', authMiddleware, (req, res) => {
 app.get('/api/academic/projects', (req, res) => {
   try {
     const { branch, semester } = req.query;
-    let sql = 'SELECT id, subject_id, branch, semester, title, type, description, objectives, technologies, prerequisites, timeline_weeks, deliverables, difficulty FROM projects WHERE 1=1';
+    let sql =
+      'SELECT id, subject_id, branch, semester, title, type, description, objectives, technologies, prerequisites, timeline_weeks, deliverables, difficulty FROM projects WHERE 1=1';
     const params = [];
-    if (branch) { sql += ' AND branch = ?'; params.push(branch); }
-    if (semester) { sql += ' AND semester = ?'; params.push(parseInt(semester)); }
+    if (branch) {
+      sql += ' AND branch = ?';
+      params.push(branch);
+    }
+    if (semester) {
+      sql += ' AND semester = ?';
+      params.push(parseInt(semester));
+    }
     sql += ' ORDER BY semester, branch';
     jsonResponse(res, { projects: db.prepare(sql).all(...params) });
   } catch (e) {
@@ -1882,14 +2267,28 @@ app.get('/api/academic/dashboard', (req, res) => {
     const { branch, semester } = req.query;
     const semInt = semester ? parseInt(semester) : null;
     const params = () => [branch || null, branch || null, semInt, semInt];
-    const count = (sql) => db.prepare(sql).get(...params()).c;
-    const subjects = count('SELECT COUNT(*) c FROM subjects WHERE (branch = ? OR ? IS NULL) AND (semester = ? OR ? IS NULL)');
-    const units = count('SELECT COUNT(*) c FROM units u JOIN subjects s ON s.id = u.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
-    const questions = count('SELECT COUNT(*) c FROM question_banks q JOIN subjects s ON s.id = q.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
-    const pyqs = count('SELECT COUNT(*) c FROM pyqs p JOIN subjects s ON s.id = p.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
-    const notes = count('SELECT COUNT(*) c FROM notes n JOIN subjects s ON s.id = n.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
-    const labs = count('SELECT COUNT(*) c FROM labs l JOIN subjects s ON s.id = l.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)');
-    const projects = count('SELECT COUNT(*) c FROM projects WHERE (branch = ? OR ? IS NULL) AND (semester = ? OR ? IS NULL)');
+    const count = sql => db.prepare(sql).get(...params()).c;
+    const subjects = count(
+      'SELECT COUNT(*) c FROM subjects WHERE (branch = ? OR ? IS NULL) AND (semester = ? OR ? IS NULL)'
+    );
+    const units = count(
+      'SELECT COUNT(*) c FROM units u JOIN subjects s ON s.id = u.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)'
+    );
+    const questions = count(
+      'SELECT COUNT(*) c FROM question_banks q JOIN subjects s ON s.id = q.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)'
+    );
+    const pyqs = count(
+      'SELECT COUNT(*) c FROM pyqs p JOIN subjects s ON s.id = p.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)'
+    );
+    const notes = count(
+      'SELECT COUNT(*) c FROM notes n JOIN subjects s ON s.id = n.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)'
+    );
+    const labs = count(
+      'SELECT COUNT(*) c FROM labs l JOIN subjects s ON s.id = l.subject_id WHERE (s.branch = ? OR ? IS NULL) AND (s.semester = ? OR ? IS NULL)'
+    );
+    const projects = count(
+      'SELECT COUNT(*) c FROM projects WHERE (branch = ? OR ? IS NULL) AND (semester = ? OR ? IS NULL)'
+    );
     jsonResponse(res, { subjects, units, questions, pyqs, notes, labs, projects });
   } catch (e) {
     log.error({ err: e }, 'Academic dashboard error');
@@ -1902,14 +2301,14 @@ function getMockAIResponse(type, message, context = '') {
   const responses = {
     chat: [
       `I understand you're asking about "${message}". Based on the GTU syllabus, this relates to ${context || 'core concepts'}. Let me break it down:\n\n**Key Points:**\n1. Fundamental principle\n2. Practical application\n3. Common exam pattern\n\n**Study Tip:** Focus on numerical problems from past papers - they repeat often.\n\nNeed a numerical example or diagram explanation?`,
-      `Great question on "${message}"! This is a ${getRandomItem(['frequently asked', 'conceptually important', 'numerical-heavy'])} topic in GTU exams.\n\n**Quick Summary:**\n• Definition & formula\n• Step-by-step derivation\n• Common variants\n\n**Pro Tip:** Create a one-page formula sheet for this unit. 80% of questions come from 20% of formulas.\n\nWant me to generate a practice problem?`
+      `Great question on "${message}"! This is a ${getRandomItem(['frequently asked', 'conceptually important', 'numerical-heavy'])} topic in GTU exams.\n\n**Quick Summary:**\n• Definition & formula\n• Step-by-step derivation\n• Common variants\n\n**Pro Tip:** Create a one-page formula sheet for this unit. 80% of questions come from 20% of formulas.\n\nWant me to generate a practice problem?`,
     ],
     explain: [
       `**${message}** - Simplified Explanation\n\n**What it is:** Core concept in simple terms\n**Formula:** [Standard formula]\n**Units:** [SI units]\n\n**Derivation Steps:**\n1. Start from basic principle\n2. Apply boundary conditions\n3. Arrive at final equation\n\n**Memory Hook:** "${getRandomMnemonic(message)}"\n\n**Typical Exam Questions:**\n- Derive the expression for...\n- Calculate when given...\n- Explain the physical significance of...`,
-      `**Topic: ${message}**\n\n**Concept Map:**\n├── Definition\n├── Formula → Variables\n├── Assumptions\n├── Applications\n└── Limitations\n\n**Bloom's Level:** Understand → Apply\n**CO Mapping:** CO${Math.floor(Math.random()*4)+1}\n\n**Practice:** Try solving Q${Math.floor(Math.random()*5)+1} from last 3 years' papers.`
-    ]
+      `**Topic: ${message}**\n\n**Concept Map:**\n├── Definition\n├── Formula → Variables\n├── Assumptions\n├── Applications\n└── Limitations\n\n**Bloom's Level:** Understand → Apply\n**CO Mapping:** CO${Math.floor(Math.random() * 4) + 1}\n\n**Practice:** Try solving Q${Math.floor(Math.random() * 5) + 1} from last 3 years' papers.`,
+    ],
   };
-  
+
   const arr = responses[type] || responses.chat;
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -1918,54 +2317,69 @@ function getMockGrading(answers, questions) {
   const qArray = Array.isArray(questions) ? questions : [];
   const total = qArray.length || 10;
   let correct = 0;
-  
+
   if (Array.isArray(answers)) {
     answers.forEach((ans, i) => {
       if (qArray[i] && qArray[i].correct === ans) correct++;
       else if (Math.random() > 0.4) correct++;
     });
   }
-  
+
   const score = Math.max(0, Math.min(total, correct + Math.floor(Math.random() * 2)));
   const percentage = Math.round((score / total) * 100);
-  
-  const breakdown = qArray.map(function(q, i) {
+
+  const breakdown = qArray.map(function (q, i) {
     return {
       question: i + 1,
       yourAnswer: answers?.[i],
       correct: q?.correct,
-      status: answers?.[i] === q?.correct ? 'correct' : 'incorrect'
+      status: answers?.[i] === q?.correct ? 'correct' : 'incorrect',
     };
   });
-  
+
   return {
     score: score,
     total: total,
     percentage: percentage,
-    feedback: percentage >= 80 
-      ? 'Excellent! You have strong grasp of this unit.' 
-      : percentage >= 60 
-        ? 'Good effort. Review the incorrect answers - focus on concept clarity.' 
-        : 'Needs improvement. Revisit the unit notes and try practice questions.',
-    breakdown: breakdown
+    feedback:
+      percentage >= 80
+        ? 'Excellent! You have strong grasp of this unit.'
+        : percentage >= 60
+          ? 'Good effort. Review the incorrect answers - focus on concept clarity.'
+          : 'Needs improvement. Revisit the unit notes and try practice questions.',
+    breakdown: breakdown,
   };
 }
 
 function getMockExplanation(topic, subject = '', level = 'intermediate') {
   const explanations = [
     `**${topic}** (${subject || 'General'})\n\n**Definition:** Fundamental concept in engineering\n\n**Key Formula:** ${getRandomFormula()}\n\n**Step-by-Step Derivation:**\n1. Identify given parameters\n2. Apply governing principle\n3. Substitute and solve\n\n**Common Mistakes:**\n- Unit conversion errors\n- Sign convention\n- Boundary conditions\n\n**Exam Pattern:** ${getRandomExamPattern()}\n\n**Quick Reference Card:**\n• When to use: [Condition]\n• What to find: [Unknown]\n• Check: [Validation step]`,
-    
-    `**${topic}** - ${level.charAt(0).toUpperCase() + level.slice(1)} Level\n\n**Concept:** ${getRandomConcept()}\n\n**Visual:** [Diagram would be here]\n\n**Worked Example:**\nGiven: [Standard problem]\nFind: [Unknown]\nSolution: [Step-by-step]\nAnswer: [With units]\n\n**Practice Set:** Try problems from Unit ${Math.floor(Math.random()*6)+1} PYQs`
+
+    `**${topic}** - ${level.charAt(0).toUpperCase() + level.slice(1)} Level\n\n**Concept:** ${getRandomConcept()}\n\n**Visual:** [Diagram would be here]\n\n**Worked Example:**\nGiven: [Standard problem]\nFind: [Unknown]\nSolution: [Step-by-step]\nAnswer: [With units]\n\n**Practice Set:** Try problems from Unit ${Math.floor(Math.random() * 6) + 1} PYQs`,
   ];
-  
+
   return explanations[Math.floor(Math.random() * explanations.length)];
 }
 
-function getRandomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function getRandomMnemonic(topic) { return topic.split(' ').map(w => w[0]).join('').toUpperCase(); }
-function getRandomFormula() { return 'V = IR / P = VI / F = ma'; }
-function getRandomExamPattern() { return '2-3 marks numerical, 1 mark theory'; }
-function getRandomConcept() { return 'Core principle applied to real-world scenarios'; }
+function getRandomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function getRandomMnemonic(topic) {
+  return topic
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .toUpperCase();
+}
+function getRandomFormula() {
+  return 'V = IR / P = VI / F = ma';
+}
+function getRandomExamPattern() {
+  return '2-3 marks numerical, 1 mark theory';
+}
+function getRandomConcept() {
+  return 'Core principle applied to real-world scenarios';
+}
 
 // ── Health Check ────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -2017,36 +2431,117 @@ function seedData() {
   const noticeCount = db.prepare('SELECT COUNT(*) as count FROM notices').get().count;
   if (noticeCount === 0) {
     const notices = [
-      { title: 'Mid-Term Exam Schedule Released', content: 'Mid-term examinations for all semesters will begin from 15th August 2026. Please check the exam hub for detailed schedule.', author: 'GTU Examination Cell', priority: 'high', category: 'EXAM' },
-      { title: 'Campus Placement Drive', content: 'TCS will be conducting a campus placement drive for eligible final year students on 20th August 2026. Register through the campus portal.', author: 'Training & Placement Cell', priority: 'normal', category: 'PLACEMENT' },
-      { title: 'Library Extended Hours', content: 'The central library will remain open until 10 PM during the examination period starting from 10th August.', author: 'Library Administration', priority: 'normal', category: 'GENERAL' },
+      {
+        title: 'Mid-Term Exam Schedule Released',
+        content:
+          'Mid-term examinations for all semesters will begin from 15th August 2026. Please check the exam hub for detailed schedule.',
+        author: 'GTU Examination Cell',
+        priority: 'high',
+        category: 'EXAM',
+      },
+      {
+        title: 'Campus Placement Drive',
+        content:
+          'TCS will be conducting a campus placement drive for eligible final year students on 20th August 2026. Register through the campus portal.',
+        author: 'Training & Placement Cell',
+        priority: 'normal',
+        category: 'PLACEMENT',
+      },
+      {
+        title: 'Library Extended Hours',
+        content:
+          'The central library will remain open until 10 PM during the examination period starting from 10th August.',
+        author: 'Library Administration',
+        priority: 'normal',
+        category: 'GENERAL',
+      },
     ];
     notices.forEach(n => {
-      db.prepare('INSERT INTO notices (id, title, content, author, priority, category, branch) VALUES (?, ?, ?, ?, ?, ?, ?)').run(generateId(), n.title, n.content, n.author, n.priority, n.category, 'ALL');
+      db.prepare(
+        'INSERT INTO notices (id, title, content, author, priority, category, branch) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(generateId(), n.title, n.content, n.author, n.priority, n.category, 'ALL');
     });
   }
 
   const facultyCount = db.prepare('SELECT COUNT(*) as count FROM faculty').get().count;
   if (facultyCount === 0) {
     const faculties = [
-      { name: 'Dr. Priya Sharma', designation: 'HOD', department: 'Electronics & Communication', email: 'priya.sharma@gtu.edu', phone: '9876543210', branch: 'EC' },
-      { name: 'Prof. Rajesh Patel', designation: 'Assistant Professor', department: 'Electronics & Communication', email: 'rajesh.patel@gtu.edu', phone: '9876543211', branch: 'EC' },
-      { name: 'Prof. Sneha Mehta', designation: 'Assistant Professor', department: 'Electronics & Communication', email: 'sneha.mehta@gtu.edu', phone: '9876543212', branch: 'EC' },
-      { name: 'Dr. Amit Joshi', designation: 'HOD', department: 'ICT', email: 'amit.joshi@gtu.edu', phone: '9876543213', branch: 'ICT' },
-      { name: 'Prof. Kavita Singh', designation: 'Assistant Professor', department: 'ICT', email: 'kavita.singh@gtu.edu', phone: '9876543214', branch: 'ICT' },
-      { name: 'Prof. Deepak Kumar', designation: 'Assistant Professor', department: 'ICT', email: 'deepak.kumar@gtu.edu', phone: '9876543215', branch: 'ICT' },
+      {
+        name: 'Dr. Priya Sharma',
+        designation: 'HOD',
+        department: 'Electronics & Communication',
+        email: 'priya.sharma@gtu.edu',
+        phone: '9876543210',
+        branch: 'EC',
+      },
+      {
+        name: 'Prof. Rajesh Patel',
+        designation: 'Assistant Professor',
+        department: 'Electronics & Communication',
+        email: 'rajesh.patel@gtu.edu',
+        phone: '9876543211',
+        branch: 'EC',
+      },
+      {
+        name: 'Prof. Sneha Mehta',
+        designation: 'Assistant Professor',
+        department: 'Electronics & Communication',
+        email: 'sneha.mehta@gtu.edu',
+        phone: '9876543212',
+        branch: 'EC',
+      },
+      {
+        name: 'Dr. Amit Joshi',
+        designation: 'HOD',
+        department: 'ICT',
+        email: 'amit.joshi@gtu.edu',
+        phone: '9876543213',
+        branch: 'ICT',
+      },
+      {
+        name: 'Prof. Kavita Singh',
+        designation: 'Assistant Professor',
+        department: 'ICT',
+        email: 'kavita.singh@gtu.edu',
+        phone: '9876543214',
+        branch: 'ICT',
+      },
+      {
+        name: 'Prof. Deepak Kumar',
+        designation: 'Assistant Professor',
+        department: 'ICT',
+        email: 'deepak.kumar@gtu.edu',
+        phone: '9876543215',
+        branch: 'ICT',
+      },
     ];
     faculties.forEach(f => {
-      db.prepare('INSERT INTO faculty (id, name, designation, department, email, phone, branch) VALUES (?, ?, ?, ?, ?, ?, ?)').run(generateId(), f.name, f.designation, f.department, f.email, f.phone, f.branch);
+      db.prepare(
+        'INSERT INTO faculty (id, name, designation, department, email, phone, branch) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(generateId(), f.name, f.designation, f.department, f.email, f.phone, f.branch);
     });
   }
 
   const timetableCount = db.prepare('SELECT COUNT(*) as count FROM timetable').get().count;
   if (timetableCount === 0) {
     const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const ecSubjects = ['Mathematics-III', 'Digital Electronics', 'Analog Circuits', 'Signals & Systems', 'Programming in C', 'Communication Systems'];
-    const ictSubjects = ['Data Structures', 'Web Technologies', 'Database Management', 'Computer Networks', 'Software Engineering', 'AI & ML Basics'];
-    
+    const ecSubjects = [
+      'Mathematics-III',
+      'Digital Electronics',
+      'Analog Circuits',
+      'Signals & Systems',
+      'Programming in C',
+      'Communication Systems',
+    ];
+    const ictSubjects = [
+      'Data Structures',
+      'Web Technologies',
+      'Database Management',
+      'Computer Networks',
+      'Software Engineering',
+      'AI & ML Basics',
+    ];
+
     ['EC', 'ICT'].forEach(branch => {
       const subjects = branch === 'EC' ? ecSubjects : ictSubjects;
       for (let sem = 1; sem <= 6; sem++) {
@@ -2055,11 +2550,20 @@ function seedData() {
             const subjectIdx = (dayIdx + slot) % subjects.length;
             const times = ['09:00', '10:00', '11:00', '12:00', '13:30', '14:30'];
             const endTimes = ['10:00', '11:00', '12:00', '13:00', '14:30', '15:30'];
-            db.prepare('INSERT INTO timetable (id, branch, semester, day, slot_index, subject, type, start_time, end_time, faculty_name, batch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
-              generateId(), branch, String(sem), day, slot, 
-              subjects[subjectIdx], slot === 4 ? 'RECESS' : 'LECTURE',
-              times[slot], endTimes[slot], 
-              slot === 4 ? '' : 'Faculty ' + (slot + 1), 'ALL'
+            db.prepare(
+              'INSERT INTO timetable (id, branch, semester, day, slot_index, subject, type, start_time, end_time, faculty_name, batch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            ).run(
+              generateId(),
+              branch,
+              String(sem),
+              day,
+              slot,
+              subjects[subjectIdx],
+              slot === 4 ? 'RECESS' : 'LECTURE',
+              times[slot],
+              endTimes[slot],
+              slot === 4 ? '' : 'Faculty ' + (slot + 1),
+              'ALL'
             );
           }
         });
@@ -2070,19 +2574,76 @@ function seedData() {
   const examCount = db.prepare('SELECT COUNT(*) as count FROM exams').get().count;
   if (examCount === 0) {
     const quizzes = [
-      { title: 'Digital Electronics - Quiz 1', branch: 'EC', semester: '3', subject: 'Digital Electronics', questions: JSON.stringify([
-        { id: '1', text: 'What is a flip-flop?', options: ['A combinational circuit', 'A sequential circuit', 'A logic gate', 'None'], correctIndex: 1 },
-        { id: '2', text: 'How many states does a JK flip-flop have?', options: ['1', '2', '3', '4'], correctIndex: 1 },
-        { id: '3', text: 'Which gate is called universal gate?', options: ['AND', 'OR', 'NAND', 'XOR'], correctIndex: 2 },
-      ]), duration: 15, totalMarks: 30 },
-      { title: 'Data Structures - Quiz 1', branch: 'ICT', semester: '2', subject: 'Data Structures', questions: JSON.stringify([
-        { id: '1', text: 'What is the time complexity of binary search?', options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'], correctIndex: 1 },
-        { id: '2', text: 'Which data structure uses FIFO?', options: ['Stack', 'Queue', 'Tree', 'Graph'], correctIndex: 1 },
-        { id: '3', text: 'What is the height of a balanced BST with n nodes?', options: ['O(n)', 'O(log n)', 'O(n log n)', 'O(1)'], correctIndex: 1 },
-      ]), duration: 15, totalMarks: 30 },
+      {
+        title: 'Digital Electronics - Quiz 1',
+        branch: 'EC',
+        semester: '3',
+        subject: 'Digital Electronics',
+        questions: JSON.stringify([
+          {
+            id: '1',
+            text: 'What is a flip-flop?',
+            options: ['A combinational circuit', 'A sequential circuit', 'A logic gate', 'None'],
+            correctIndex: 1,
+          },
+          {
+            id: '2',
+            text: 'How many states does a JK flip-flop have?',
+            options: ['1', '2', '3', '4'],
+            correctIndex: 1,
+          },
+          {
+            id: '3',
+            text: 'Which gate is called universal gate?',
+            options: ['AND', 'OR', 'NAND', 'XOR'],
+            correctIndex: 2,
+          },
+        ]),
+        duration: 15,
+        totalMarks: 30,
+      },
+      {
+        title: 'Data Structures - Quiz 1',
+        branch: 'ICT',
+        semester: '2',
+        subject: 'Data Structures',
+        questions: JSON.stringify([
+          {
+            id: '1',
+            text: 'What is the time complexity of binary search?',
+            options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
+            correctIndex: 1,
+          },
+          {
+            id: '2',
+            text: 'Which data structure uses FIFO?',
+            options: ['Stack', 'Queue', 'Tree', 'Graph'],
+            correctIndex: 1,
+          },
+          {
+            id: '3',
+            text: 'What is the height of a balanced BST with n nodes?',
+            options: ['O(n)', 'O(log n)', 'O(n log n)', 'O(1)'],
+            correctIndex: 1,
+          },
+        ]),
+        duration: 15,
+        totalMarks: 30,
+      },
     ];
     quizzes.forEach(q => {
-      db.prepare('INSERT INTO exams (id, title, branch, semester, subject, questions, duration, total_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(generateId(), q.title, q.branch, q.semester, q.subject, q.questions, q.duration, q.totalMarks);
+      db.prepare(
+        'INSERT INTO exams (id, title, branch, semester, subject, questions, duration, total_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(
+        generateId(),
+        q.title,
+        q.branch,
+        q.semester,
+        q.subject,
+        q.questions,
+        q.duration,
+        q.totalMarks
+      );
     });
   }
 }
@@ -2096,12 +2657,12 @@ function gracefulShutdown(signal) {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', err => {
   log.fatal({ err }, 'Uncaught exception');
   trackError();
   process.exit(1);
 });
-process.on('unhandledRejection', (reason) => {
+process.on('unhandledRejection', reason => {
   log.error({ reason }, 'Unhandled rejection');
   trackError();
 });
@@ -2110,7 +2671,9 @@ process.on('unhandledRejection', (reason) => {
 setInterval(() => {
   const alerts = checkAlerts();
   if (alerts.length > 0) {
-    alerts.forEach(a => log[a.level === 'critical' ? 'fatal' : 'warn']({ alert: a }, 'System alert'));
+    alerts.forEach(a =>
+      log[a.level === 'critical' ? 'fatal' : 'warn']({ alert: a }, 'System alert')
+    );
   }
 }, 60000);
 

@@ -4,7 +4,6 @@ import { GoogleGenAI, Modality } from '@google/genai';
 import { useToast } from './ToastProvider';
 import { runAgentCommand } from '../services/agentService';
 
-
 interface NexusAgentProps {
   forceLower?: boolean;
 }
@@ -34,7 +33,7 @@ const NexusAgent: React.FC<NexusAgentProps> = ({ forceLower }) => {
     if (!input.trim() || isProcessing) return;
 
     if (!hasKey) {
-      info("Neural Link Restricted. Connect API key to use Nexus Agent.");
+      info('Neural Link Restricted. Connect API key to use Nexus Agent.');
       if (window.aistudio) await window.aistudio.openSelectKey();
       return;
     }
@@ -47,7 +46,7 @@ const NexusAgent: React.FC<NexusAgentProps> = ({ forceLower }) => {
       setInput('');
       setIsOpen(false);
     } catch (err) {
-      error("Neural link interrupted.");
+      error('Neural link interrupted.');
     } finally {
       setIsProcessing(false);
     }
@@ -55,29 +54,34 @@ const NexusAgent: React.FC<NexusAgentProps> = ({ forceLower }) => {
 
   const startVoice = async () => {
     if (!hasKey) {
-      info("Neural Link Restricted.");
+      info('Neural Link Restricted.');
       if (window.aistudio) await window.aistudio.openSelectKey();
       return;
     }
 
     setIsVoiceActive(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('USER_GEMINI_API_KEY') || 'missing' });
+      const ai = new GoogleGenAI({
+        apiKey:
+          import.meta.env.VITE_GEMINI_API_KEY ||
+          localStorage.getItem('USER_GEMINI_API_KEY') ||
+          'missing',
+      });
       const session = await ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction: "You are the Nexus voice assistant. Be brief and helpful."
+          systemInstruction: 'You are the Nexus voice assistant. Be brief and helpful.',
         },
         callbacks: {
-          onopen: () => success("Voice Assistant Online"),
+          onopen: () => success('Voice Assistant Online'),
           onmessage: () => {},
           onclose: () => setIsVoiceActive(false),
           onerror: () => {
-            error("Voice connection failed.");
+            error('Voice connection failed.');
             setIsVoiceActive(false);
           },
-        }
+        },
       });
       sessionRef.current = session;
     } catch {
@@ -88,8 +92,9 @@ const NexusAgent: React.FC<NexusAgentProps> = ({ forceLower }) => {
   return (
     <>
       <div
-            className={`fixed right-6 z-[70] transition-all duration-500 pointer-events-none ${forceLower ? 'bottom-24 lg:bottom-10' : 'bottom-[100px] lg:bottom-10'
-          }`}
+        className={`fixed right-6 z-[70] transition-all duration-500 pointer-events-none ${
+          forceLower ? 'bottom-24 lg:bottom-10' : 'bottom-[100px] lg:bottom-10'
+        }`}
       >
         <div className="flex flex-col items-end gap-3 pointer-events-auto">
           {isOpen && (
@@ -99,9 +104,9 @@ const NexusAgent: React.FC<NexusAgentProps> = ({ forceLower }) => {
               </div>
               <input
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCommand()}
-                placeholder={hasKey ? "Ask Nexus Agent..." : "API Key Required..."}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleCommand()}
+                placeholder={hasKey ? 'Ask Nexus Agent...' : 'API Key Required...'}
                 className="flex-1 bg-transparent border-none text-sm px-2 outline-none font-medium text-white placeholder:text-slate-400 h-10 min-h-[44px]"
                 disabled={isProcessing}
                 autoFocus
@@ -121,7 +126,13 @@ const NexusAgent: React.FC<NexusAgentProps> = ({ forceLower }) => {
                   disabled={isProcessing}
                   className={`p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl transition-all shadow-sm ${hasKey ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-white/10 text-slate-400'}`}
                 >
-                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : hasKey ? <Send className="w-4 h-4" /> : <Key className="w-4 h-4" />}
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : hasKey ? (
+                    <Send className="w-4 h-4" />
+                  ) : (
+                    <Key className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>

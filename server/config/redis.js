@@ -19,7 +19,7 @@ const redis = new Redis(REDIS_URL, {
 
 redis.on('connect', () => log.info('Redis connected'));
 redis.on('ready', () => log.info('Redis ready'));
-redis.on('error', (err) => log.error({ err: err.message }, 'Redis error'));
+redis.on('error', err => log.error({ err: err.message }, 'Redis error'));
 redis.on('close', () => log.warn('Redis connection closed'));
 
 // Cache helpers
@@ -36,13 +36,17 @@ const cache = {
   async set(key, value, ttlSeconds = 300) {
     try {
       await redis.setex(key, ttlSeconds, JSON.stringify(value));
-    } catch { /* cache write failure is non-fatal */ }
+    } catch {
+      /* cache write failure is non-fatal */
+    }
   },
 
   async del(key) {
     try {
       await redis.del(key);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   },
 
   async delPattern(pattern) {
@@ -53,7 +57,9 @@ const cache = {
         keys.forEach(k => pipeline.del(k.replace('gpa:', '')));
         await pipeline.exec();
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   },
 
   async incr(key, ttlSeconds = 60) {
@@ -78,7 +84,9 @@ const cache = {
     try {
       await redis.hset(key, data);
       if (ttlSeconds > 0) await redis.expire(key, ttlSeconds);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   },
 };
 
@@ -91,10 +99,12 @@ function cacheMiddleware(keyFn, ttlSeconds = 300) {
       if (cached) {
         return res.json(cached);
       }
-    } catch { /* ignore cache errors, proceed to handler */ }
+    } catch {
+      /* ignore cache errors, proceed to handler */
+    }
 
     const originalJson = res.json.bind(res);
-    res.json = (data) => {
+    res.json = data => {
       cache.set(key, data, ttlSeconds).catch(() => {});
       return originalJson(data);
     };
@@ -104,7 +114,8 @@ function cacheMiddleware(keyFn, ttlSeconds = 300) {
 
 // Session store using Redis
 const session = {
-  async create(userId, data, ttlSeconds = 2592000) { // 30 days
+  async create(userId, data, ttlSeconds = 2592000) {
+    // 30 days
     const key = `session:${userId}`;
     await cache.set(key, { ...data, userId, createdAt: Date.now() }, ttlSeconds);
   },

@@ -1,8 +1,18 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { VisionState } from '../types';
 import { analyzeImage } from '../services/aiProviderService';
-import { Upload, Calculator, Sparkles, Loader2, X, Copy, Check, Scan, Zap, Key } from 'lucide-react';
+import {
+  Upload,
+  Calculator,
+  Sparkles,
+  Loader2,
+  X,
+  Copy,
+  Check,
+  Scan,
+  Zap,
+  Key,
+} from 'lucide-react';
 import { useToast } from './ToastProvider';
 
 const VisionInterface: React.FC = () => {
@@ -29,18 +39,18 @@ const VisionInterface: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        showError("File too large. Max 10MB allowed.");
+        showError('File too large. Max 10MB allowed.');
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setState((prev) => ({
+        setState(prev => ({
           ...prev,
           image: file,
           imagePreview: reader.result as string,
           result: '',
         }));
-        showSuccess("Image scanned successfully");
+        showSuccess('Image scanned successfully');
       };
       reader.readAsDataURL(file);
     }
@@ -54,17 +64,21 @@ const VisionInterface: React.FC = () => {
       return;
     }
 
-    setState((prev) => ({ ...prev, isLoading: true, result: '' }));
+    setState(prev => ({ ...prev, isLoading: true, result: '' }));
 
     try {
       const text = await analyzeImage(state.imagePreview, state.prompt);
-      setState((prev) => ({ ...prev, result: text }));
-      showSuccess("Problem solved");
+      setState(prev => ({ ...prev, result: text }));
+      showSuccess('Problem solved');
     } catch (error) {
-      showError("Analysis failed. Try checking your API key.");
-      setState((prev) => ({ ...prev, result: "Failed to analyze image. Please ensure your prompt is clear and the image is legible." }));
+      showError('Analysis failed. Try checking your API key.');
+      setState(prev => ({
+        ...prev,
+        result:
+          'Failed to analyze image. Please ensure your prompt is clear and the image is legible.',
+      }));
     } finally {
-      setState((prev) => ({ ...prev, isLoading: false }));
+      setState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -72,7 +86,7 @@ const VisionInterface: React.FC = () => {
     if (!state.result) return;
     navigator.clipboard.writeText(state.result);
     setCopied(true);
-    showSuccess("Solution copied to clipboard");
+    showSuccess('Solution copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -133,8 +147,12 @@ const VisionInterface: React.FC = () => {
                   <Upload className="w-10 h-10 text-stitch-cyan" />
                   <div className="absolute inset-[-8px] border-2 border-stitch-cyan/30 rounded-[36px] animate-pulse"></div>
                 </div>
-                <p className="text-white font-black text-lg uppercase tracking-tight">Drop Problem Node</p>
-                <p className="text-slate-300 text-sm mt-2 font-medium">Upload equation, diagram, or text snippet</p>
+                <p className="text-white font-black text-lg uppercase tracking-tight">
+                  Drop Problem Node
+                </p>
+                <p className="text-slate-300 text-sm mt-2 font-medium">
+                  Upload equation, diagram, or text snippet
+                </p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -147,22 +165,32 @@ const VisionInterface: React.FC = () => {
           </div>
 
           <div className="space-y-3 relative z-10">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">Context Instruction</label>
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-2">
+              Context Instruction
+            </label>
             <div className="flex gap-3">
               <input
                 type="text"
                 value={state.prompt}
-                onChange={(e) => setState(s => ({ ...s, prompt: e.target.value }))}
+                onChange={e => setState(s => ({ ...s, prompt: e.target.value }))}
                 placeholder="e.g. 'Show step-by-step derivation'"
                 className="flex-1 bg-white/5 border border-white/10 text-white rounded-[16px] px-6 py-4 text-[15px] focus:ring-2 focus:ring-stitch-cyan/30 focus:border-stitch-cyan/50 outline-none transition-all shadow-sm font-medium placeholder:text-slate-400"
                 disabled={!state.imagePreview || state.isLoading}
               />
               <button
                 onClick={handleAnalyze}
-                disabled={!state.imagePreview || (!hasKey && !state.imagePreview) || state.isLoading}
+                disabled={
+                  !state.imagePreview || (!hasKey && !state.imagePreview) || state.isLoading
+                }
                 className={`px-8 py-4 min-h-[44px] rounded-[16px] font-black uppercase tracking-widest text-xs flex items-center gap-2 shadow-2xl transition-all active:scale-95 ${hasKey ? 'bg-stitch-cyan text-slate-950 shadow-[0_0_15px_rgba(47,217,244,0.3)] hover:bg-[rgba(47,217,244,0.8)]' : 'bg-slate-800 text-white shadow-slate-900/10 hover:bg-slate-700'}`}
               >
-                {state.isLoading ? <Loader2 className="w-5 h-5 animate-spin text-slate-950" /> : hasKey ? <Zap className="w-5 h-5" /> : <Key className="w-4 h-4" />}
+                {state.isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
+                ) : hasKey ? (
+                  <Zap className="w-5 h-5" />
+                ) : (
+                  <Key className="w-4 h-4" />
+                )}
                 {hasKey ? 'Compute' : 'Connect Key'}
               </button>
             </div>
@@ -181,7 +209,11 @@ const VisionInterface: React.FC = () => {
               onClick={handleCopy}
               className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-[16px] text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-stitch-cyan/30 transition-all active:scale-90"
             >
-              {copied ? <Check className="w-4 h-4 text-stitch-cyan" /> : <Copy className="w-4 h-4 text-stitch-cyan" />}
+              {copied ? (
+                <Check className="w-4 h-4 text-stitch-cyan" />
+              ) : (
+                <Copy className="w-4 h-4 text-stitch-cyan" />
+              )}
               {copied ? 'Captured' : 'Capture'}
             </button>
           )}
@@ -194,18 +226,26 @@ const VisionInterface: React.FC = () => {
                 <div className="absolute inset-0 bg-stitch-cyan blur-3xl opacity-20 animate-pulse"></div>
               </div>
               <div className="text-center">
-                <p className="text-sm font-black font-display uppercase tracking-[0.3em] text-white">Decoding Image</p>
-                <p className="text-[10px] text-stitch-cyan mt-2 font-bold uppercase tracking-widest">Neural weights aligning...</p>
+                <p className="text-sm font-black font-display uppercase tracking-[0.3em] text-white">
+                  Decoding Image
+                </p>
+                <p className="text-[10px] text-stitch-cyan mt-2 font-bold uppercase tracking-widest">
+                  Neural weights aligning...
+                </p>
               </div>
             </div>
           ) : state.result ? (
             <div className="prose prose-invert max-w-none animate-fade-in">
-              <p className="whitespace-pre-wrap leading-relaxed text-slate-100 font-medium text-[16px]">{state.result}</p>
+              <p className="whitespace-pre-wrap leading-relaxed text-slate-100 font-medium text-[16px]">
+                {state.result}
+              </p>
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 text-center opacity-40">
               <Scan className="w-20 h-20 mb-6 animate-pulse text-stitch-cyan" />
-              <p className="text-sm font-black uppercase tracking-widest text-white">Awaiting Visual Input</p>
+              <p className="text-sm font-black uppercase tracking-widest text-white">
+                Awaiting Visual Input
+              </p>
             </div>
           )}
         </div>

@@ -12,10 +12,14 @@ class TenantManager {
     const { v4: uuidv4 } = require('uuid');
     const id = uuidv4();
 
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO institutions (id, name, code, domain, plan, max_users)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, name, code, domain || '', plan, maxUsers);
+    `
+      )
+      .run(id, name, code, domain || '', plan, maxUsers);
 
     log.info({ tenantId: id, name, code }, 'Tenant created');
     return { id, name, code, plan };
@@ -41,7 +45,9 @@ class TenantManager {
     };
     const limits = plans[plan] || plans.free;
 
-    this.db.prepare('UPDATE institutions SET plan = ?, max_users = ? WHERE id = ?').run(plan, limits.maxUsers, tenantId);
+    this.db
+      .prepare('UPDATE institutions SET plan = ?, max_users = ? WHERE id = ?')
+      .run(plan, limits.maxUsers, tenantId);
     log.info({ tenantId, plan }, 'Tenant plan updated');
     return { plan, maxUsers: limits.maxUsers };
   }
@@ -51,7 +57,9 @@ class TenantManager {
     const tenant = this.db.prepare('SELECT max_users FROM institutions WHERE id = ?').get(tenantId);
     if (!tenant) return { allowed: false, error: 'Tenant not found' };
 
-    const userCount = this.db.prepare('SELECT COUNT(*) as count FROM users WHERE institution_id = ?').get(tenantId).count;
+    const userCount = this.db
+      .prepare('SELECT COUNT(*) as count FROM users WHERE institution_id = ?')
+      .get(tenantId).count;
     return {
       allowed: userCount < tenant.maxUsers,
       current: userCount,
@@ -62,15 +70,27 @@ class TenantManager {
 
   // Tenant stats
   getTenantStats(tenantId) {
-    const users = this.db.prepare('SELECT COUNT(*) as count FROM users WHERE institution_id = ?').get(tenantId).count;
-    const attendance = this.db.prepare('SELECT COUNT(*) as count FROM attendance_records WHERE institution_id = ?').get(tenantId).count;
-    const resources = this.db.prepare('SELECT COUNT(*) as count FROM resources WHERE institution_id = ?').get(tenantId).count;
-    const exams = this.db.prepare('SELECT COUNT(*) as count FROM exams WHERE institution_id = ?').get(tenantId).count;
-    const messages = this.db.prepare(`
+    const users = this.db
+      .prepare('SELECT COUNT(*) as count FROM users WHERE institution_id = ?')
+      .get(tenantId).count;
+    const attendance = this.db
+      .prepare('SELECT COUNT(*) as count FROM attendance_records WHERE institution_id = ?')
+      .get(tenantId).count;
+    const resources = this.db
+      .prepare('SELECT COUNT(*) as count FROM resources WHERE institution_id = ?')
+      .get(tenantId).count;
+    const exams = this.db
+      .prepare('SELECT COUNT(*) as count FROM exams WHERE institution_id = ?')
+      .get(tenantId).count;
+    const messages = this.db
+      .prepare(
+        `
       SELECT COUNT(*) as count FROM messages m
       JOIN chats c ON m.chat_id = c.id
       WHERE c.institution_id = ?
-    `).get(tenantId).count;
+    `
+      )
+      .get(tenantId).count;
 
     return { users, attendance, resources, exams, messages };
   }

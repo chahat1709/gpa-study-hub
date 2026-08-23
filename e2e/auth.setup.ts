@@ -18,7 +18,10 @@ test('setup: create authenticated user', async ({ page }) => {
   // Check if already logged in
   const userMenu = page.locator('button[aria-label="User menu"]').first();
   const profileText = page.locator('text=Profile').first();
-  if (await userMenu.isVisible({ timeout: 2000 }) || await profileText.isVisible({ timeout: 2000 })) {
+  if (
+    (await userMenu.isVisible({ timeout: 2000 })) ||
+    (await profileText.isVisible({ timeout: 2000 }))
+  ) {
     await page.context().storageState({ path: 'e2e/.auth/user.json' });
     return;
   }
@@ -31,7 +34,10 @@ test('setup: create authenticated user', async ({ page }) => {
     const nameInput = page.locator('input[placeholder*="Name"], input[name="name"]').first();
     if (await nameInput.isVisible({ timeout: 5000 })) {
       await nameInput.fill('Test Student');
-      await page.locator('input[placeholder*="Email"], input[name="email"]').first().fill('test@student.com');
+      await page
+        .locator('input[placeholder*="Email"], input[name="email"]')
+        .first()
+        .fill('test@student.com');
       await page.locator('input[type="password"], input[name="pin"]').first().fill('123456');
       await page.locator('button:has-text("Create"), button:has-text("Sign up")').first().click();
       await page.waitForLoadState('networkidle', { timeout: 10000 });

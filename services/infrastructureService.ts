@@ -1,4 +1,3 @@
-
 /**
  * FOUNDER INTELLIGENCE MODULE (FIM)
  * Purpose: Track the business-level health of the GPA Hub Cluster.
@@ -39,9 +38,24 @@ export interface InfrastructureCluster {
 const STORAGE_KEY = 'GPA_HUB_CLUSTER_V6';
 
 const MOCK_BACKLOG: BacklogItem[] = [
-  { id: '1', priority: 'CRITICAL', task: 'Migrate Mock Storage to Firebase Production', impact: 'Enables 10TB Scaling' },
-  { id: '2', priority: 'DEBT', task: 'Optimize Image Compression', impact: 'Reduces Egress Burn by 20%' },
-  { id: '3', priority: 'STABLE', task: 'Implement PWA Offline Support', impact: 'Student Retention' }
+  {
+    id: '1',
+    priority: 'CRITICAL',
+    task: 'Migrate Mock Storage to Firebase Production',
+    impact: 'Enables 10TB Scaling',
+  },
+  {
+    id: '2',
+    priority: 'DEBT',
+    task: 'Optimize Image Compression',
+    impact: 'Reduces Egress Burn by 20%',
+  },
+  {
+    id: '3',
+    priority: 'STABLE',
+    task: 'Implement PWA Offline Support',
+    impact: 'Student Retention',
+  },
 ];
 
 const generateInitialCluster = (): InfrastructureCluster => {
@@ -51,12 +65,12 @@ const generateInitialCluster = (): InfrastructureCluster => {
   const branches = ['ICT', 'CSE', 'ECE', 'MECH', 'CIVIL', 'IT', 'EE', 'CHEM', 'AERO', 'AUTO'];
   const nodes: Record<string, NodeMetrics> = {};
   const REVENUE_PER_BRANCH = 4000;
-  
+
   branches.forEach(id => {
     const storageGB = 150 + Math.random() * 400;
     const egressGB = 20 + Math.random() * 100;
-    const cost = (storageGB * 1.8) + (egressGB * 8.2);
-    
+    const cost = storageGB * 1.8 + egressGB * 8.2;
+
     nodes[id] = {
       branchId: id,
       storageUsedGB: storageGB,
@@ -65,7 +79,7 @@ const generateInitialCluster = (): InfrastructureCluster => {
       revenueINR: REVENUE_PER_BRANCH,
       estCostINR: cost,
       netYieldINR: REVENUE_PER_BRANCH - cost,
-      health: 'PROFITABLE'
+      health: 'PROFITABLE',
     };
   });
 
@@ -73,7 +87,7 @@ const generateInitialCluster = (): InfrastructureCluster => {
     nodes,
     totalClusterRevenue: 40000,
     totalClusterBurn: 18400,
-    netMonthlyProfit: 21600
+    netMonthlyProfit: 21600,
   };
 };
 
@@ -81,12 +95,12 @@ let cluster = generateInitialCluster();
 
 export const infrastructureService = {
   getCluster: (): InfrastructureCluster => ({ ...cluster }),
-  
+
   getBusinessHealth: (): BusinessHealth => ({
     dailyActiveUsers: Object.values(cluster.nodes).reduce((acc, n) => acc + n.activeUsers, 0),
     projectedRevenue: cluster.totalClusterRevenue,
     infrastructureStability: 98.4,
-    unresolvedBacklogCount: MOCK_BACKLOG.length
+    unresolvedBacklogCount: MOCK_BACKLOG.length,
   }),
 
   getBacklog: (): BacklogItem[] => MOCK_BACKLOG,
@@ -95,7 +109,7 @@ export const infrastructureService = {
     const mem = (window.performance as any)?.memory?.usedJSHeapSize || 0;
     return {
       heapUsageMB: (mem / 1048576).toFixed(1),
-      isMemorySafe: mem < 200 * 1048576 
+      isMemorySafe: mem < 200 * 1048576,
     };
   },
 
@@ -106,7 +120,7 @@ export const infrastructureService = {
       totalRevenue: cluster.totalClusterRevenue,
       totalBurn,
       netProfit,
-      margin: ((netProfit / cluster.totalClusterRevenue) * 100).toFixed(1)
+      margin: ((netProfit / cluster.totalClusterRevenue) * 100).toFixed(1),
     };
-  }
+  },
 };

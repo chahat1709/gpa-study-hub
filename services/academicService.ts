@@ -1,4 +1,3 @@
-
 /**
  * GTU ACADEMIC MATRIX SERVICE
  * Handles university-wide subjects, sections, and semesters.
@@ -49,12 +48,19 @@ const DEFAULT_MATRIX: AcademicMatrix = {
     'ICTET - Cloud & IoT (4353204)',
     'ICTET - Cyber Security & Ethics (4363205)',
     'Engineering Maths (4300001)',
-    'Communication Skills (4300002)'
+    'Communication Skills (4300002)',
   ],
   sections: ['All', 'A', 'B', 'C', 'D'],
   semesters: ['1', '2', '3', '4', '5', '6'],
   branches: ['Diploma EC', 'ICTET'],
-  categories: ['Syllabus', 'Lecture Notes', 'Assignments', 'Question Papers', 'Lab Manuals', 'Project Specs']
+  categories: [
+    'Syllabus',
+    'Lecture Notes',
+    'Assignments',
+    'Question Papers',
+    'Lab Manuals',
+    'Project Specs',
+  ],
 };
 
 const loadMatrix = (): AcademicMatrix => {
@@ -124,7 +130,9 @@ export const academicService = {
     }
   },
 
-  getSubjectDetail: async (id: string): Promise<{ subject: AcademicSubject; units: AcademicUnit[] } | null> => {
+  getSubjectDetail: async (
+    id: string
+  ): Promise<{ subject: AcademicSubject; units: AcademicUnit[] } | null> => {
     try {
       return await getAcademicSubjectDetail(id);
     } catch {
@@ -140,7 +148,15 @@ export const academicService = {
     }
   },
 
-  getQuestions: async (opts: { subjectId?: string; unitId?: string; type?: string; difficulty?: string; limit?: number } = {}): Promise<AcademicQuestion[]> => {
+  getQuestions: async (
+    opts: {
+      subjectId?: string;
+      unitId?: string;
+      type?: string;
+      difficulty?: string;
+      limit?: number;
+    } = {}
+  ): Promise<AcademicQuestion[]> => {
     try {
       const data = await getAcademicQuestions(opts);
       return data.questions;
@@ -149,7 +165,9 @@ export const academicService = {
     }
   },
 
-  getPyqs: async (opts: { subjectId?: string; year?: number; examType?: string } = {}): Promise<Pyq[]> => {
+  getPyqs: async (
+    opts: { subjectId?: string; year?: number; examType?: string } = {}
+  ): Promise<Pyq[]> => {
     try {
       const data = await getAcademicPyqs(opts);
       return data.pyqs;
@@ -158,7 +176,9 @@ export const academicService = {
     }
   },
 
-  getNotes: async (opts: { subjectId?: string; unitId?: string; contentType?: string } = {}): Promise<AcademicNote[]> => {
+  getNotes: async (
+    opts: { subjectId?: string; unitId?: string; contentType?: string } = {}
+  ): Promise<AcademicNote[]> => {
     try {
       const data = await getAcademicNotes(opts);
       return data.notes;
@@ -185,7 +205,18 @@ export const academicService = {
     }
   },
 
-  getDashboard: async (branch?: string, semester?: string): Promise<{ subjects: number; units: number; questions: number; pyqs: number; notes: number; labs: number; projects: number } | null> => {
+  getDashboard: async (
+    branch?: string,
+    semester?: string
+  ): Promise<{
+    subjects: number;
+    units: number;
+    questions: number;
+    pyqs: number;
+    notes: number;
+    labs: number;
+    projects: number;
+  } | null> => {
     try {
       return await getAcademicDashboard(branch, semester);
     } catch {

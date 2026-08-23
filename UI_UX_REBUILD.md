@@ -16,12 +16,12 @@ The web startup path no longer blocks first-visit users behind the long legacy l
 
 ## Verification
 
-| Check | Result |
-|---|---:|
-| TypeScript | Passed |
-| Production build | Passed |
-| Unit tests | 11 files passed |
-| Playwright browser tests | 23 passed |
+| Check                              |                                       Result |
+| ---------------------------------- | -------------------------------------------: |
+| TypeScript                         |                                       Passed |
+| Production build                   |                                       Passed |
+| Unit tests                         |                              11 files passed |
+| Playwright browser tests           |                                    23 passed |
 | First-visit strict-mode regression | Fixed by removing duplicate onboarding label |
 
 ## Review guidance

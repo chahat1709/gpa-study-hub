@@ -10,7 +10,7 @@ export default function MagneticCursor() {
   const [isHovering, setIsHovering] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
-  
+
   const posRef = useRef({ x: 0, y: 0 });
   const velRef = useRef({ x: 0, y: 0 });
   const targetRef = useRef({ x: 0, y: 0 });
@@ -21,9 +21,10 @@ export default function MagneticCursor() {
 
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.matchMedia('(max-width: 768px)').matches || 
-                     'ontouchstart' in window ||
-                     navigator.maxTouchPoints > 0;
+      const mobile =
+        window.matchMedia('(max-width: 768px)').matches ||
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0;
       setIsMobile(mobile);
     };
     checkMobile();
@@ -38,17 +39,19 @@ export default function MagneticCursor() {
 
   // Magnetic attraction to interactive elements
   const findNearestInteractive = useCallback((x: number, y: number) => {
-    const elements = document.querySelectorAll('button, a, [data-magnetic], input, textarea, select, .glass-card, .liquid-glass, .magnetic-btn, [role="button"]');
+    const elements = document.querySelectorAll(
+      'button, a, [data-magnetic], input, textarea, select, .glass-card, .liquid-glass, .magnetic-btn, [role="button"]'
+    );
     let nearest = null;
     let nearestDist = Infinity;
     let nearestCenter = { x: 0, y: 0 };
 
-    elements.forEach((el) => {
+    elements.forEach(el => {
       const rect = el.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
       const dist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-      
+
       const magnetRadius = 150;
       if (dist < magnetRadius && dist < nearestDist) {
         nearestDist = dist;
@@ -77,7 +80,11 @@ export default function MagneticCursor() {
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest('button, a, [data-magnetic], input, textarea, select, .glass-card, .liquid-glass, .magnetic-btn, [role="button"]')) {
+      if (
+        target.closest(
+          'button, a, [data-magnetic], input, textarea, select, .glass-card, .liquid-glass, .magnetic-btn, [role="button"]'
+        )
+      ) {
         setIsHovering(true);
         cursorStore.setHovering(true);
       }
@@ -85,7 +92,11 @@ export default function MagneticCursor() {
 
     const handleMouseOut = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest('button, a, [data-magnetic], input, textarea, select, .glass-card, .liquid-glass, .magnetic-btn, [role="button"]')) {
+      if (
+        target.closest(
+          'button, a, [data-magnetic], input, textarea, select, .glass-card, .liquid-glass, .magnetic-btn, [role="button"]'
+        )
+      ) {
         setIsHovering(false);
         cursorStore.setHovering(false);
       }
@@ -113,7 +124,7 @@ export default function MagneticCursor() {
       // Find nearest interactive element for magnetic pull
       const nearest = findNearestInteractive(pos.x, pos.y);
       let magneticForce = { x: 0, y: 0 };
-      
+
       if (nearest) {
         const dx = nearest.center.x - pos.x;
         const dy = nearest.center.y - pos.y;
@@ -153,8 +164,7 @@ export default function MagneticCursor() {
       // Update main cursor with stretch + rotation
       if (cursorRef.current) {
         const deg = angleRef.current * (180 / Math.PI);
-        cursorRef.current.style.transform = 
-          `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%) rotate(${deg}deg) scale(${stretchRef.current.x}, ${stretchRef.current.y})`;
+        cursorRef.current.style.transform = `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%) rotate(${deg}deg) scale(${stretchRef.current.x}, ${stretchRef.current.y})`;
       }
 
       // Update glow
@@ -169,11 +179,18 @@ export default function MagneticCursor() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         trailPositions.current.forEach((trailPos, i) => {
-          const opacity = Math.max(0, 1 - (trailPos.age / 20));
+          const opacity = Math.max(0, 1 - trailPos.age / 20);
           const radius = Math.max(0.5, (6 - i * 0.3) * opacity);
-          
+
           // Glow
-          const grad = ctx.createRadialGradient(trailPos.x, trailPos.y, 0, trailPos.x, trailPos.y, radius * 3);
+          const grad = ctx.createRadialGradient(
+            trailPos.x,
+            trailPos.y,
+            0,
+            trailPos.x,
+            trailPos.y,
+            radius * 3
+          );
           grad.addColorStop(0, `rgba(128, 131, 255, ${opacity * 0.4})`);
           grad.addColorStop(1, `rgba(128, 131, 255, 0)`);
           ctx.beginPath();
@@ -225,7 +242,8 @@ export default function MagneticCursor() {
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(128, 131, 255, 0.15) 0%, transparent 70%)',
           transform: 'translate(-50%, -50%)',
-          transition: 'width 0.3s cubic-bezier(0.23, 1, 0.32, 1), height 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
+          transition:
+            'width 0.3s cubic-bezier(0.23, 1, 0.32, 1), height 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
           filter: 'blur(8px)',
         }}
       />
@@ -238,13 +256,14 @@ export default function MagneticCursor() {
           width: isPressed ? '8px' : isHovering ? '12px' : '6px',
           height: isPressed ? '8px' : isHovering ? '12px' : '6px',
           borderRadius: '50%',
-          background: isHovering 
-            ? 'radial-gradient(circle, #5de6ff 0%, #8083ff 100%)' 
+          background: isHovering
+            ? 'radial-gradient(circle, #5de6ff 0%, #8083ff 100%)'
             : 'radial-gradient(circle, #c0c1ff 0%, #8083ff 100%)',
           transform: 'translate(-50%, -50%)',
-          transition: 'width 0.3s cubic-bezier(0.23, 1, 0.32, 1), height 0.3s cubic-bezier(0.23, 1, 0.32, 1), background 0.3s',
-          boxShadow: isHovering 
-            ? '0 0 20px rgba(93, 230, 255, 0.6), 0 0 40px rgba(128, 131, 255, 0.3)' 
+          transition:
+            'width 0.3s cubic-bezier(0.23, 1, 0.32, 1), height 0.3s cubic-bezier(0.23, 1, 0.32, 1), background 0.3s',
+          boxShadow: isHovering
+            ? '0 0 20px rgba(93, 230, 255, 0.6), 0 0 40px rgba(128, 131, 255, 0.3)'
             : '0 0 10px rgba(128, 131, 255, 0.4)',
         }}
       />

@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, GenerateContentResponse, Chat } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Chat } from '@google/genai';
 import { getStoredApiKey } from './aiKeyStorage';
 
 const MODEL_PRO = 'gemini-3-pro-preview';
@@ -16,10 +15,13 @@ export const createChatSession = (systemInstruction?: string): Chat => {
   });
 };
 
-export const generateSocialAgentResponse = async (userMessage: string, context?: string): Promise<string> => {
+export const generateSocialAgentResponse = async (
+  userMessage: string,
+  context?: string
+): Promise<string> => {
   try {
     const apiKey = getStoredApiKey();
-    if (!apiKey) return "AI Agent Offline (Key Missing)";
+    if (!apiKey) return 'AI Agent Offline (Key Missing)';
 
     const ai = new GoogleGenAI({ apiKey });
     const socialPrompt = `
@@ -36,42 +38,42 @@ export const generateSocialAgentResponse = async (userMessage: string, context?:
       contents: socialPrompt,
       config: {
         maxOutputTokens: 200,
-        thinkingConfig: { thinkingBudget: 100 } 
-      }
+        thinkingConfig: { thinkingBudget: 100 },
+      },
     });
-    return response.text || "Synchronized.";
+    return response.text || 'Synchronized.';
   } catch {
-    return "Campus Agent is currently syncing.";
+    return 'Campus Agent is currently syncing.';
   }
 };
 
 export const generateTextContent = async (prompt: string): Promise<string> => {
   try {
     const apiKey = getStoredApiKey();
-    if (!apiKey) throw new Error("API Key missing");
+    if (!apiKey) throw new Error('API Key missing');
 
     const ai = new GoogleGenAI({ apiKey });
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: MODEL_PRO,
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 2048 }
-      }
+        thinkingConfig: { thinkingBudget: 2048 },
+      },
     });
-    return response.text || "No response generated.";
+    return response.text || 'No response generated.';
   } catch (error: any) {
-    if (error.message?.includes('429')) return "System Busy: Rate limit exceeded.";
-    return "Unable to generate content at this time.";
+    if (error.message?.includes('429')) return 'System Busy: Rate limit exceeded.';
+    return 'Unable to generate content at this time.';
   }
 };
 
 export const analyzeImageContent = async (base64Image: string, prompt: string): Promise<string> => {
   try {
     const apiKey = getStoredApiKey();
-    if (!apiKey) throw new Error("API Key missing");
+    if (!apiKey) throw new Error('API Key missing');
 
     const ai = new GoogleGenAI({ apiKey });
-    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: MODEL_PRO,
@@ -90,12 +92,13 @@ export const analyzeImageContent = async (base64Image: string, prompt: string): 
       },
       config: {
         maxOutputTokens: 1000,
-        thinkingConfig: { thinkingBudget: 500 }
-      }
+        thinkingConfig: { thinkingBudget: 500 },
+      },
     });
-    return response.text || "No analysis generated.";
+    return response.text || 'No analysis generated.';
   } catch (error: any) {
-    if (error.message?.includes('429')) return "High Traffic: Please try scanning again in a moment.";
-    return "Visual analysis failed. Ensure image is clear.";
+    if (error.message?.includes('429'))
+      return 'High Traffic: Please try scanning again in a moment.';
+    return 'Visual analysis failed. Ensure image is clear.';
   }
 };

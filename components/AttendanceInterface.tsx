@@ -1,12 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { attendanceService } from '../services/attendanceService';
 import { TimeSlot } from '../types';
-import {
-  CheckCircle2, XCircle, Clock,
-  ChevronRight, CalendarDays, BarChart3
-} from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, ChevronRight, CalendarDays, BarChart3 } from 'lucide-react';
 
 const AttendanceInterface: React.FC = () => {
   const { user } = useAuth();
@@ -15,7 +11,7 @@ const AttendanceInterface: React.FC = () => {
     overall: 0,
     totalClasses: 0,
     attendedClasses: 0,
-    subjectWise: [] as { subject: string, percentage: number, attended: number, total: number }[]
+    subjectWise: [] as { subject: string; percentage: number; attended: number; total: number }[],
   });
 
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -24,7 +20,7 @@ const AttendanceInterface: React.FC = () => {
   const safeDay = days[dayIndex >= 0 ? dayIndex : 6]; // Default to SUN if calculation weird, but logic below handles it
 
   const [selectedDay, setSelectedDay] = useState<string>(
-    (dayIndex >= 0 && dayIndex < 5) ? days[dayIndex]! : 'MON' // Default to MON if weekend
+    dayIndex >= 0 && dayIndex < 5 ? days[dayIndex]! : 'MON' // Default to MON if weekend
   );
   const [dailySchedule, setDailySchedule] = useState<TimeSlot[]>([]);
 
@@ -34,7 +30,7 @@ const AttendanceInterface: React.FC = () => {
     const loadData = async () => {
       const schedule = await attendanceService.getDailySchedule(selectedDay);
       setDailySchedule(schedule);
-      
+
       const slot = await attendanceService.getCurrentSlot();
       setCurrentSlot(slot);
 
@@ -82,23 +78,37 @@ const AttendanceInterface: React.FC = () => {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="glass-card bg-white/5 p-6 rounded-[24px] border border-white/10 text-white shadow-2xl">
-                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Aggregate</p>
+                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  Aggregate
+                </p>
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-4xl font-bold font-display ${displayPercentage >= 75 ? 'text-stitch-cyan' : 'text-amber-400'}`}>{displayPercentage}%</span>
+                  <span
+                    className={`text-4xl font-bold font-display ${displayPercentage >= 75 ? 'text-stitch-cyan' : 'text-amber-400'}`}
+                  >
+                    {displayPercentage}%
+                  </span>
                   <span className="text-sm text-slate-400">attendance</span>
                 </div>
               </div>
               <div className="glass-card bg-white/5 p-6 rounded-[24px] border border-white/10 text-white shadow-2xl">
-                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Total Sessions</p>
+                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  Total Sessions
+                </p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold font-display text-white">{stats.totalClasses}</span>
+                  <span className="text-4xl font-bold font-display text-white">
+                    {stats.totalClasses}
+                  </span>
                   <span className="text-sm text-slate-400">classes</span>
                 </div>
               </div>
               <div className="glass-card bg-white/5 p-6 rounded-[24px] border border-white/10 text-white shadow-2xl">
-                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Attended</p>
+                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  Attended
+                </p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold font-display text-stitch-primary">{stats.attendedClasses}</span>
+                  <span className="text-4xl font-bold font-display text-stitch-primary">
+                    {stats.attendedClasses}
+                  </span>
                   <span className="text-sm text-slate-400">present</span>
                 </div>
               </div>
@@ -110,11 +120,16 @@ const AttendanceInterface: React.FC = () => {
                 <h3 className="font-bold font-display text-white text-sm">Subject Breakdown</h3>
               </div>
               <div className="divide-y divide-white/10">
-                {stats.subjectWise.map((sub) => (
-                  <div key={sub.subject} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+                {stats.subjectWise.map(sub => (
+                  <div
+                    key={sub.subject}
+                    className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+                  >
                     <div className="w-1/3">
                       <p className="font-bold font-display text-white text-sm">{sub.subject}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{sub.attended}/{sub.total} sessions</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {sub.attended}/{sub.total} sessions
+                      </p>
                     </div>
                     <div className="w-1/3 flex flex-col justify-center px-4">
                       <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
@@ -125,7 +140,9 @@ const AttendanceInterface: React.FC = () => {
                       </div>
                     </div>
                     <div className="w-1/6 text-right">
-                      <span className={`text-sm font-bold font-display ${sub.percentage >= 75 ? 'text-stitch-cyan' : sub.percentage >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>
+                      <span
+                        className={`text-sm font-bold font-display ${sub.percentage >= 75 ? 'text-stitch-cyan' : sub.percentage >= 60 ? 'text-amber-400' : 'text-rose-400'}`}
+                      >
                         {sub.percentage}%
                       </span>
                     </div>
@@ -139,20 +156,24 @@ const AttendanceInterface: React.FC = () => {
         {activeTab === 'TIMETABLE' && (
           <div role="tabpanel" className="max-w-3xl mx-auto space-y-6 animate-fade-in">
             {/* Day Tabs */}
-            <div className="flex border-b border-white/10 overflow-x-auto no-scrollbar" role="tablist">
+            <div
+              className="flex border-b border-white/10 overflow-x-auto no-scrollbar"
+              role="tablist"
+            >
               {days.map(d => (
                 <button
                   role="tab"
                   aria-selected={selectedDay === d}
                   key={d}
                   onClick={() => setSelectedDay(d)}
-                  className={`px-4 py-3 min-h-[44px] flex items-center justify-center text-xs font-bold transition-all relative ${selectedDay === d
-                      ? 'text-stitch-cyan'
-                      : 'text-slate-400 hover:text-white'
-                    }`}
+                  className={`px-4 py-3 min-h-[44px] flex items-center justify-center text-xs font-bold transition-all relative ${
+                    selectedDay === d ? 'text-stitch-cyan' : 'text-slate-400 hover:text-white'
+                  }`}
                 >
                   {d}
-                  {selectedDay === d && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-stitch-cyan"></div>}
+                  {selectedDay === d && (
+                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-stitch-cyan"></div>
+                  )}
                 </button>
               ))}
             </div>
@@ -162,36 +183,55 @@ const AttendanceInterface: React.FC = () => {
               {/* Vertical Line */}
               <div className="absolute left-[27px] top-4 bottom-4 w-px bg-white/10"></div>
 
-              {dailySchedule.length > 0 ? dailySchedule.map((slot, index) => {
-                const isNow = currentSlot?.id === slot.id;
+              {dailySchedule.length > 0 ? (
+                dailySchedule.map((slot, index) => {
+                  const isNow = currentSlot?.id === slot.id;
 
-                return (
-                  <div key={index} className={`relative flex gap-6 pb-8 group ${slot.type === 'RECESS' ? 'opacity-60' : ''}`}>
-                    {/* Dot */}
-                    <div className={`w-3 h-3 rounded-full border-2 mt-1.5 z-10 shrink-0 ${isNow ? 'bg-stitch-primary border-stitch-primary shadow-[0_0_0_4px_rgba(67,56,202,0.3)]' :
-                        'bg-slate-900 border-white/30 group-hover:border-stitch-primary'
-                      } transition-colors`}></div>
+                  return (
+                    <div
+                      key={index}
+                      className={`relative flex gap-6 pb-8 group ${slot.type === 'RECESS' ? 'opacity-60' : ''}`}
+                    >
+                      {/* Dot */}
+                      <div
+                        className={`w-3 h-3 rounded-full border-2 mt-1.5 z-10 shrink-0 ${
+                          isNow
+                            ? 'bg-stitch-primary border-stitch-primary shadow-[0_0_0_4px_rgba(67,56,202,0.3)]'
+                            : 'bg-slate-900 border-white/30 group-hover:border-stitch-primary'
+                        } transition-colors`}
+                      ></div>
 
-                    {/* Card */}
-                    <div className={`flex-1 p-4 rounded-[16px] border transition-all ${isNow ? 'glass-card bg-white/5 border-stitch-primary/50 shadow-lg shadow-[0_0_15px_rgba(67,56,202,0.2)] text-white' :
-                        slot.type === 'RECESS' ? 'bg-white/5 border-white/10 border-dashed text-slate-300' :
-                          'glass-card bg-white/5 border-white/10 hover:border-stitch-primary/30 text-white'
-                      }`}>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-xs font-mono font-medium text-slate-400">{slot.startTime} - {slot.endTime}</span>
-                          <h3 className="text-base font-bold font-display text-white mt-0.5">{slot.subject}</h3>
-                          {slot.type !== 'RECESS' && (
-                            <p className="text-xs text-slate-300 mt-1">
-                              {slot.type} • {slot.facultyName} {slot.batch !== 'ALL' && `• Batch ${slot.batch}`}
-                            </p>
-                          )}
+                      {/* Card */}
+                      <div
+                        className={`flex-1 p-4 rounded-[16px] border transition-all ${
+                          isNow
+                            ? 'glass-card bg-white/5 border-stitch-primary/50 shadow-lg shadow-[0_0_15px_rgba(67,56,202,0.2)] text-white'
+                            : slot.type === 'RECESS'
+                              ? 'bg-white/5 border-white/10 border-dashed text-slate-300'
+                              : 'glass-card bg-white/5 border-white/10 hover:border-stitch-primary/30 text-white'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs font-mono font-medium text-slate-400">
+                              {slot.startTime} - {slot.endTime}
+                            </span>
+                            <h3 className="text-base font-bold font-display text-white mt-0.5">
+                              {slot.subject}
+                            </h3>
+                            {slot.type !== 'RECESS' && (
+                              <p className="text-xs text-slate-300 mt-1">
+                                {slot.type} • {slot.facultyName}{' '}
+                                {slot.batch !== 'ALL' && `• Batch ${slot.batch}`}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              }) : (
+                  );
+                })
+              ) : (
                 <div className="text-center py-12 text-slate-400 pl-8">
                   <p className="font-medium text-sm">No classes scheduled</p>
                 </div>

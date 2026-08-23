@@ -2,16 +2,28 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastProvider';
 import {
-  User as UserIcon, Camera, Loader2,
-  LogOut, Key, Eye, EyeOff,
-  Shield, Globe, Cpu
+  User as UserIcon,
+  Camera,
+  Loader2,
+  LogOut,
+  Key,
+  Eye,
+  EyeOff,
+  Shield,
+  Globe,
+  Cpu,
 } from 'lucide-react';
 import {
-  AIProvider, PROVIDERS,
-  getSelectedProvider, setSelectedProvider,
-  getGeminiApiKey, setGeminiApiKey,
-  getZenApiKey, setZenApiKey,
-  getCustomConfig, setCustomConfig,
+  AIProvider,
+  PROVIDERS,
+  getSelectedProvider,
+  setSelectedProvider,
+  getGeminiApiKey,
+  setGeminiApiKey,
+  getZenApiKey,
+  setZenApiKey,
+  getCustomConfig,
+  setCustomConfig,
 } from '../services/aiProviderService';
 
 const ProfileInterface: React.FC = () => {
@@ -19,7 +31,7 @@ const ProfileInterface: React.FC = () => {
   const { success, error } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
-  
+
   // AI Config State
   const [provider, setProviderState] = useState<AIProvider>(getSelectedProvider());
   const [geminiKey, setGeminiKeyState] = useState(getGeminiApiKey());
@@ -48,27 +60,27 @@ const ProfileInterface: React.FC = () => {
   const handleSaveGemini = () => {
     if (geminiKey.trim().startsWith('AIza')) {
       setGeminiApiKey(geminiKey.trim());
-      success("Gemini API Key saved");
+      success('Gemini API Key saved');
     } else {
-      error("Invalid Gemini key format (should start with AIza)");
+      error('Invalid Gemini key format (should start with AIza)');
     }
   };
 
   const handleSaveZen = () => {
     if (zenKey.trim().length > 10) {
       setZenApiKey(zenKey.trim());
-      success("OpenCode Zen API Key saved");
+      success('OpenCode Zen API Key saved');
     } else {
-      error("Invalid API key");
+      error('Invalid API key');
     }
   };
 
   const handleSaveCustom = () => {
     if (customUrl && customKey && customModel) {
       setCustomConfig(customUrl.trim(), customKey.trim(), customModel.trim());
-      success("Custom AI configuration saved");
+      success('Custom AI configuration saved');
     } else {
-      error("URL, key, and model are all required");
+      error('URL, key, and model are all required');
     }
   };
 
@@ -78,28 +90,33 @@ const ProfileInterface: React.FC = () => {
       setIsUploading(true);
       try {
         await uploadProfilePicture(file);
-        success("Profile image updated");
+        success('Profile image updated');
       } catch (err) {
-        error("Upload failed");
-      } finally { setIsUploading(false); }
+        error('Upload failed');
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
-  if (!user) return (
-    <div className="h-full w-full flex flex-col items-center justify-center bg-transparent text-white gap-3">
-      <Loader2 className="w-6 h-6 animate-spin text-stitch-cyan" />
-      <p className="text-sm text-slate-400 font-medium">Loading profile...</p>
-    </div>
-  );
+  if (!user)
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center bg-transparent text-white gap-3">
+        <Loader2 className="w-6 h-6 animate-spin text-stitch-cyan" />
+        <p className="text-sm text-slate-400 font-medium">Loading profile...</p>
+      </div>
+    );
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto no-scrollbar pb-20 lg:pb-8" style={{ background: 'transparent' }}>
+    <div
+      className="h-full flex flex-col overflow-y-auto no-scrollbar pb-20 lg:pb-8"
+      style={{ background: 'transparent' }}
+    >
       <div className="max-w-3xl mx-auto p-6 md:p-10 space-y-8 w-full">
-        
         {/* Profile Card */}
         <div className="glass-card bg-white/5 p-8 rounded-[24px] border border-white/10 flex flex-col items-center md:flex-row gap-8 relative overflow-hidden shadow-[0_0_30px_rgba(47,217,244,0.1)]">
           <div className="relative group shrink-0">
-            <div 
+            <div
               className={`w-28 h-28 rounded-full overflow-hidden border-2 border-stitch-cyan/40 shadow-[0_0_20px_rgba(47,217,244,0.2)] bg-white/5 cursor-pointer relative ${isUploading ? 'opacity-50' : ''}`}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -114,14 +131,24 @@ const ProfileInterface: React.FC = () => {
                 <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
           </div>
 
           <div className="text-center md:text-left flex-1">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
               <div>
-                <h1 className="text-2xl font-bold font-display text-white tracking-tight">{user.name}</h1>
-                <p className="text-slate-400 font-medium text-xs mt-0.5">{user.role} • {user.branch || 'Diploma EC'}</p>
+                <h1 className="text-2xl font-bold font-display text-white tracking-tight">
+                  {user.name}
+                </h1>
+                <p className="text-slate-400 font-medium text-xs mt-0.5">
+                  {user.role} • {user.branch || 'Diploma EC'}
+                </p>
               </div>
               <span className="px-3 py-1 bg-stitch-cyan/10 text-stitch-cyan border border-stitch-cyan/30 rounded-full text-xs font-bold w-fit mx-auto md:mx-0 shadow-inner">
                 {user.role}
@@ -129,43 +156,52 @@ const ProfileInterface: React.FC = () => {
             </div>
 
             <div className="flex justify-center md:justify-start gap-2 mt-4 flex-wrap">
-               <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 rounded-[12px] text-xs font-semibold">
-                 Sem {user.semester || '4'} - Sec {user.section || 'A'}
-               </span>
-               <span className="px-3 py-1 bg-stitch-cyan/10 border border-stitch-cyan/30 text-stitch-cyan rounded-[12px] text-xs font-mono font-bold shadow-inner">
-                 {user.enrollmentNumber || '22EC101'}
-               </span>
+              <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 rounded-[12px] text-xs font-semibold">
+                Sem {user.semester || '4'} - Sec {user.section || 'A'}
+              </span>
+              <span className="px-3 py-1 bg-stitch-cyan/10 border border-stitch-cyan/30 text-stitch-cyan rounded-[12px] text-xs font-mono font-bold shadow-inner">
+                {user.enrollmentNumber || '22EC101'}
+              </span>
             </div>
 
             {/* Role Info (Read-only - Roles are server-controlled) */}
             <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center gap-2 justify-center md:justify-start">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-full md:w-auto">Current Role:</span>
-              <span className={`px-4 py-2 text-xs font-bold rounded-[12px] border ${user.role === 'STUDENT' ? 'bg-stitch-cyan text-slate-950 border-stitch-cyan/50 shadow-lg shadow-[0_0_15px_rgba(47,217,244,0.3)]' : user.role === 'FACULTY' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-400/50 shadow-lg shadow-purple-500/30' : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400/50 shadow-lg shadow-amber-500/30'}`}>
-                {user.role === 'STUDENT' ? 'Student' : user.role === 'FACULTY' ? 'Faculty' : 'GTU Admin'}
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-full md:w-auto">
+                Current Role:
               </span>
-              <span className="text-[9px] text-slate-500 italic">Role changes require admin approval</span>
+              <span
+                className={`px-4 py-2 text-xs font-bold rounded-[12px] border ${user.role === 'STUDENT' ? 'bg-stitch-cyan text-slate-950 border-stitch-cyan/50 shadow-lg shadow-[0_0_15px_rgba(47,217,244,0.3)]' : user.role === 'FACULTY' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-400/50 shadow-lg shadow-purple-500/30' : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400/50 shadow-lg shadow-amber-500/30'}`}
+              >
+                {user.role === 'STUDENT'
+                  ? 'Student'
+                  : user.role === 'FACULTY'
+                    ? 'Faculty'
+                    : 'GTU Admin'}
+              </span>
+              <span className="text-[9px] text-slate-500 italic">
+                Role changes require admin approval
+              </span>
             </div>
           </div>
         </div>
 
         {/* Configuration Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
           {/* AI Configuration */}
           <div className="glass-card bg-white/5 p-6 rounded-[24px] border border-white/10 shadow-[0_0_20px_rgba(47,217,244,0.05)]">
             <div className="flex items-center gap-3 mb-6">
-               <div className="p-2.5 bg-stitch-cyan/20 border border-stitch-cyan/30 rounded-[12px] text-stitch-cyan shadow-[0_0_15px_rgba(47,217,244,0.2)]">
-                 <Cpu className="w-5 h-5" />
-               </div>
-               <div>
-                 <h3 className="font-semibold text-white text-sm">AI Provider</h3>
-                 <p className="text-xs text-slate-400">BYOK — your key, your data</p>
-               </div>
+              <div className="p-2.5 bg-stitch-cyan/20 border border-stitch-cyan/30 rounded-[12px] text-stitch-cyan shadow-[0_0_15px_rgba(47,217,244,0.2)]">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-sm">AI Provider</h3>
+                <p className="text-xs text-slate-400">BYOK — your key, your data</p>
+              </div>
             </div>
 
             {/* Provider Selector */}
             <div className="space-y-2 mb-5">
-              {(Object.keys(PROVIDERS) as AIProvider[]).map((p) => (
+              {(Object.keys(PROVIDERS) as AIProvider[]).map(p => (
                 <button
                   key={p}
                   onClick={() => handleProviderChange(p)}
@@ -175,10 +211,16 @@ const ProfileInterface: React.FC = () => {
                       : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${provider === p ? 'bg-stitch-cyan shadow-[0_0_8px_rgba(47,217,244,0.8)]' : 'bg-slate-500'}`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${provider === p ? 'bg-stitch-cyan shadow-[0_0_8px_rgba(47,217,244,0.8)]' : 'bg-slate-500'}`}
+                  />
                   <div>
                     <div className="font-bold">{PROVIDERS[p].name}</div>
-                    {p === 'opencode-zen' && <div className="text-[10px] text-emerald-400 font-bold mt-0.5">FREE — No limits</div>}
+                    {p === 'opencode-zen' && (
+                      <div className="text-[10px] text-emerald-400 font-bold mt-0.5">
+                        FREE — No limits
+                      </div>
+                    )}
                   </div>
                 </button>
               ))}
@@ -188,12 +230,14 @@ const ProfileInterface: React.FC = () => {
             <div className="space-y-4">
               {provider === 'gemini' && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Gemini API Key</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Gemini API Key
+                  </label>
                   <div className="relative">
                     <input
-                      type={showKey ? "text" : "password"}
+                      type={showKey ? 'text' : 'password'}
                       value={geminiKey}
-                      onChange={(e) => setGeminiKeyState(e.target.value)}
+                      onChange={e => setGeminiKeyState(e.target.value)}
                       className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="AIza..."
                     />
@@ -204,18 +248,26 @@ const ProfileInterface: React.FC = () => {
                       {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <button onClick={handleSaveGemini} disabled={!geminiKey} className="stitch-btn w-full mt-2 py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95">Save Gemini Key</button>
+                  <button
+                    onClick={handleSaveGemini}
+                    disabled={!geminiKey}
+                    className="stitch-btn w-full mt-2 py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95"
+                  >
+                    Save Gemini Key
+                  </button>
                 </div>
               )}
 
               {provider === 'opencode-zen' && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">OpenCode Zen API Key</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    OpenCode Zen API Key
+                  </label>
                   <div className="relative">
                     <input
-                      type={showKey ? "text" : "password"}
+                      type={showKey ? 'text' : 'password'}
                       value={zenKey}
-                      onChange={(e) => setZenKeyState(e.target.value)}
+                      onChange={e => setZenKeyState(e.target.value)}
                       className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="Get free key at opencode.ai/auth"
                     />
@@ -226,32 +278,47 @@ const ProfileInterface: React.FC = () => {
                       {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <a href="https://opencode.ai/auth" target="_blank" rel="noopener noreferrer" className="block mt-2 text-center py-2 text-stitch-cyan text-xs font-bold hover:underline drop-shadow-md">
+                  <a
+                    href="https://opencode.ai/auth"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block mt-2 text-center py-2 text-stitch-cyan text-xs font-bold hover:underline drop-shadow-md"
+                  >
                     Get free API key →
                   </a>
-                  <button onClick={handleSaveZen} disabled={!zenKey} className="stitch-btn w-full mt-2 py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95">Save Zen Key</button>
+                  <button
+                    onClick={handleSaveZen}
+                    disabled={!zenKey}
+                    className="stitch-btn w-full mt-2 py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95"
+                  >
+                    Save Zen Key
+                  </button>
                 </div>
               )}
 
               {provider === 'custom' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">API Endpoint URL</label>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                      API Endpoint URL
+                    </label>
                     <input
                       type="url"
                       value={customUrl}
-                      onChange={(e) => setCustomUrlState(e.target.value)}
+                      onChange={e => setCustomUrlState(e.target.value)}
                       className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="https://api.example.com/v1/chat/completions"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">API Key</label>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                      API Key
+                    </label>
                     <div className="relative">
                       <input
-                        type={showKey ? "text" : "password"}
+                        type={showKey ? 'text' : 'password'}
                         value={customKey}
-                        onChange={(e) => setCustomKeyState(e.target.value)}
+                        onChange={e => setCustomKeyState(e.target.value)}
                         className="w-full pl-3 pr-12 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                         placeholder="sk-..."
                       />
@@ -264,16 +331,24 @@ const ProfileInterface: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">Model ID</label>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                      Model ID
+                    </label>
                     <input
                       type="text"
                       value={customModel}
-                      onChange={(e) => setCustomModelState(e.target.value)}
+                      onChange={e => setCustomModelState(e.target.value)}
                       className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-[12px] text-xs text-white focus:border-stitch-cyan focus:ring-2 focus:ring-stitch-cyan/30 transition-all font-mono"
                       placeholder="e.g., gpt-4o, claude-3-5-sonnet"
                     />
                   </div>
-                  <button onClick={handleSaveCustom} disabled={!customUrl || !customKey || !customModel} className="stitch-btn w-full py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95">Save Custom Config</button>
+                  <button
+                    onClick={handleSaveCustom}
+                    disabled={!customUrl || !customKey || !customModel}
+                    className="stitch-btn w-full py-2.5 min-h-[44px] text-white font-bold rounded-[12px] text-xs transition-all active:scale-95"
+                  >
+                    Save Custom Config
+                  </button>
                 </div>
               )}
 
@@ -291,22 +366,22 @@ const ProfileInterface: React.FC = () => {
           {/* Account Actions */}
           <div className="glass-card bg-white/5 p-6 rounded-[24px] border border-white/10 flex flex-col justify-between shadow-[0_0_20px_rgba(47,217,244,0.05)]">
             <div className="flex items-center gap-3 mb-6">
-               <div className="p-2.5 bg-white/5 border border-white/10 rounded-[12px] text-slate-300">
-                 <Shield className="w-5 h-5" />
-               </div>
-               <div>
-                 <h3 className="font-bold font-display text-white text-sm">Account & Security</h3>
-                 <p className="text-xs text-slate-400">Zero-Knowledge E2EE</p>
-               </div>
+              <div className="p-2.5 bg-white/5 border border-white/10 rounded-[12px] text-slate-300">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold font-display text-white text-sm">Account & Security</h3>
+                <p className="text-xs text-slate-400">Zero-Knowledge E2EE</p>
+              </div>
             </div>
-            
+
             <div className="space-y-3 mt-auto">
               <div className="flex items-center justify-between p-3 rounded-[12px] border border-white/10 bg-white/5 text-xs text-slate-300">
                 <span>PWA Offline Cache</span>
                 <span className="text-stitch-cyan font-bold">Active</span>
               </div>
-              
-              <button 
+
+              <button
                 onClick={logout}
                 className="w-full flex items-center justify-center gap-2 p-3 rounded-[12px] bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition-all font-bold text-xs"
               >
@@ -314,7 +389,6 @@ const ProfileInterface: React.FC = () => {
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>

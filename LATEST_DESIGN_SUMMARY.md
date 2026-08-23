@@ -12,14 +12,14 @@ The dashboard remains the central daily workspace. It prioritizes one primary ex
 
 ## Principles applied
 
-| Principle | Application |
-|---|---|
-| Calm design | Default surfaces show only the next useful actions; secondary features remain in navigation or command search. |
-| AI as infrastructure | The tutor appears as a contextual action and setup status rather than a loud separate visual brand. |
-| Unified search/commands | Desktop users can open a quick switcher with Ctrl/Cmd + K and search actions. |
-| Adaptive layout | Desktop rail, tablet-friendly collapsed composition, and mobile dock are treated as distinct layouts. |
-| Accessibility | Focus visibility, readable contrast, keyboard activation, large touch targets, and reduced-motion behavior remain foundational. |
-| Strategic color | Cobalt marks actions, lime marks progress/success, and coral marks risk; color is not the only status signal. |
+| Principle               | Application                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Calm design             | Default surfaces show only the next useful actions; secondary features remain in navigation or command search.                  |
+| AI as infrastructure    | The tutor appears as a contextual action and setup status rather than a loud separate visual brand.                             |
+| Unified search/commands | Desktop users can open a quick switcher with Ctrl/Cmd + K and search actions.                                                   |
+| Adaptive layout         | Desktop rail, tablet-friendly collapsed composition, and mobile dock are treated as distinct layouts.                           |
+| Accessibility           | Focus visibility, readable contrast, keyboard activation, large touch targets, and reduced-motion behavior remain foundational. |
+| Strategic color         | Cobalt marks actions, lime marks progress/success, and coral marks risk; color is not the only status signal.                   |
 
 ## References
 

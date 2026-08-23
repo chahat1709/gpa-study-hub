@@ -53,11 +53,18 @@ function setupWebSocket(server, db) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       // Verify user exists and is active
-      const user = db.prepare('SELECT id, name, role, is_active, institution_id FROM users WHERE id = ?').get(decoded.id);
+      const user = db
+        .prepare('SELECT id, name, role, is_active, institution_id FROM users WHERE id = ?')
+        .get(decoded.id);
       if (!user || !user.is_active) {
         return next(new Error('Account inactive or not found'));
       }
-      socket.user = { id: user.id, name: user.name, role: user.role, institutionId: user.institution_id };
+      socket.user = {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        institutionId: user.institution_id,
+      };
       next();
     } catch {
       next(new Error('Invalid token'));
@@ -94,7 +101,7 @@ function setupWebSocket(server, db) {
       .substring(0, 5000);
   }
 
-  io.on('connection', (socket) => {
+  io.on('connection', socket => {
     const userId = socket.user.id;
 
     // Enforce max connections per user
@@ -116,7 +123,7 @@ function setupWebSocket(server, db) {
     socket.broadcast.emit('user:online', { userId, online: true });
 
     // ── Chat Events ──────────────────────────────────────────────────────
-    socket.on('chat:join', (chatId) => {
+    socket.on('chat:join', chatId => {
       if (!checkRateLimit(socket.id, 'chat:join', MAX_JOINS_PER_MINUTE)) {
         return socket.emit('error', { message: 'Rate limit exceeded' });
       }
@@ -128,12 +135,12 @@ function setupWebSocket(server, db) {
       log.debug({ userId, chatId }, 'Joined chat room');
     });
 
-    socket.on('chat:leave', (chatId) => {
+    socket.on('chat:leave', chatId => {
       if (!chatId || typeof chatId !== 'string') return;
       socket.leave(`chat:${chatId}`);
     });
 
-    socket.on('chat:message', (data) => {
+    socket.on('chat:message', data => {
       if (!checkRateLimit(socket.id, 'chat:message', MAX_MESSAGES_PER_MINUTE)) {
         return socket.emit('error', { message: 'Rate limit exceeded' });
       }
@@ -151,12 +158,12 @@ function setupWebSocket(server, db) {
 
       try {
         const id = uuidv4();
-        db.prepare('INSERT INTO messages (id, chat_id, sender_id, sender_name, content, is_encrypted) VALUES (?, ?, ?, ?, ?, ?)').run(
-          id, chatId, userId, socket.user.name, sanitized, isEncrypted ? 1 : 0
-        );
-        db.prepare('UPDATE chats SET last_message = ?, last_timestamp = datetime("now") WHERE id = ?').run(
-          sanitized.substring(0, 100), chatId
-        );
+        db.prepare(
+          'INSERT INTO messages (id, chat_id, sender_id, sender_name, content, is_encrypted) VALUES (?, ?, ?, ?, ?, ?)'
+        ).run(id, chatId, userId, socket.user.name, sanitized, isEncrypted ? 1 : 0);
+        db.prepare(
+          'UPDATE chats SET last_message = ?, last_timestamp = datetime("now") WHERE id = ?'
+        ).run(sanitized.substring(0, 100), chatId);
 
         io.to(`chat:${chatId}`).emit('chat:message', {
           id,
@@ -186,7 +193,7 @@ function setupWebSocket(server, db) {
     });
 
     // ── Attendance Events (Faculty only) ────────────────────────────────
-    socket.on('attendance:startSession', (data) => {
+    socket.on('attendance:startSession', data => {
       if (socket.user.role !== 'FACULTY' && socket.user.role !== 'GTU_ADMIN') {
         return socket.emit('error', { message: 'Faculty only' });
       }
@@ -195,10 +202,16 @@ function setupWebSocket(server, db) {
       if (!branch || !semester || !section || !subject) return;
       const room = `attendance:${branch}:${semester}:${section}`;
       socket.join(room);
-      io.to(room).emit('attendance:sessionStarted', { subject, branch, semester, section, startedBy: userId });
+      io.to(room).emit('attendance:sessionStarted', {
+        subject,
+        branch,
+        semester,
+        section,
+        startedBy: userId,
+      });
     });
 
-    socket.on('attendance:mark', (data) => {
+    socket.on('attendance:mark', data => {
       if (socket.user.role !== 'FACULTY' && socket.user.role !== 'GTU_ADMIN') {
         return socket.emit('error', { message: 'Faculty only' });
       }
@@ -218,7 +231,7 @@ function setupWebSocket(server, db) {
     });
 
     // ── Notifications (admin/system only) ────────────────────────────────
-    socket.on('notification:send', (data) => {
+    socket.on('notification:send', data => {
       if (socket.user.role !== 'GTU_ADMIN') {
         return socket.emit('error', { message: 'Admin only' });
       }
@@ -236,32 +249,46 @@ function setupWebSocket(server, db) {
       const targetSockets = onlineUsers.get(targetUserId);
       if (targetSockets) {
         targetSockets.forEach(sid => {
-          io.to(sid).emit('notification:receive', { message: sanitizedMsg, type: type || 'info', from: userId });
+          io.to(sid).emit('notification:receive', {
+            message: sanitizedMsg,
+            type: type || 'info',
+            from: userId,
+          });
         });
       }
     });
 
     // ── Exam Events ──────────────────────────────────────────────────────
-    socket.on('exam:join', (examId) => {
+    socket.on('exam:join', examId => {
       if (!checkRateLimit(socket.id, 'exam', 10)) return;
       if (!examId || typeof examId !== 'string') return;
-      const exam = db.prepare('SELECT id, branch, semester, institution_id, is_published FROM exams WHERE id = ?').get(examId);
+      const exam = db
+        .prepare(
+          'SELECT id, branch, semester, institution_id, is_published FROM exams WHERE id = ?'
+        )
+        .get(examId);
       if (!exam) return socket.emit('error', { message: 'Exam not found' });
       if (exam.institution_id && exam.institution_id !== socket.user.institutionId) {
         return socket.emit('error', { message: 'Access denied' });
       }
-      if (exam.is_published === 0 && socket.user.role !== 'FACULTY' && socket.user.role !== 'GTU_ADMIN') {
+      if (
+        exam.is_published === 0 &&
+        socket.user.role !== 'FACULTY' &&
+        socket.user.role !== 'GTU_ADMIN'
+      ) {
         return socket.emit('error', { message: 'Exam not yet available' });
       }
       socket.join(`exam:${examId}`);
     });
 
-    socket.on('exam:submit', (data) => {
+    socket.on('exam:submit', data => {
       if (!checkRateLimit(socket.id, 'exam', 5)) return;
       const { examId, answers } = data;
       if (!examId || !answers || typeof answers !== 'object') return;
 
-      const exam = db.prepare('SELECT id, total_marks, questions, institution_id FROM exams WHERE id = ?').get(examId);
+      const exam = db
+        .prepare('SELECT id, total_marks, questions, institution_id FROM exams WHERE id = ?')
+        .get(examId);
       if (!exam) return socket.emit('error', { message: 'Exam not found' });
       if (exam.institution_id && exam.institution_id !== socket.user.institutionId) {
         return socket.emit('error', { message: 'Access denied' });
@@ -280,13 +307,15 @@ function setupWebSocket(server, db) {
           }
           score = Math.round(score);
         }
-      } catch { /* default to 0 */ }
+      } catch {
+        /* default to 0 */
+      }
 
       try {
         const id = uuidv4();
-        db.prepare('INSERT INTO exam_results (id, user_id, exam_id, score, total, answers) VALUES (?, ?, ?, ?, ?, ?)').run(
-          id, userId, examId, score, total, JSON.stringify(answers)
-        );
+        db.prepare(
+          'INSERT INTO exam_results (id, user_id, exam_id, score, total, answers) VALUES (?, ?, ?, ?, ?, ?)'
+        ).run(id, userId, examId, score, total, JSON.stringify(answers));
         socket.emit('exam:submitted', { examId, success: true, score, total });
       } catch (e) {
         log.error({ err: e }, 'Failed to save exam result');
@@ -295,7 +324,7 @@ function setupWebSocket(server, db) {
     });
 
     // ── Disconnect ───────────────────────────────────────────────────────
-    socket.on('disconnect', (reason) => {
+    socket.on('disconnect', reason => {
       const userSockets = onlineUsers.get(userId);
       if (userSockets) {
         userSockets.delete(socket.id);

@@ -269,9 +269,7 @@ describe('rbacAuthService', () => {
         section: 'A',
       });
 
-      await expect(
-        changePin('2464050', '9999', '5678')
-      ).rejects.toThrow('Old PIN is incorrect');
+      await expect(changePin('2464050', '9999', '5678')).rejects.toThrow('Old PIN is incorrect');
     });
 
     it('should reject non-4-digit new PIN', async () => {
@@ -284,9 +282,7 @@ describe('rbacAuthService', () => {
         section: 'A',
       });
 
-      await expect(
-        changePin('2464060', '1234', '123')
-      ).rejects.toThrow('4 digits');
+      await expect(changePin('2464060', '1234', '123')).rejects.toThrow('4 digits');
     });
   });
 

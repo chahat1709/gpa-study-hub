@@ -49,7 +49,7 @@ export const licenseService = {
       try {
         const snap = await Promise.race([
           getDoc(doc(db, 'system_config', 'license')),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
         ]);
         if (snap && snap.exists()) {
           const data = snap.data() as LicenseStatus;
@@ -59,13 +59,13 @@ export const licenseService = {
           // Seed initial free license when Firestore responds with no record.
           await Promise.race([
             setDoc(doc(db, 'system_config', 'license'), currentLicense),
-            new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+            new Promise<void>(resolve => setTimeout(resolve, 1500)),
           ]);
         } else {
           console.warn('License service timed out; continuing with local community license.');
         }
       } catch (err) {
-        console.warn("Failed to fetch license from Firestore, using local:", err);
+        console.warn('Failed to fetch license from Firestore, using local:', err);
       }
     }
 
@@ -84,7 +84,7 @@ export const licenseService = {
    */
   processMaintenancePayment: async (months: number = 1) => {
     // Free community license — no payment needed
-    console.info("GPA Study Hub Community Edition — no payment required.");
+    console.info('GPA Study Hub Community Edition — no payment required.');
   },
 
   setTier: async (tier: LicenseStatus['tier'], fee: number) => {
@@ -102,6 +102,6 @@ export const licenseService = {
 
   terminateLease: async () => {
     // Cannot terminate the free community license
-    console.info("Community license cannot be terminated.");
+    console.info('Community license cannot be terminated.');
   },
 };

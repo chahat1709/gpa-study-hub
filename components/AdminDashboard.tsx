@@ -1,15 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import {
-  Users, Megaphone, FileUp, BookPlus,
-  LogOut, LayoutDashboard,
-  Bell, CheckCircle2,
-  Database, Plus, Trash2, Globe2,
-  ShieldCheck, Loader2, CalendarCheck,
-  Search, Filter, FileText, Upload, Layers,
-  X, ChevronDown, Download, AlertTriangle,
-  Server, Wifi, Cpu, Activity, Zap,
-  GraduationCap, Award, Sparkles, Clock, BarChart3
+  Users,
+  Megaphone,
+  FileUp,
+  BookPlus,
+  LogOut,
+  LayoutDashboard,
+  Bell,
+  CheckCircle2,
+  Database,
+  Plus,
+  Trash2,
+  Globe2,
+  ShieldCheck,
+  Loader2,
+  CalendarCheck,
+  Search,
+  Filter,
+  FileText,
+  Upload,
+  Layers,
+  X,
+  ChevronDown,
+  Download,
+  AlertTriangle,
+  Server,
+  Wifi,
+  Cpu,
+  Activity,
+  Zap,
+  GraduationCap,
+  Award,
+  Sparkles,
+  Clock,
+  BarChart3,
 } from 'lucide-react';
 import { useToast } from './ToastProvider';
 import { campusService } from '../services/campusService';
@@ -127,47 +152,57 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (!noticeTitle || !noticeContent) return;
     campusService.postNotice({
-      title: noticeTitle, content: noticeContent, priority: noticePriority,
-      author: user?.name || 'Faculty', category: 'General', scope: 'COLLEGE'
+      title: noticeTitle,
+      content: noticeContent,
+      priority: noticePriority,
+      author: user?.name || 'Faculty',
+      category: 'General',
+      scope: 'COLLEGE',
     });
     setNoticeTitle('');
     setNoticeContent('');
-    success("Notice Broadcasted");
+    success('Notice Broadcasted');
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!uploadSubject || !uploadCategory) {
-      error("Select Subject & Category first");
+      error('Select Subject & Category first');
       return;
     }
     setIsUploading(true);
     try {
       await resourceService.uploadResource(
-        user?.branch || 'General', user?.semester || '1', uploadSection,
-        uploadSubject, uploadCategory, file,
+        user?.branch || 'General',
+        user?.semester || '1',
+        uploadSection,
+        uploadSubject,
+        uploadCategory,
+        file,
         { unit: uploadUnit, academicYear: uploadYear, deadline: uploadDeadline }
       );
-      success("Resource Uploaded");
-      setUploadUnit(''); setUploadYear(''); setUploadDeadline('');
+      success('Resource Uploaded');
+      setUploadUnit('');
+      setUploadYear('');
+      setUploadDeadline('');
       setRecentUploads(resourceService.getAllResources());
     } catch {
-      error("Upload failed");
+      error('Upload failed');
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDeleteResource = async (id: string) => {
-    if (window.confirm("Permanently delete this resource?")) {
+    if (window.confirm('Permanently delete this resource?')) {
       setRecentUploads(prev => prev.filter(r => r.id !== id));
       try {
         await resourceService.deleteResource(id);
-        success("Deleted");
+        success('Deleted');
         setRecentUploads(resourceService.getAllResources());
       } catch {
-        error("Deletion failed");
+        error('Deletion failed');
         setRecentUploads(resourceService.getAllResources());
       }
     }
@@ -178,7 +213,7 @@ const AdminDashboard: React.FC = () => {
     if (exists) return false;
     academicService.addSubject(name);
     setSubjects(academicService.getSubjects());
-    success("Subject Added");
+    success('Subject Added');
     return true;
   };
 
@@ -190,7 +225,7 @@ const AdminDashboard: React.FC = () => {
   const handleAddQuestionManual = (e: React.FormEvent) => {
     e.preventDefault();
     if (!qText.trim() || !qOpt0.trim() || !qOpt1.trim() || !qOpt2.trim() || !qOpt3.trim()) {
-      error("Please fill in question prompt and all 4 options.");
+      error('Please fill in question prompt and all 4 options.');
       return;
     }
     const newQ: QuizQuestion = {
@@ -198,16 +233,23 @@ const AdminDashboard: React.FC = () => {
       question: qText.trim(),
       options: [qOpt0.trim(), qOpt1.trim(), qOpt2.trim(), qOpt3.trim()],
       correctAnswer: qCorrect,
-      explanation: qExplanation.trim() || 'Official GTU course answer explanation.'
+      explanation: qExplanation.trim() || 'Official GTU course answer explanation.',
     };
     setPubQuestions(prev => [...prev, newQ]);
-    setQText(''); setQOpt0(''); setQOpt1(''); setQOpt2(''); setQOpt3('');
+    setQText('');
+    setQOpt0('');
+    setQOpt1('');
+    setQOpt2('');
+    setQOpt3('');
     setQExplanation('');
-    success("Question added to test paper!");
+    success('Question added to test paper!');
   };
 
   const handleGenerateAIQuestions = async () => {
-    if (!pubSubject) { error("Select a subject first."); return; }
+    if (!pubSubject) {
+      error('Select a subject first.');
+      return;
+    }
     setIsGeneratingQuiz(true);
     info(`Generating AI Quiz Questions for ${pubSubject}...`);
     try {
@@ -218,7 +260,7 @@ const AdminDashboard: React.FC = () => {
         success(`Generated ${quiz.questions.length} questions successfully!`);
       }
     } catch {
-      error("AI generation failed. Loading fallback questions.");
+      error('AI generation failed. Loading fallback questions.');
       const fallback = examService.getFallbackQuiz(pubSubject, pubUnit);
       setPubQuestions(fallback.questions);
     } finally {
@@ -228,30 +270,40 @@ const AdminDashboard: React.FC = () => {
 
   const handlePublishOfficialQuiz = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pubTitle.trim() || !pubSubject) { error("Enter exam title and select subject."); return; }
-    if (pubQuestions.length === 0) { error("Add at least 1 question to publish test."); return; }
+    if (!pubTitle.trim() || !pubSubject) {
+      error('Enter exam title and select subject.');
+      return;
+    }
+    if (pubQuestions.length === 0) {
+      error('Add at least 1 question to publish test.');
+      return;
+    }
     setIsPublishingQuiz(true);
     try {
       const created = await examService.publishQuiz({
-        title: pubTitle.trim(), subject: pubSubject, unit: pubUnit,
-        durationMinutes: pubDuration, questions: pubQuestions,
-        createdBy: user?.name || 'Faculty Admin'
+        title: pubTitle.trim(),
+        subject: pubSubject,
+        unit: pubUnit,
+        durationMinutes: pubDuration,
+        questions: pubQuestions,
+        createdBy: user?.name || 'Faculty Admin',
       });
       setPublishedQuizzes(prev => [created, ...prev]);
-      setPubTitle(''); setPubQuestions([]);
-      success("Exam Paper Published to Campus!");
+      setPubTitle('');
+      setPubQuestions([]);
+      success('Exam Paper Published to Campus!');
     } catch {
-      error("Failed to publish quiz.");
+      error('Failed to publish quiz.');
     } finally {
       setIsPublishingQuiz(false);
     }
   };
 
   const handleDeleteOfficialQuiz = async (id: string) => {
-    if (window.confirm("Delete this published exam?")) {
+    if (window.confirm('Delete this published exam?')) {
       setPublishedQuizzes(prev => prev.filter(q => q.id !== id));
       await examService.deleteOfficialQuiz(id);
-      success("Exam paper removed.");
+      success('Exam paper removed.');
     }
   };
 
@@ -259,7 +311,9 @@ const AdminDashboard: React.FC = () => {
     if (activeSlot) {
       if (user?.role === 'FACULTY' && user.facultyShortCode) {
         if (user.facultyShortCode !== activeSlot.facultyName) {
-          error(`Security Alert: Class belongs to ${activeSlot.facultyName}. You are authorized as ${user.facultyShortCode}.`);
+          error(
+            `Security Alert: Class belongs to ${activeSlot.facultyName}. You are authorized as ${user.facultyShortCode}.`
+          );
           return;
         }
       }
@@ -267,34 +321,42 @@ const AdminDashboard: React.FC = () => {
       success(`Attendance Logged: ${activeSlot.subject}`);
       try {
         const today = new Date().toISOString().split('T')[0] ?? '';
-        const studentIds = (user?.role === 'STUDENT' && user.id) ? [user.id] : [];
-        await attendanceService.markAttendance(activeSlot.id, activeSlot.subject, today, studentIds, 60);
+        const studentIds = user?.role === 'STUDENT' && user.id ? [user.id] : [];
+        await attendanceService.markAttendance(
+          activeSlot.id,
+          activeSlot.subject,
+          today,
+          studentIds,
+          60
+        );
       } catch {
         setAttendanceStatus('idle');
-        error("Sync Failed: Retrying in background...");
+        error('Sync Failed: Retrying in background...');
       }
     } else {
-      info("No active class");
+      info('No active class');
     }
   };
 
   const debouncedVaultSearch = useDebounce(vaultSearch, 300);
-  const filteredUploads = recentUploads.filter(r =>
-    r.title.toLowerCase().includes(debouncedVaultSearch.toLowerCase()) ||
-    (r.subject && r.subject.toLowerCase().includes(debouncedVaultSearch.toLowerCase())) ||
-    (r.category && r.category.toLowerCase().includes(debouncedVaultSearch.toLowerCase()))
+  const filteredUploads = recentUploads.filter(
+    r =>
+      r.title.toLowerCase().includes(debouncedVaultSearch.toLowerCase()) ||
+      (r.subject && r.subject.toLowerCase().includes(debouncedVaultSearch.toLowerCase())) ||
+      (r.category && r.category.toLowerCase().includes(debouncedVaultSearch.toLowerCase()))
   );
 
   const classOverview = examService.getClassReadinessOverview(gradebookResults);
   const filteredGradebook = gradebookResults.filter(r => {
-    const matchesSearch = r.studentName.toLowerCase().includes(gradebookSearch.toLowerCase()) ||
+    const matchesSearch =
+      r.studentName.toLowerCase().includes(gradebookSearch.toLowerCase()) ||
       r.subject.toLowerCase().includes(gradebookSearch.toLowerCase()) ||
       r.quizTitle.toLowerCase().includes(gradebookSearch.toLowerCase());
     const matchesSubject = gradebookSubjectFilter === 'ALL' || r.subject === gradebookSubjectFilter;
     return matchesSearch && matchesSubject;
   });
 
-  const TAB_ITEMS: { id: AdminTab; label: string; icon: React.FC<{className?: string}> }[] = [
+  const TAB_ITEMS: { id: AdminTab; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'CONSOLE', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'CLASSROOM', label: 'Classroom', icon: CalendarCheck },
     { id: 'VAULT', label: 'Upload Vault', icon: FileUp },
@@ -305,44 +367,106 @@ const AdminDashboard: React.FC = () => {
   const renderTab = () => {
     switch (activeTab) {
       case 'CONSOLE':
-        return <AdminConsoleTab noticeTitle={noticeTitle} setNoticeTitle={setNoticeTitle}
-          noticeContent={noticeContent} setNoticeContent={setNoticeContent}
-          noticePriority={noticePriority} setNoticePriority={setNoticePriority}
-          onPostNotice={handlePostNotice} notices={notices} subjects={subjects}
-          resourceCount={recentUploads.length} />;
+        return (
+          <AdminConsoleTab
+            noticeTitle={noticeTitle}
+            setNoticeTitle={setNoticeTitle}
+            noticeContent={noticeContent}
+            setNoticeContent={setNoticeContent}
+            noticePriority={noticePriority}
+            setNoticePriority={setNoticePriority}
+            onPostNotice={handlePostNotice}
+            notices={notices}
+            subjects={subjects}
+            resourceCount={recentUploads.length}
+          />
+        );
       case 'CLASSROOM':
-        return <AdminClassroomTab activeSlot={activeSlot} selectedDay={selectedDay}
-          setSelectedDay={setSelectedDay} user={user} attendanceStatus={attendanceStatus}
-          onMarkAttendance={handleMarkAttendance} />;
+        return (
+          <AdminClassroomTab
+            activeSlot={activeSlot}
+            selectedDay={selectedDay}
+            setSelectedDay={setSelectedDay}
+            user={user}
+            attendanceStatus={attendanceStatus}
+            onMarkAttendance={handleMarkAttendance}
+          />
+        );
       case 'VAULT':
-        return <AdminVaultTab subjects={subjects} categories={categories}
-          uploadSubject={uploadSubject} setUploadSubject={setUploadSubject}
-          uploadCategory={uploadCategory} setUploadCategory={setUploadCategory}
-          uploadUnit={uploadUnit} setUploadUnit={setUploadUnit}
-          uploadYear={uploadYear} setUploadYear={setUploadYear}
-          uploadDeadline={uploadDeadline} setUploadDeadline={setUploadDeadline}
-          isUploading={isUploading} onFileUpload={handleFileUpload}
-          vaultSearch={vaultSearch} setVaultSearch={setVaultSearch}
-          filteredUploads={filteredUploads} onDeleteResource={handleDeleteResource}
-          onRefresh={() => setRecentUploads(resourceService.getAllResources())} />;
+        return (
+          <AdminVaultTab
+            subjects={subjects}
+            categories={categories}
+            uploadSubject={uploadSubject}
+            setUploadSubject={setUploadSubject}
+            uploadCategory={uploadCategory}
+            setUploadCategory={setUploadCategory}
+            uploadUnit={uploadUnit}
+            setUploadUnit={setUploadUnit}
+            uploadYear={uploadYear}
+            setUploadYear={setUploadYear}
+            uploadDeadline={uploadDeadline}
+            setUploadDeadline={setUploadDeadline}
+            isUploading={isUploading}
+            onFileUpload={handleFileUpload}
+            vaultSearch={vaultSearch}
+            setVaultSearch={setVaultSearch}
+            filteredUploads={filteredUploads}
+            onDeleteResource={handleDeleteResource}
+            onRefresh={() => setRecentUploads(resourceService.getAllResources())}
+          />
+        );
       case 'CURRICULUM':
-        return <AdminCurriculumTab subjects={subjects} onAddSubject={handleAddSubject} onRemoveSubject={handleRemoveSubject} />;
+        return (
+          <AdminCurriculumTab
+            subjects={subjects}
+            onAddSubject={handleAddSubject}
+            onRemoveSubject={handleRemoveSubject}
+          />
+        );
       case 'EXAMS':
-        return <AdminExamsTab subjects={subjects}
-          pubTitle={pubTitle} setPubTitle={setPubTitle} pubSubject={pubSubject} setPubSubject={setPubSubject}
-          pubUnit={pubUnit} setPubUnit={setPubUnit} pubDuration={pubDuration} setPubDuration={setPubDuration}
-          pubQuestions={pubQuestions} setPubQuestions={setPubQuestions}
-          isGeneratingQuiz={isGeneratingQuiz} isPublishingQuiz={isPublishingQuiz}
-          onGenerateAI={handleGenerateAIQuestions} onPublish={handlePublishOfficialQuiz}
-          publishedQuizzes={publishedQuizzes} onDeleteQuiz={handleDeleteOfficialQuiz}
-          classOverview={classOverview} gradebookSearch={gradebookSearch} setGradebookSearch={setGradebookSearch}
-          gradebookSubjectFilter={gradebookSubjectFilter} setGradebookSubjectFilter={setGradebookSubjectFilter}
-          filteredGradebook={filteredGradebook}
-          qText={qText} setQText={setQText} qOpt0={qOpt0} setQOpt0={setQOpt0}
-          qOpt1={qOpt1} setQOpt1={setQOpt1} qOpt2={qOpt2} setQOpt2={setQOpt2}
-          qOpt3={qOpt3} setQOpt3={setQOpt3} qCorrect={qCorrect} setQCorrect={setQCorrect}
-          qExplanation={qExplanation} setQExplanation={setQExplanation}
-          onAddQuestion={handleAddQuestionManual} />;
+        return (
+          <AdminExamsTab
+            subjects={subjects}
+            pubTitle={pubTitle}
+            setPubTitle={setPubTitle}
+            pubSubject={pubSubject}
+            setPubSubject={setPubSubject}
+            pubUnit={pubUnit}
+            setPubUnit={setPubUnit}
+            pubDuration={pubDuration}
+            setPubDuration={setPubDuration}
+            pubQuestions={pubQuestions}
+            setPubQuestions={setPubQuestions}
+            isGeneratingQuiz={isGeneratingQuiz}
+            isPublishingQuiz={isPublishingQuiz}
+            onGenerateAI={handleGenerateAIQuestions}
+            onPublish={handlePublishOfficialQuiz}
+            publishedQuizzes={publishedQuizzes}
+            onDeleteQuiz={handleDeleteOfficialQuiz}
+            classOverview={classOverview}
+            gradebookSearch={gradebookSearch}
+            setGradebookSearch={setGradebookSearch}
+            gradebookSubjectFilter={gradebookSubjectFilter}
+            setGradebookSubjectFilter={setGradebookSubjectFilter}
+            filteredGradebook={filteredGradebook}
+            qText={qText}
+            setQText={setQText}
+            qOpt0={qOpt0}
+            setQOpt0={setQOpt0}
+            qOpt1={qOpt1}
+            setQOpt1={setQOpt1}
+            qOpt2={qOpt2}
+            setQOpt2={setQOpt2}
+            qOpt3={qOpt3}
+            setQOpt3={setQOpt3}
+            qCorrect={qCorrect}
+            setQCorrect={setQCorrect}
+            qExplanation={qExplanation}
+            setQExplanation={setQExplanation}
+            onAddQuestion={handleAddQuestionManual}
+          />
+        );
     }
   };
 
@@ -359,20 +483,31 @@ const AdminDashboard: React.FC = () => {
               <ShieldCheck className="w-5 h-5 text-slate-950" />
             </div>
             <div>
-              <h1 className="font-black font-display text-lg text-white tracking-tight leading-none">Admin</h1>
-              <p className="text-[10px] text-stitch-cyan font-bold uppercase tracking-wider mt-1">{user?.branch || 'General'} Faculty</p>
+              <h1 className="font-black font-display text-lg text-white tracking-tight leading-none">
+                Admin
+              </h1>
+              <p className="text-[10px] text-stitch-cyan font-bold uppercase tracking-wider mt-1">
+                {user?.branch || 'General'} Faculty
+              </p>
             </div>
           </div>
         </div>
         <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto no-scrollbar">
-          {TAB_ITEMS.map((item) => {
+          {TAB_ITEMS.map(item => {
             const isActive = activeTab === item.id;
             return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${isActive ? 'bg-stitch-cyan/20 text-white font-bold shadow-inner shadow-[0_0_15px_rgba(47,217,244,0.1)] border border-stitch-cyan/50' : 'text-slate-300 hover:bg-white/10 hover:text-white font-medium hover:border hover:border-white/5 border border-transparent'}`}>
-                <item.icon className={`w-5 h-5 ${isActive ? 'text-stitch-cyan drop-shadow-[0_0_8px_rgba(47,217,244,0.5)]' : 'text-slate-400 group-hover:text-stitch-cyan transition-colors'}`} />
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${isActive ? 'bg-stitch-cyan/20 text-white font-bold shadow-inner shadow-[0_0_15px_rgba(47,217,244,0.1)] border border-stitch-cyan/50' : 'text-slate-300 hover:bg-white/10 hover:text-white font-medium hover:border hover:border-white/5 border border-transparent'}`}
+              >
+                <item.icon
+                  className={`w-5 h-5 ${isActive ? 'text-stitch-cyan drop-shadow-[0_0_8px_rgba(47,217,244,0.5)]' : 'text-slate-400 group-hover:text-stitch-cyan transition-colors'}`}
+                />
                 <span className="text-sm tracking-tight">{item.label}</span>
-                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-stitch-cyan shadow-[0_0_8px_rgba(47,217,244,0.8)]"></div>}
+                {isActive && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-stitch-cyan shadow-[0_0_8px_rgba(47,217,244,0.8)]"></div>
+                )}
               </button>
             );
           })}
@@ -385,8 +520,18 @@ const AdminDashboard: React.FC = () => {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-white truncate">{user?.name}</p>
               <div className="flex gap-2">
-                <button onClick={() => window.location.reload()} className="text-[10px] font-bold text-stitch-cyan hover:text-[rgba(47,217,244,0.8)] uppercase tracking-wider mt-0.5">Exit</button>
-                <button onClick={logout} className="text-[10px] font-bold text-rose-400 hover:text-rose-300 uppercase tracking-wider mt-0.5">Sign Out</button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-[10px] font-bold text-stitch-cyan hover:text-[rgba(47,217,244,0.8)] uppercase tracking-wider mt-0.5"
+                >
+                  Exit
+                </button>
+                <button
+                  onClick={logout}
+                  className="text-[10px] font-bold text-rose-400 hover:text-rose-300 uppercase tracking-wider mt-0.5"
+                >
+                  Sign Out
+                </button>
               </div>
             </div>
           </div>
@@ -401,16 +546,25 @@ const AdminDashboard: React.FC = () => {
               <ShieldCheck className="w-4 h-4 text-slate-950" />
             </div>
             <h2 className="text-lg font-black font-display text-white tracking-tight uppercase drop-shadow-md">
-              {activeTab === 'CONSOLE' ? 'Control Center' : activeTab === 'EXAMS' ? 'Exams & Gradebook' : activeTab}
+              {activeTab === 'CONSOLE'
+                ? 'Control Center'
+                : activeTab === 'EXAMS'
+                  ? 'Exams & Gradebook'
+                  : activeTab}
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowDiagnostics(true)}
-              className="hidden md:flex items-center gap-2 px-4 py-2.5 min-h-[44px] glass-card bg-white/5 border border-white/10 rounded-full text-xs font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all shadow-inner hover:border-stitch-cyan/30">
+            <button
+              onClick={() => setShowDiagnostics(true)}
+              className="hidden md:flex items-center gap-2 px-4 py-2.5 min-h-[44px] glass-card bg-white/5 border border-white/10 rounded-full text-xs font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all shadow-inner hover:border-stitch-cyan/30"
+            >
               <Activity className="w-4 h-4 text-stitch-cyan" />
               <span>Status</span>
             </button>
-            <button onClick={logout} className="lg:hidden p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-rose-400 transition-colors">
+            <button
+              onClick={logout}
+              className="lg:hidden p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-rose-400 transition-colors"
+            >
               <LogOut className="w-5 h-5" />
             </button>
             <div className="hidden lg:block w-px h-8 bg-white/10 mx-1"></div>
@@ -434,10 +588,19 @@ const AdminDashboard: React.FC = () => {
             {TAB_ITEMS.map(item => {
               const isActive = activeTab === item.id;
               return (
-                <button key={item.id} onClick={() => setActiveTab(item.id)}
-                  className={`flex-1 flex flex-col items-center justify-center h-full min-h-[44px] active:scale-90 transition-all ${isActive ? 'bg-white/5 border-t-2 border-stitch-cyan' : ''}`}>
-                  <item.icon className={`w-6 h-6 mb-1 ${isActive ? 'text-stitch-cyan drop-shadow-[0_0_8px_rgba(47,217,244,0.5)]' : 'text-slate-400'}`} />
-                  <span className={`text-[10px] font-bold ${isActive ? 'text-stitch-cyan' : 'text-slate-400'}`}>{item.label}</span>
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex-1 flex flex-col items-center justify-center h-full min-h-[44px] active:scale-90 transition-all ${isActive ? 'bg-white/5 border-t-2 border-stitch-cyan' : ''}`}
+                >
+                  <item.icon
+                    className={`w-6 h-6 mb-1 ${isActive ? 'text-stitch-cyan drop-shadow-[0_0_8px_rgba(47,217,244,0.5)]' : 'text-slate-400'}`}
+                  />
+                  <span
+                    className={`text-[10px] font-bold ${isActive ? 'text-stitch-cyan' : 'text-slate-400'}`}
+                  >
+                    {item.label}
+                  </span>
                 </button>
               );
             })}

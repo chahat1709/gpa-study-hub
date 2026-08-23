@@ -1,7 +1,13 @@
 import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise } from '@react-three/postprocessing';
+import {
+  EffectComposer,
+  Bloom,
+  ChromaticAberration,
+  Vignette,
+  Noise,
+} from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import { cursorStore } from '../../lib/cursorStore';
 
@@ -9,13 +15,16 @@ import { cursorStore } from '../../lib/cursorStore';
 function GradientScene() {
   const meshRef = useRef<THREE.Mesh>(null);
   const { viewport } = useThree();
-  
-  const uniforms = useMemo(() => ({
-    uTime: { value: 0 },
-    uMouse: { value: new THREE.Vector2(0, 0) },
-    uScroll: { value: 0 },
-    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-  }), []);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uMouse: { value: new THREE.Vector2(0, 0) },
+      uScroll: { value: 0 },
+      uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    }),
+    []
+  );
 
   const vertexShader = `
     varying vec2 vUv;
@@ -125,7 +134,7 @@ function GradientScene() {
     }
   `;
 
-  useFrame((state) => {
+  useFrame(state => {
     uniforms.uTime.value = state.clock.elapsedTime;
     uniforms.uMouse.value.set(cursorStore.x, cursorStore.y);
     uniforms.uScroll.value = window.scrollY;
@@ -149,7 +158,7 @@ function GradientScene() {
 function InteractiveParticles({ count = 500 }: { count?: number }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const { viewport } = useThree();
-  
+
   const dataRef = useRef({
     positions: new Float32Array(count * 3),
     velocities: new Float32Array(count * 3),
@@ -159,59 +168,59 @@ function InteractiveParticles({ count = 500 }: { count?: number }) {
 
   useMemo(() => {
     const { positions, velocities, basePositions, sizes } = dataRef.current;
-    
+
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
       const radius = Math.random() * 8;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      
+
       const px = radius * Math.sin(phi) * Math.cos(theta);
       const py = radius * Math.sin(phi) * Math.sin(theta);
       const pz = radius * Math.cos(phi) - 3;
-      
+
       positions[i3] = px;
       positions[i3 + 1] = py;
       positions[i3 + 2] = pz;
-      
+
       basePositions[i3] = px;
       basePositions[i3 + 1] = py;
       basePositions[i3 + 2] = pz;
-      
+
       velocities[i3] = (Math.random() - 0.5) * 0.01;
       velocities[i3 + 1] = (Math.random() - 0.5) * 0.01;
       velocities[i3 + 2] = (Math.random() - 0.5) * 0.01;
-      
+
       sizes[i] = Math.random() * 0.03 + 0.01;
     }
   }, [count]);
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  useFrame((state) => {
+  useFrame(state => {
     if (!meshRef.current) return;
-    
+
     const { positions, velocities, basePositions, sizes } = dataRef.current;
     const time = state.clock.elapsedTime;
-    
+
     // Use shared cursor store
     const mx = cursorStore.x * 5;
     const my = cursorStore.y * 3;
     const mSpeed = cursorStore.getSpeed();
-    
+
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      
+
       let px = positions[i3] ?? 0;
       let py = positions[i3 + 1] ?? 0;
       let pz = positions[i3 + 2] ?? 0;
-      
+
       // Calculate distance to mouse
       const dx = px - mx;
       const dy = py - my;
-      const dz = pz - (-2);
+      const dz = pz - -2;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      
+
       // Attract particles toward cursor when moving fast
       const attractRadius = 3.0 + mSpeed * 2;
       if (dist < attractRadius && dist > 0.01) {
@@ -219,7 +228,7 @@ function InteractiveParticles({ count = 500 }: { count?: number }) {
         px -= (dx / dist) * force;
         py -= (dy / dist) * force;
       }
-      
+
       // Mouse repulsion force (close range)
       const repulsionRadius = 2.0;
       const repulsionStrength = 0.08;
@@ -229,7 +238,7 @@ function InteractiveParticles({ count = 500 }: { count?: number }) {
         py += (dy / dist) * force;
         pz += (dz / dist) * force;
       }
-      
+
       // Spring back to base position
       const springK = 0.005;
       const bx = basePositions[i3] ?? 0;
@@ -238,12 +247,12 @@ function InteractiveParticles({ count = 500 }: { count?: number }) {
       px += (bx - px) * springK;
       py += (by - py) * springK;
       pz += (bz - pz) * springK;
-      
+
       // Orbital motion
       const angle = time * 0.2 + i * 0.01;
       px += Math.sin(angle) * 0.002;
       py += Math.cos(angle) * 0.002;
-      
+
       // Apply velocities
       const vx = velocities[i3] ?? 0;
       const vy = velocities[i3 + 1] ?? 0;
@@ -251,12 +260,12 @@ function InteractiveParticles({ count = 500 }: { count?: number }) {
       px += vx;
       py += vy;
       pz += vz;
-      
+
       // Write back
       positions[i3] = px;
       positions[i3 + 1] = py;
       positions[i3 + 2] = pz;
-      
+
       // Update instance matrix
       dummy.position.set(px, py, pz);
       const sz = sizes[i] ?? 0.02;
@@ -264,7 +273,7 @@ function InteractiveParticles({ count = 500 }: { count?: number }) {
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     }
-    
+
     meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
@@ -285,50 +294,93 @@ function InteractiveParticles({ count = 500 }: { count?: number }) {
 // Floating wireframe geometry with cursor tracking + fog
 function FloatingGeometry() {
   const groupRef = useRef<THREE.Group>(null);
-  
-  const meshes = useMemo(() => [
-    { geo: new THREE.IcosahedronGeometry(0.8, 1), pos: [-2, 1, -4] as [number, number, number], speed: 0.3, rotSpeed: 0.2, fogNear: 3, fogFar: 8 },
-    { geo: new THREE.OctahedronGeometry(0.6, 0), pos: [2.5, -0.5, -3] as [number, number, number], speed: 0.4, rotSpeed: 0.3, fogNear: 2, fogFar: 7 },
-    { geo: new THREE.TorusGeometry(0.5, 0.15, 8, 16), pos: [0, -1.5, -5] as [number, number, number], speed: 0.2, rotSpeed: 0.15, fogNear: 4, fogFar: 9 },
-    { geo: new THREE.IcosahedronGeometry(0.4, 0), pos: [-1.5, -1, -3.5] as [number, number, number], speed: 0.35, rotSpeed: 0.25, fogNear: 2.5, fogFar: 7.5 },
-    { geo: new THREE.DodecahedronGeometry(0.5, 0), pos: [1.5, 1.5, -4.5] as [number, number, number], speed: 0.25, rotSpeed: 0.18, fogNear: 3.5, fogFar: 8.5 },
-  ], []);
 
-  useFrame((state) => {
+  const meshes = useMemo(
+    () => [
+      {
+        geo: new THREE.IcosahedronGeometry(0.8, 1),
+        pos: [-2, 1, -4] as [number, number, number],
+        speed: 0.3,
+        rotSpeed: 0.2,
+        fogNear: 3,
+        fogFar: 8,
+      },
+      {
+        geo: new THREE.OctahedronGeometry(0.6, 0),
+        pos: [2.5, -0.5, -3] as [number, number, number],
+        speed: 0.4,
+        rotSpeed: 0.3,
+        fogNear: 2,
+        fogFar: 7,
+      },
+      {
+        geo: new THREE.TorusGeometry(0.5, 0.15, 8, 16),
+        pos: [0, -1.5, -5] as [number, number, number],
+        speed: 0.2,
+        rotSpeed: 0.15,
+        fogNear: 4,
+        fogFar: 9,
+      },
+      {
+        geo: new THREE.IcosahedronGeometry(0.4, 0),
+        pos: [-1.5, -1, -3.5] as [number, number, number],
+        speed: 0.35,
+        rotSpeed: 0.25,
+        fogNear: 2.5,
+        fogFar: 7.5,
+      },
+      {
+        geo: new THREE.DodecahedronGeometry(0.5, 0),
+        pos: [1.5, 1.5, -4.5] as [number, number, number],
+        speed: 0.25,
+        rotSpeed: 0.18,
+        fogNear: 3.5,
+        fogFar: 8.5,
+      },
+    ],
+    []
+  );
+
+  useFrame(state => {
     if (!groupRef.current) return;
     const time = state.clock.elapsedTime;
-    
+
     // Use shared cursor store
     const cx = cursorStore.x;
     const cy = cursorStore.y;
     const scrollNorm = Math.min(window.scrollY / 2000, 1);
-    
+
     groupRef.current.children.forEach((child, i) => {
       const mesh = meshes[i];
       if (!mesh) return;
-      
+
       // Floating animation with scroll-driven parallax
       child.position.y = mesh.pos[1] + Math.sin(time * mesh.speed + i) * 0.3 - scrollNorm * 2;
       child.position.x = mesh.pos[0] + Math.cos(time * mesh.speed * 0.7 + i) * 0.2;
       child.position.z = mesh.pos[2] + scrollNorm * 1.5; // Depth shift on scroll
-      
+
       // Rotation
       child.rotation.x += mesh.rotSpeed * 0.01;
       child.rotation.y += mesh.rotSpeed * 0.015;
-      
+
       // Cursor-reactive tilt
       const targetRotX = cy * 0.3;
       const targetRotY = cx * 0.3;
       child.rotation.x += (targetRotX - child.rotation.x) * 0.02;
       child.rotation.y += (targetRotY - child.rotation.y) * 0.02;
-      
+
       // Atmospheric fog — objects fade with distance + scroll
       const meshChild = child as THREE.Mesh;
       if (meshChild.material && 'opacity' in meshChild.material) {
         const mat = meshChild.material as THREE.MeshPhysicalMaterial;
         const baseOpacity = 0.15;
         const fogFade = 1 - scrollNorm * 0.3;
-        const mouseProximity = 1 - Math.min(Math.sqrt((cx * 5 - child.position.x) ** 2 + (cy * 3 - child.position.y) ** 2) / 10, 1);
+        const mouseProximity =
+          1 -
+          Math.min(
+            Math.sqrt((cx * 5 - child.position.x) ** 2 + (cy * 3 - child.position.y) ** 2) / 10,
+            1
+          );
         mat.opacity = baseOpacity * fogFade * (1 + mouseProximity * 0.2);
       }
     });
@@ -360,31 +412,16 @@ function Scene() {
       <ambientLight intensity={0.2} />
       <pointLight position={[5, 5, 5]} intensity={0.5} color="#8083ff" />
       <pointLight position={[-5, -5, 5]} intensity={0.3} color="#5de6ff" />
-      
+
       <GradientScene />
       <InteractiveParticles count={400} />
       <FloatingGeometry />
-      
+
       <EffectComposer>
-        <Bloom
-          intensity={1.5}
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.9}
-          mipmapBlur
-        />
-        <ChromaticAberration
-          blendFunction={BlendFunction.NORMAL}
-          offset={[0.001, 0.001] as any}
-        />
-        <Vignette
-          offset={0.3}
-          darkness={0.7}
-          blendFunction={BlendFunction.NORMAL}
-        />
-        <Noise
-          blendFunction={BlendFunction.SOFT_LIGHT}
-          opacity={0.1}
-        />
+        <Bloom intensity={1.5} luminanceThreshold={0.2} luminanceSmoothing={0.9} mipmapBlur />
+        <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.001, 0.001] as any} />
+        <Vignette offset={0.3} darkness={0.7} blendFunction={BlendFunction.NORMAL} />
+        <Noise blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.1} />
       </EffectComposer>
     </>
   );
@@ -394,7 +431,7 @@ function Scene() {
 function getQualitySettings() {
   const cores = navigator.hardwareConcurrency || 4;
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
+
   if (isMobile || cores < 4) {
     return { particles: 100, postProcessing: false, dpr: 1 };
   } else if (cores < 8) {
@@ -422,10 +459,10 @@ export default function WebGLBackground() {
     <div className="fixed inset-0 -z-10" style={{ pointerEvents: 'none' }}>
       <Canvas
         camera={{ position: [0, 0, 5], fov: 75 }}
-        gl={{ 
-          antialias: true, 
+        gl={{
+          antialias: true,
           alpha: true,
-          powerPreference: 'high-performance'
+          powerPreference: 'high-performance',
         }}
         dpr={[1, quality.dpr]}
         style={{ background: 'transparent' }}

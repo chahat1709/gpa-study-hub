@@ -1,64 +1,138 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0f0a1e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/gpa_hub_logo.png" />
+    <title>GPA Study Hub</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f0a1e" />
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/gpa_hub_logo.png">
-  <title>GPA Study Hub</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
 
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-</head>
-
-<body class="antialiased text-slate-100 bg-[#0f0a1e]">
-  <div class="glow-orb glow-orb-1"></div>
-  <div class="glow-orb glow-orb-2"></div>
-  <div class="glow-orb glow-orb-3"></div>
-  <div id="root" role="main" aria-label="GPA Study Hub Application" style="position:relative;z-index:1;">
-    <!-- Professional Loading Skeleton (shown until React mounts) -->
-    <div id="app-skeleton"
-      style="position:fixed;inset:0;background:linear-gradient(135deg,#0f0a1e 0%,#1a1145 40%,#0d1b2a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
-      <div style="text-align:center;">
-        <div
-          style="width:64px;height:64px;margin:0 auto 24px;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(16,185,129,0.2));border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;">
+  <body class="antialiased text-slate-100 bg-[#0f0a1e]">
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="glow-orb glow-orb-3"></div>
+    <div
+      id="root"
+      role="main"
+      aria-label="GPA Study Hub Application"
+      style="position: relative; z-index: 1"
+    >
+      <!-- Professional Loading Skeleton (shown until React mounts) -->
+      <div
+        id="app-skeleton"
+        style="
+          position: fixed;
+          inset: 0;
+          background: linear-gradient(135deg, #0f0a1e 0%, #1a1145 40%, #0d1b2a 100%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+        "
+      >
+        <div style="text-align: center">
           <div
-            style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#10b981);animation:pulse 1.5s ease-in-out infinite;">
+            style="
+              width: 64px;
+              height: 64px;
+              margin: 0 auto 24px;
+              border-radius: 16px;
+              background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(16, 185, 129, 0.2));
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <div
+              style="
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                background: linear-gradient(135deg, #6366f1, #10b981);
+                animation: pulse 1.5s ease-in-out infinite;
+              "
+            ></div>
           </div>
-        </div>
-        <div
-          style="font-family:'Inter',sans-serif;color:#e2e8f0;font-size:18px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;">
-          GPA Study Hub</div>
-        <div
-          style="font-family:'Inter',sans-serif;color:rgba(148,163,184,0.6);font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">
-          Loading GTU Node...</div>
-        <div style="margin-top:32px;display:flex;gap:4px;justify-content:center;">
           <div
-            style="width:6px;height:6px;border-radius:50%;background:#6366f1;animation:bounce 1.4s infinite ease-in-out both;animation-delay:-0.32s;">
+            style="
+              font-family: 'Inter', sans-serif;
+              color: #e2e8f0;
+              font-size: 18px;
+              font-weight: 700;
+              letter-spacing: -0.02em;
+              margin-bottom: 8px;
+            "
+          >
+            GPA Study Hub
           </div>
           <div
-            style="width:6px;height:6px;border-radius:50%;background:#818cf8;animation:bounce 1.4s infinite ease-in-out both;animation-delay:-0.16s;">
+            style="
+              font-family: 'Inter', sans-serif;
+              color: rgba(148, 163, 184, 0.6);
+              font-size: 11px;
+              font-weight: 600;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+            "
+          >
+            Loading GTU Node...
           </div>
-          <div
-            style="width:6px;height:6px;border-radius:50%;background:#10b981;animation:bounce 1.4s infinite ease-in-out both;">
+          <div style="margin-top: 32px; display: flex; gap: 4px; justify-content: center">
+            <div
+              style="
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #6366f1;
+                animation: bounce 1.4s infinite ease-in-out both;
+                animation-delay: -0.32s;
+              "
+            ></div>
+            <div
+              style="
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #818cf8;
+                animation: bounce 1.4s infinite ease-in-out both;
+                animation-delay: -0.16s;
+              "
+            ></div>
+            <div
+              style="
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #10b981;
+                animation: bounce 1.4s infinite ease-in-out both;
+              "
+            ></div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => { });
-      });
-    }
-  </script>
-  <script type="module" src="/index.tsx"></script>
-</body>
-
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>

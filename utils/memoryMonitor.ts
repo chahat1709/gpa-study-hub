@@ -42,7 +42,7 @@ class MemoryMonitor {
       percentage,
       isOverTarget: usedMB > MEMORY_TARGET_MB,
       isWarning: usedMB > WARNING_THRESHOLD_MB,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     this.lastStatus = status;
@@ -89,12 +89,12 @@ class MemoryMonitor {
    */
   public onStatusChange(callback: MemoryCallback): () => void {
     this.listeners.add(callback);
-    
+
     // Emit current status immediately
     if (this.lastStatus) {
       callback(this.lastStatus);
     }
-    
+
     return () => this.listeners.delete(callback);
   }
 
@@ -118,8 +118,9 @@ class MemoryMonitor {
     return {
       deviceMemory,
       hardwareConcurrency,
-      isLowEndDevice: (deviceMemory && deviceMemory <= 2) || (hardwareConcurrency && hardwareConcurrency <= 4),
-      maxHeapSize: maxHeapSize ? Math.round(maxHeapSize / (1024 * 1024)) : undefined
+      isLowEndDevice:
+        (deviceMemory && deviceMemory <= 2) || (hardwareConcurrency && hardwareConcurrency <= 4),
+      maxHeapSize: maxHeapSize ? Math.round(maxHeapSize / (1024 * 1024)) : undefined,
     };
   }
 
@@ -149,7 +150,7 @@ class MemoryMonitor {
     return {
       current: this.lastStatus,
       device: this.getDeviceInfo(),
-      isSupported: typeof performance !== 'undefined' && !!(performance as any).memory
+      isSupported: typeof performance !== 'undefined' && !!(performance as any).memory,
     };
   }
 

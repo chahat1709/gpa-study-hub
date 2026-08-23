@@ -91,12 +91,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(n.title, { body: n.message, icon: '/favicon.ico' });
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, []);
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, isRead: true } : n)));
   }, []);
 
   const markAllRead = useCallback(() => {
@@ -114,18 +116,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      addNotification,
-      markAsRead,
-      markAllRead,
-      clearNotification,
-      clearAll,
-    }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        addNotification,
+        markAsRead,
+        markAllRead,
+        clearNotification,
+        clearAll,
+      }}
+    >
       {children}
       {/* Toast container for real-time notifications */}
-      <div ref={containerRef} className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm" />
+      <div
+        ref={containerRef}
+        className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm"
+      />
     </NotificationContext.Provider>
   );
 }

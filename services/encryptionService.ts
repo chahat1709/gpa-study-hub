@@ -1,4 +1,3 @@
-
 /**
  * PRODUCTION E2EE SERVICE
  * Uses Web Crypto API (SubtleCrypto) for AES-GCM 256-bit encryption.
@@ -7,7 +6,6 @@
 
 const ENCRYPTION_ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
-
 
 function uint8ToBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -104,12 +102,12 @@ export async function decryptText(combinedBase64: string, chatId: string): Promi
     if (!combinedBase64 || combinedBase64.length < 44) return combinedBase64;
 
     const combined = base64ToUint8(combinedBase64);
-    if (combined.length === 0) return "[Message Corrupted]";
+    if (combined.length === 0) return '[Message Corrupted]';
 
     const salt = combined.slice(0, 16);
     const iv = combined.slice(16, 28);
     const ciphertext = combined.slice(28);
-    
+
     const key = await getRoomKey(chatId, salt);
 
     const decryptedBuffer = await window.crypto.subtle.decrypt(
@@ -122,6 +120,6 @@ export async function decryptText(combinedBase64: string, chatId: string): Promi
     return decoder.decode(decryptedBuffer);
   } catch (error) {
     // In production, we return a lock placeholder to signify E2EE is working but keys differ
-    return "🔒 Securely Encrypted";
+    return '🔒 Securely Encrypted';
   }
 }

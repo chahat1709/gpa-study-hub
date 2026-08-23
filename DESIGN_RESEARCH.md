@@ -1,6 +1,7 @@
 # Current UI/UX Design Research — GPA Study Hub
 
 ## Source 1 — SaaSUI.Design, “7 SaaS UI Design Trends in 2026”
+
 URL: https://www.saasui.design/blog/7-saas-ui-design-trends-2026
 
 Key findings relevant to GPA Study Hub:
@@ -11,6 +12,7 @@ Key findings relevant to GPA Study Hub:
 - Role-based and adaptive interfaces, progressive disclosure, emotional design used sparingly, and strategic minimalism are presented as durable patterns for reducing friction.
 
 ## Source 2 — Figma, “Top Web Design Trends for 2026”
+
 URL: https://www.figma.com/resource-library/web-design-trends/
 
 Key findings relevant to GPA Study Hub:
@@ -25,6 +27,7 @@ Key findings relevant to GPA Study Hub:
 The next redesign should not imitate a generic neon-glass dashboard or a decorative 3D landing page. It should use a high-contrast editorial/productivity system with one clear daily objective, quiet chrome, strong typography, visible progress, contextual AI assistance, a command/search surface, role-aware navigation, and progressive disclosure for secondary tools. Any vibrant color or motion should be reserved for status, focus, and feedback.
 
 ## Source 3 — W3C, Web Content Accessibility Guidelines 2.2
+
 URL: https://www.w3.org/TR/WCAG22/
 
 Key findings:
@@ -34,6 +37,7 @@ Key findings:
 - The redesign should not rely on color alone for status, should keep focus indicators visible, and should keep interactive targets comfortable on touch devices.
 
 ## Source 4 — Material Design 3, Layout overview
+
 URL: https://m3.material.io/foundations/layout/layout-overview
 
 Key findings:

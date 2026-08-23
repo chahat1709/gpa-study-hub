@@ -61,7 +61,7 @@ export function checkRateLimit(identifier: string): {
     return {
       allowed: false,
       remainingAttempts: 0,
-      retryAfter: Math.ceil((entry.lockedUntil - now) / 1000)
+      retryAfter: Math.ceil((entry.lockedUntil - now) / 1000),
     };
   }
 
@@ -80,13 +80,13 @@ export function checkRateLimit(identifier: string): {
     return {
       allowed: false,
       remainingAttempts: 0,
-      retryAfter: Math.ceil(LOCKOUT_DURATION / 1000)
+      retryAfter: Math.ceil(LOCKOUT_DURATION / 1000),
     };
   }
 
   return {
     allowed: true,
-    remainingAttempts: MAX_ATTEMPTS - entry.attempts
+    remainingAttempts: MAX_ATTEMPTS - entry.attempts,
   };
 }
 
@@ -96,14 +96,14 @@ export function checkRateLimit(identifier: string): {
 export function recordFailedAttempt(identifier: string): void {
   const limits = loadLimits();
   const now = Date.now();
-  
+
   if (!limits[identifier]) {
     limits[identifier] = { attempts: 1, lastAttempt: now };
   } else {
     limits[identifier].attempts++;
     limits[identifier].lastAttempt = now;
   }
-  
+
   saveLimits(limits);
 }
 

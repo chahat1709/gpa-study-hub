@@ -95,7 +95,7 @@ const queue = new JobQueue();
 
 // Email job processor (stub - integrate with nodemailer/SendGrid)
 queue.createQueue('email');
-queue.process('email', async (job) => {
+queue.process('email', async job => {
   const { to, subject, body } = job.data;
   log.info({ to, subject }, 'Email job processed (stub)');
   // TODO: integrate real email service
@@ -103,7 +103,7 @@ queue.process('email', async (job) => {
 
 // Report generation processor
 queue.createQueue('reports');
-queue.process('reports', async (job) => {
+queue.process('reports', async job => {
   const { type, userId, data } = job.data;
   log.info({ type, userId }, 'Report generation started');
   // TODO: generate PDF/Excel reports
@@ -111,7 +111,7 @@ queue.process('reports', async (job) => {
 
 // Notification processor
 queue.createQueue('notifications');
-queue.process('notifications', async (job) => {
+queue.process('notifications', async job => {
   const { userId, message, type } = job.data;
   log.info({ userId, type }, 'Notification sent');
 });

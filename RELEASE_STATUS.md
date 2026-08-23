@@ -1,29 +1,46 @@
-# Release Status
+# Release Status — 1.0.0
 
 ## Current status
 
-GPA Study Hub is in a **near-beta release state**. The frontend has a typed React implementation, an Express/Socket.IO backend, SQLite runtime persistence, Android/Capacitor packaging, academic seed data, and automated test coverage.
+**1.0.0 professional release** — React 19 + TS frontend, Express + Socket.IO backend, SQLite (WAL) runtime, academic seed (48 subjects / 3193 questions), 155 Vitest tests, Playwright e2e, PM2 + Docker + K8s, CI green.
 
-## Automated checks
+## Automated checks (CI enforces)
 
-| Check | Command | Expected status |
-|---|---|---|
-| TypeScript | `npm run check` | Must pass with zero errors |
-| Frontend build | `npm run build` | Must complete successfully |
-| Unit suite | `npm test` | Runs in one isolated worker with bounded timeouts |
-| AI storage tests | `npm run test:ai` | Tests provider/key persistence without live network calls |
-| Browser suite | `npm run test:e2e` | Requires the preview server and configured browser environment |
+| Check         | Command                        | Gate                 |
+| ------------- | ------------------------------ | -------------------- |
+| Type          | `npm run check`                | 0 errors             |
+| Format        | `npm run format:check`         | no diff              |
+| Tests         | `npm test`                     | 155/155, single fork |
+| Build         | `npm run build`                | success              |
+| Audit         | `npm audit --audit-level=high` | no high (warn)       |
+| Server health | `node scripts/healthcheck.js`  | 200 on /api/health   |
 
-## Manual release checks
+Pre-commit (Husky): `lint-staged` + `tsc --noEmit`.
 
-Before publishing, verify the required Firebase configuration and backend environment values in the deployment environment. Confirm that the backend can create or open its SQLite database, that the health endpoint responds, and that Socket.IO connections work through the intended tunnel or reverse proxy.
+## Manual release checklist
 
-Test at least one student flow, one faculty flow, one administrator flow, one offline fallback, one attendance update, one quiz submission, one resource operation, and one chat message in a staging environment. Validate mobile layout on a real Android device after Capacitor synchronization.
+- [ ] `scripts/validate-env.js` passes (JWT_SECRET, ADMIN_CODE set, not placeholder)
+- [ ] `curl http://localhost:3000/api/health` 200 and `Socket.IO` connects via tunnel/proxy
+- [ ] Student → faculty → admin flow, offline fallback, attendance, quiz, resource, chat in staging
+- [ ] `node scripts/backup.js` creates `backups/gpa_hub-YYYY-MM-DD.db` and rotation keeps 7
+- [ ] Mobile layout on real Android after `npx cap sync`
+- [ ] `firestore.rules` and `k8s/secrets.yaml` not containing real secrets
 
-## Known architecture boundary
+## Architecture
 
-The active backend runtime uses SQLite through `better-sqlite3` and the server's inline schema/bootstrap path. `server/config/database.js` is a reusable SQLite schema helper, while `server/config/init.sql` is a PostgreSQL-oriented reference schema. These are intentionally documented as separate tracks for this release; they should not be treated as interchangeable without a planned migration.
+- **College PC default:** SQLite `server/gpa_hub.db` (WAL), single PM2 instance. No Postgres needed.
+- **SaaS scale:** `docker-compose --profile saas up` enables Postgres + Redis; server reads `DATABASE_URL`/`REDIS_URL` when set.
+- `server/config/database.js` is the reusable SQLite helper; `server/config/init.sql` is Postgres reference.
 
-## Release blockers to resolve before public production
+## How to release
 
-The deployment environment must have a secret-management process, a backup and restore procedure for the SQLite database, a tested tunnel or reverse-proxy configuration, and a controlled Android signing process. Any external AI provider should be configured separately from deterministic unit tests and monitored for quota, latency, and failure behavior.
+1. Bump `package.json` version, update `CHANGELOG.md`
+2. `npm run check && npm test && npm run build`
+3. `git tag v1.0.0 && git push --tags`
+4. Build artifacts: `dist/`, `android/app/build/outputs/apk/debug/app-debug.apk` (CI uploads), `release/` (electron)
+5. Deploy via `start-server.bat` (college PC) or `docker-compose up` / `kubectl apply -f k8s/` (server) or Cloudflare Tunnel.
+
+## Known limits
+
+- SQLite single writer; for >10k concurrent writers move to Postgres (`saas` profile).
+- BI/analytics not yet in Grafana — `monitoring/prometheus.yml` is scaffold.

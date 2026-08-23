@@ -6,7 +6,7 @@ export const cursorStore = {
   vy: 0,
   isHovering: false,
   listeners: new Set<() => void>(),
-  
+
   update(x: number, y: number) {
     this.vx = x - this.x;
     this.vy = y - this.y;
@@ -14,18 +14,18 @@ export const cursorStore = {
     this.y = y;
     this.listeners.forEach(fn => fn());
   },
-  
+
   setHovering(value: boolean) {
     this.isHovering = value;
     this.listeners.forEach(fn => fn());
   },
-  
+
   subscribe(fn: () => void) {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
   },
-  
+
   getSpeed() {
     return Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-  }
+  },
 };

@@ -21,26 +21,26 @@ const MAX_RETRIES = 3;
 
 // Sync handlers for different action types
 const syncHandlers: Record<OfflineAction['type'], (payload: any) => Promise<void>> = {
-  ATTENDANCE_LOG: async (payload) => {
+  ATTENDANCE_LOG: async payload => {
     if (!db) throw new Error('Firebase not configured');
     await addDoc(collection(db, 'attendance_records'), {
       ...payload,
       timestamp: serverTimestamp(),
-      syncedFromOffline: true
+      syncedFromOffline: true,
     });
   },
-  EXAM_SUBMISSION: async (payload) => {
+  EXAM_SUBMISSION: async payload => {
     if (!db) throw new Error('Firebase not configured');
     await addDoc(collection(db, 'exam_results'), {
       ...payload,
       timestamp: serverTimestamp(),
-      syncedFromOffline: true
+      syncedFromOffline: true,
     });
   },
-  NOTE_SAVE: async (payload) => {
+  NOTE_SAVE: async payload => {
     // Notes are stored locally, no sync needed
   },
-  CHAT_MESSAGE: async (payload) => {
+  CHAT_MESSAGE: async payload => {
     if (!db) throw new Error('Firebase not configured');
     await addDoc(collection(db, 'chats', payload.chatId, 'messages'), {
       senderId: payload.senderId,
@@ -49,22 +49,24 @@ const syncHandlers: Record<OfflineAction['type'], (payload: any) => Promise<void
       timestamp: Date.now(),
       type: payload.type || 'text',
       isEncrypted: payload.isEncrypted || false,
-      syncedFromOffline: true
+      syncedFromOffline: true,
     });
-  }
+  },
 };
 
 class OfflineStorageService {
   private queue: OfflineAction[] = [];
   private isSyncing = false;
-  private listeners: Set<(status: { syncing: boolean; pending: number; lastSync?: number }) => void> = new Set();
+  private listeners: Set<
+    (status: { syncing: boolean; pending: number; lastSync?: number }) => void
+  > = new Set();
   private lastSyncTime: number | null = null;
 
   constructor() {
     this.loadQueue();
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => this.syncOfflineQueue());
-      
+
       // Try to sync on startup if online
       if (navigator.onLine && this.queue.length > 0) {
         setTimeout(() => this.syncOfflineQueue(), 1000);
@@ -75,10 +77,16 @@ class OfflineStorageService {
   /**
    * Subscribe to sync status updates
    */
-  public onStatusChange(callback: (status: { syncing: boolean; pending: number; lastSync?: number }) => void): () => void {
+  public onStatusChange(
+    callback: (status: { syncing: boolean; pending: number; lastSync?: number }) => void
+  ): () => void {
     this.listeners.add(callback);
     // Initial status
-    callback({ syncing: this.isSyncing, pending: this.queue.length, lastSync: this.lastSyncTime || undefined });
+    callback({
+      syncing: this.isSyncing,
+      pending: this.queue.length,
+      lastSync: this.lastSyncTime || undefined,
+    });
     return () => this.listeners.delete(callback);
   }
 
@@ -99,7 +107,7 @@ class OfflineStorageService {
     return {
       pending: this.queue.length,
       isSyncing: this.isSyncing,
-      lastSync: this.lastSyncTime || undefined
+      lastSync: this.lastSyncTime || undefined,
     };
   }
 
@@ -113,7 +121,7 @@ class OfflineStorageService {
       payload,
       timestamp: Date.now(),
       retryCount: 0,
-      maxRetries: MAX_RETRIES
+      maxRetries: MAX_RETRIES,
     };
     this.queue.push(action);
     this.saveQueue();
@@ -130,13 +138,13 @@ class OfflineStorageService {
    */
   public async syncOfflineQueue(): Promise<void> {
     if (this.queue.length === 0 || this.isSyncing || !isConfigValid) return;
-    
+
     this.isSyncing = true;
     this.notifyListeners();
-    
+
     const remainingQueue: OfflineAction[] = [];
     let syncCount = 0;
-    
+
     for (const item of this.queue) {
       try {
         const handler = syncHandlers[item.type];
@@ -151,7 +159,7 @@ class OfflineStorageService {
         }
       }
     }
-    
+
     this.queue = remainingQueue;
     this.saveQueue();
     this.lastSyncTime = Date.now();
@@ -180,7 +188,11 @@ class OfflineStorageService {
   }
 
   private notifyListeners(): void {
-    const status = { syncing: this.isSyncing, pending: this.queue.length, lastSync: this.lastSyncTime || undefined };
+    const status = {
+      syncing: this.isSyncing,
+      pending: this.queue.length,
+      lastSync: this.lastSyncTime || undefined,
+    };
     this.listeners.forEach(cb => cb(status));
   }
 

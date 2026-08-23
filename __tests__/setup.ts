@@ -49,10 +49,18 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-    get length() { return Object.keys(store).length; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
     key: (index: number) => Object.keys(store)[index] ?? null,
   };
 })();
@@ -67,7 +75,11 @@ Object.defineProperty(navigator, 'hardwareConcurrency', { writable: true, value:
 
 // Mock window.addEventListener for offline service
 const originalAddEventListener = window.addEventListener.bind(window);
-window.addEventListener = ((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+window.addEventListener = ((
+  type: string,
+  listener: EventListenerOrEventListenerObject,
+  options?: boolean | AddEventListenerOptions
+) => {
   if (type === 'online' || type === 'offline') return;
   return originalAddEventListener(type, listener, options);
 }) as typeof window.addEventListener;

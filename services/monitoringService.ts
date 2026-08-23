@@ -33,7 +33,11 @@ class MonitoringService {
 
   private notify() {
     this.listeners.forEach(l => {
-      try { l({ ...this.metrics }); } catch { /* ignore */ }
+      try {
+        l({ ...this.metrics });
+      } catch {
+        /* ignore */
+      }
     });
   }
 
@@ -47,7 +51,9 @@ class MonitoringService {
     if (isError) this.metrics.apiErrors++;
     this.apiTimes.push(durationMs);
     if (this.apiTimes.length > 100) this.apiTimes.shift();
-    this.metrics.avgApiTime = Math.round(this.apiTimes.reduce((a, b) => a + b, 0) / this.apiTimes.length);
+    this.metrics.avgApiTime = Math.round(
+      this.apiTimes.reduce((a, b) => a + b, 0) / this.apiTimes.length
+    );
     this.notify();
   }
 

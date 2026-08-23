@@ -25,7 +25,12 @@ interface SocketContextType {
   sendChatMessage: (chatId: string, content: string, isEncrypted?: boolean) => void;
   startTyping: (chatId: string) => void;
   stopTyping: (chatId: string) => void;
-  startAttendance: (data: { branch: string; semester: string; section: string; subject: string }) => void;
+  startAttendance: (data: {
+    branch: string;
+    semester: string;
+    section: string;
+    subject: string;
+  }) => void;
   markAttendanceLive: (chatId: string, studentId: string, status: string) => void;
 }
 
@@ -113,7 +118,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     // Auto-stop after 3 seconds
     const existing = typingTimeouts.current.get(chatId);
     if (existing) clearTimeout(existing);
-    typingTimeouts.current.set(chatId, setTimeout(() => sendStopTyping(chatId), 3000));
+    typingTimeouts.current.set(
+      chatId,
+      setTimeout(() => sendStopTyping(chatId), 3000)
+    );
   }, []);
 
   const stopTyping = useCallback((chatId: string) => {
@@ -123,18 +131,20 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <SocketContext.Provider value={{
-      connected,
-      onlineUsers,
-      typingUsers,
-      joinRoom,
-      leaveRoom,
-      sendChatMessage,
-      startTyping,
-      stopTyping,
-      startAttendance: startAttendanceSession,
-      markAttendanceLive: markAttendanceRealtime,
-    }}>
+    <SocketContext.Provider
+      value={{
+        connected,
+        onlineUsers,
+        typingUsers,
+        joinRoom,
+        leaveRoom,
+        sendChatMessage,
+        startTyping,
+        stopTyping,
+        startAttendance: startAttendanceSession,
+        markAttendanceLive: markAttendanceRealtime,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );

@@ -33,7 +33,11 @@ describe('campusService (local mode)', () => {
         scope: 'COLLEGE' as const,
       };
 
-      const result = await campusService.postNotice(noticeData) as { id?: string; title: string; date: number };
+      const result = (await campusService.postNotice(noticeData)) as {
+        id?: string;
+        title: string;
+        date: number;
+      };
       expect(result.id).toBeDefined();
       expect(result.title).toBe('Test Notice');
       expect(result.date).toBeGreaterThan(0);

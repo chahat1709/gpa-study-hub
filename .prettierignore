@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+release
+release-*
+android
+android/app/build
+android/build
+server/node_modules
+server/uploads
+server/*.db
+server/*.db-*
+coverage
+.playwright
+test-results
+playwright-report

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../../components/AuthContext';
 import { resourceService } from '../../services/resourceService';
@@ -8,10 +7,10 @@ import LibraryView from './LibraryView';
 
 const LibraryController: React.FC = () => {
   const { user } = useAuth();
-  
+
   const subjects = academicService.getSubjects();
   const categories = academicService.getCategories();
-  
+
   const [selectedSubject, setSelectedSubject] = useState<string>(subjects[0] || 'Maths');
   const [selectedCategory, setSelectedCategory] = useState<string>(categories[0] || 'Syllabus');
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,12 +29,12 @@ const LibraryController: React.FC = () => {
     selectedCategory as Category
   );
 
-  const filteredResources = resources.filter(res => 
+  const filteredResources = resources.filter(res =>
     res.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <LibraryView 
+    <LibraryView
       userMetadata={{ branch: studentBranch, semester: studentSemester, section: studentSection }}
       selectedSubject={selectedSubject}
       setSelectedSubject={setSelectedSubject}

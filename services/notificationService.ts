@@ -1,4 +1,3 @@
-
 /**
  * CAMPUS NOTIFICATION SERVICE
  * Manages Web Notification API and FCM Subscriptions.
@@ -24,14 +23,14 @@ export const notificationService = {
         body,
         icon: 'https://cdn-icons-png.flaticon.com/512/5351/5351486.png',
         badge: 'https://cdn-icons-png.flaticon.com/512/5351/5351486.png',
-        data: { url }
+        data: { url },
       };
 
       const notification = new Notification(title, options);
       notification.onclick = () => {
         window.focus();
         // You could use a router here to navigate
-        window.location.hash = url; 
+        window.location.hash = url;
         notification.close();
       };
     }
@@ -44,8 +43,8 @@ export const notificationService = {
   broadcastToCampus: async (title: string, message: string) => {
     // Simulated delay for network handshake
     await new Promise(r => setTimeout(r, 800));
-    
+
     // For local dev, we trigger it for the current user too
     notificationService.sendLocalNotification(title, message);
-  }
+  },
 };

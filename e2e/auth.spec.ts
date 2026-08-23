@@ -22,7 +22,10 @@ test.describe('Authentication', () => {
       const nameInput = page.locator('input[placeholder*="Name"], input[name="name"]').first();
       if (await nameInput.isVisible({ timeout: 3000 })) {
         await nameInput.fill('Test Student');
-        await page.locator('input[placeholder*="Email"], input[name="email"]').first().fill('test@student.com');
+        await page
+          .locator('input[placeholder*="Email"], input[name="email"]')
+          .first()
+          .fill('test@student.com');
         await page.locator('input[type="password"], input[name="pin"]').first().fill('123456');
         await page.locator('button:has-text("Create"), button:has-text("Sign up")').first().click();
       }
@@ -50,7 +53,9 @@ test.describe('Main Navigation', () => {
   test('bottom nav switches modes', async ({ page }) => {
     const modes = ['Exam Hub', 'Planner', 'Campus', 'Profile', 'Library', 'Attendance'];
     for (const mode of modes) {
-      const btn = page.locator(`button:has-text("${mode}"), [role="button"]:has-text("${mode}")`).first();
+      const btn = page
+        .locator(`button:has-text("${mode}"), [role="button"]:has-text("${mode}")`)
+        .first();
       if (await btn.isVisible({ timeout: 3000 })) {
         await btn.click();
         await page.waitForTimeout(500);
@@ -59,11 +64,15 @@ test.describe('Main Navigation', () => {
   });
 
   test('sidebar opens and closes', async ({ page }) => {
-    const menuBtn = page.locator('button[aria-label="Menu"], button:has-text("Menu"), button[aria-label="Open menu"]').first();
+    const menuBtn = page
+      .locator('button[aria-label="Menu"], button:has-text("Menu"), button[aria-label="Open menu"]')
+      .first();
     if (await menuBtn.isVisible({ timeout: 3000 })) {
       await menuBtn.click();
       await page.waitForTimeout(500);
-      const closeBtn = page.locator('button[aria-label="Close"], button[aria-label="Close menu"]').first();
+      const closeBtn = page
+        .locator('button[aria-label="Close"], button[aria-label="Close menu"]')
+        .first();
       if (await closeBtn.isVisible({ timeout: 3000 })) {
         await closeBtn.click();
       }
@@ -81,7 +90,9 @@ test.describe('Core Features', () => {
     if (await btn.isVisible({ timeout: 5000 })) {
       await btn.click();
       await page.waitForTimeout(1000);
-      await expect(page.locator('text=Quiz, text=Exam, text=Question').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=Quiz, text=Exam, text=Question').first()).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 
@@ -92,7 +103,9 @@ test.describe('Core Features', () => {
     if (await btn.isVisible({ timeout: 5000 })) {
       await btn.click();
       await page.waitForTimeout(1000);
-      await expect(page.locator('text=Timetable, text=Attendance, text=%').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=Timetable, text=Attendance, text=%').first()).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 
@@ -103,7 +116,9 @@ test.describe('Core Features', () => {
     if (await btn.isVisible({ timeout: 5000 })) {
       await btn.click();
       await page.waitForTimeout(1000);
-      await expect(page.locator('text=Resource, text=Note, text=Library').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=Resource, text=Note, text=Library').first()).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 
@@ -114,7 +129,9 @@ test.describe('Core Features', () => {
     if (await btn.isVisible({ timeout: 5000 })) {
       await btn.click();
       await page.waitForTimeout(1000);
-      await expect(page.locator('text=Directory, text=Faculty, text=Campus').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=Directory, text=Faculty, text=Campus').first()).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 
@@ -125,18 +142,28 @@ test.describe('Core Features', () => {
     if (await btn.isVisible({ timeout: 5000 })) {
       await btn.click();
       await page.waitForTimeout(1000);
-      await expect(page.locator('text=Profile, text=Settings, text=Account').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=Profile, text=Settings, text=Account').first()).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 
   test('Nexus AI accessible', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const nexusBtn = page.locator('button:has-text("Nexus")').first().or(page.locator('button:has-text("AI")')).first().or(page.locator('text=Nexus')).first();
+    const nexusBtn = page
+      .locator('button:has-text("Nexus")')
+      .first()
+      .or(page.locator('button:has-text("AI")'))
+      .first()
+      .or(page.locator('text=Nexus'))
+      .first();
     if (await nexusBtn.isVisible({ timeout: 5000 })) {
       await nexusBtn.click();
       await page.waitForTimeout(1000);
-      await expect(page.locator('text=How can I help, text=Ask, text=Chat').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=How can I help, text=Ask, text=Chat').first()).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 });

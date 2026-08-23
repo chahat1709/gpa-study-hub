@@ -1,11 +1,11 @@
 /**
  * API Client — GPA Study Hub
- * 
+ *
  * Architecture:
  *  - Backend (Express + SQLite) runs on college PC in server room
  *  - Cloudflare Tunnel exposes server to internet (free, secure)
  *  - App connects via tunnel URL — works from any network
- * 
+ *
  * Setup:
  *  1. College PC runs server + cloudflare tunnel
  *  2. Tunnel shows a public URL (e.g., https://xyz.trycloudflare.com)
@@ -65,11 +65,13 @@ export function clearApiUrl(): void {
 // ── Core API Fetch ─────────────────────────────────────────────────────────────
 async function api<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const baseUrl = getServerUrl();
-  
+
   if (!baseUrl) {
     const localUrl = await autoDetectServer();
     if (!localUrl) {
-      throw new Error('Cannot find GPA Study Hub server. Make sure your college server is running.');
+      throw new Error(
+        'Cannot find GPA Study Hub server. Make sure your college server is running.'
+      );
     }
     return apiFetch<T>(localUrl + path, options);
   }
@@ -85,7 +87,7 @@ async function apiFetch<T = unknown>(url: string, options: RequestInit = {}): Pr
   try {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string> || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -128,7 +130,9 @@ async function autoDetectServer(): Promise<string | null> {
         localStorage.setItem(API_URL_KEY, url);
         return url;
       }
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
   return null;
 }
@@ -172,27 +176,49 @@ export async function signup(data: {
   section: string;
   university?: string;
 }): Promise<AuthResponse> {
-  const res = await api<AuthResponse>('/api/auth/signup', { method: 'POST', body: JSON.stringify(data) });
+  const res = await api<AuthResponse>('/api/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
   if (res.token) setAuthToken(res.token);
   return res;
 }
 
 export async function login(enrollmentNumber: string, pin: string): Promise<AuthResponse> {
-  const res = await api<AuthResponse>('/api/auth/login', { method: 'POST', body: JSON.stringify({ enrollmentNumber, pin }) });
+  const res = await api<AuthResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ enrollmentNumber, pin }),
+  });
   if (res.token) setAuthToken(res.token);
   return res;
 }
 
-export async function forgotPin(enrollmentNumber: string, newPin: string): Promise<{ message: string }> {
-  return api('/api/auth/forgot-pin', { method: 'POST', body: JSON.stringify({ enrollmentNumber, newPin }) });
+export async function forgotPin(
+  enrollmentNumber: string,
+  newPin: string
+): Promise<{ message: string }> {
+  return api('/api/auth/forgot-pin', {
+    method: 'POST',
+    body: JSON.stringify({ enrollmentNumber, newPin }),
+  });
 }
 
-export async function changePin(userId: string, oldPin: string, newPin: string): Promise<{ message: string }> {
-  return api('/api/auth/change-pin', { method: 'POST', body: JSON.stringify({ userId, oldPin, newPin }) });
+export async function changePin(
+  userId: string,
+  oldPin: string,
+  newPin: string
+): Promise<{ message: string }> {
+  return api('/api/auth/change-pin', {
+    method: 'POST',
+    body: JSON.stringify({ userId, oldPin, newPin }),
+  });
 }
 
 export async function facultyLogin(email: string, password: string): Promise<AuthResponse> {
-  const res = await api<AuthResponse>('/api/auth/faculty-login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  const res = await api<AuthResponse>('/api/auth/faculty-login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
   if (res.token) setAuthToken(res.token);
   return res;
 }
@@ -203,19 +229,28 @@ export async function facultySignup(data: {
   password: string;
   branch: string;
 }): Promise<AuthResponse> {
-  const res = await api<AuthResponse>('/api/auth/faculty-signup', { method: 'POST', body: JSON.stringify(data) });
+  const res = await api<AuthResponse>('/api/auth/faculty-signup', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
   if (res.token) setAuthToken(res.token);
   return res;
 }
 
 export async function adminLogin(code: string): Promise<AuthResponse> {
-  const res = await api<AuthResponse>('/api/auth/admin-login', { method: 'POST', body: JSON.stringify({ code }) });
+  const res = await api<AuthResponse>('/api/auth/admin-login', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
   if (res.token) setAuthToken(res.token);
   return res;
 }
 
 export async function updateProfile(userId: string, photoUrl: string): Promise<{ user: ApiUser }> {
-  return api(`/api/auth/profile/${userId}`, { method: 'PUT', body: JSON.stringify({ photo_url: photoUrl }) });
+  return api(`/api/auth/profile/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ photo_url: photoUrl }),
+  });
 }
 
 // ── Attendance ─────────────────────────────────────────────────────────────────
@@ -239,8 +274,17 @@ export async function getAttendance(userId: string): Promise<{ records: Attendan
   return api(`/api/attendance/${userId}`);
 }
 
-export async function markAttendance(userId: string, subject: string, date: string, status: string, slotId?: string): Promise<{ id: string }> {
-  return api('/api/attendance', { method: 'POST', body: JSON.stringify({ userId, subject, date, status, slotId }) });
+export async function markAttendance(
+  userId: string,
+  subject: string,
+  date: string,
+  status: string,
+  slotId?: string
+): Promise<{ id: string }> {
+  return api('/api/attendance', {
+    method: 'POST',
+    body: JSON.stringify({ userId, subject, date, status, slotId }),
+  });
 }
 
 export async function getAttendanceStats(userId: string): Promise<AttendanceStats> {
@@ -262,7 +306,11 @@ export interface TimeSlot {
   batch: string;
 }
 
-export async function getTimetable(branch: string, semester: string, day: string): Promise<{ slots: TimeSlot[] }> {
+export async function getTimetable(
+  branch: string,
+  semester: string,
+  day: string
+): Promise<{ slots: TimeSlot[] }> {
   return api(`/api/timetable/${branch}/${semester}/${day}`);
 }
 
@@ -286,7 +334,13 @@ export async function getTasks(userId: string): Promise<{ tasks: Task[] }> {
   return api(`/api/tasks/${userId}`);
 }
 
-export async function addTask(data: { userId: string; title: string; description?: string; dueDate?: string; category?: string }): Promise<{ id: string }> {
+export async function addTask(data: {
+  userId: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  category?: string;
+}): Promise<{ id: string }> {
   return api('/api/tasks', { method: 'POST', body: JSON.stringify(data) });
 }
 
@@ -312,7 +366,10 @@ export interface Resource {
   created_at: string;
 }
 
-export async function getResources(branch?: string, semester?: string): Promise<{ resources: Resource[] }> {
+export async function getResources(
+  branch?: string,
+  semester?: string
+): Promise<{ resources: Resource[] }> {
   const params = new URLSearchParams();
   if (branch) params.set('branch', branch);
   if (semester) params.set('semester', semester);
@@ -320,7 +377,9 @@ export async function getResources(branch?: string, semester?: string): Promise<
   return api(`/api/resources${qs ? '?' + qs : ''}`);
 }
 
-export async function addResource(data: Omit<Resource, 'id' | 'created_at'>): Promise<{ id: string }> {
+export async function addResource(
+  data: Omit<Resource, 'id' | 'created_at'>
+): Promise<{ id: string }> {
   return api('/api/resources', { method: 'POST', body: JSON.stringify(data) });
 }
 
@@ -340,7 +399,14 @@ export async function getNotices(): Promise<{ notices: Notice[] }> {
   return api('/api/notices');
 }
 
-export async function addNotice(data: { title: string; content: string; author?: string; category?: string; priority?: string; branch?: string }): Promise<{ id: string }> {
+export async function addNotice(data: {
+  title: string;
+  content: string;
+  author?: string;
+  category?: string;
+  priority?: string;
+  branch?: string;
+}): Promise<{ id: string }> {
   return api('/api/notices', { method: 'POST', body: JSON.stringify(data) });
 }
 
@@ -368,16 +434,32 @@ export async function getChats(userId: string): Promise<{ chats: Chat[] }> {
   return api(`/api/chats/${userId}`);
 }
 
-export async function createChat(participants: string[], isGroup?: boolean, groupName?: string): Promise<{ id: string }> {
-  return api('/api/chats', { method: 'POST', body: JSON.stringify({ participants, isGroup, groupName }) });
+export async function createChat(
+  participants: string[],
+  isGroup?: boolean,
+  groupName?: string
+): Promise<{ id: string }> {
+  return api('/api/chats', {
+    method: 'POST',
+    body: JSON.stringify({ participants, isGroup, groupName }),
+  });
 }
 
 export async function getMessages(chatId: string): Promise<{ messages: Message[] }> {
   return api(`/api/messages/${chatId}`);
 }
 
-export async function sendMessage(chatId: string, senderId: string, senderName: string, content: string, isEncrypted?: boolean): Promise<{ id: string }> {
-  return api('/api/messages', { method: 'POST', body: JSON.stringify({ chatId, senderId, senderName, content, isEncrypted }) });
+export async function sendMessage(
+  chatId: string,
+  senderId: string,
+  senderName: string,
+  content: string,
+  isEncrypted?: boolean
+): Promise<{ id: string }> {
+  return api('/api/messages', {
+    method: 'POST',
+    body: JSON.stringify({ chatId, senderId, senderName, content, isEncrypted }),
+  });
 }
 
 export async function searchUsers(query: string): Promise<{ users: ApiUser[] }> {
@@ -409,12 +491,29 @@ export async function getExam(id: string): Promise<{ exam: Exam }> {
   return api(`/api/exams/${id}`);
 }
 
-export async function createExam(data: { title: string; branch?: string; semester?: string; subject?: string; questions?: any[]; duration?: number; totalMarks?: number }): Promise<{ id: string }> {
+export async function createExam(data: {
+  title: string;
+  branch?: string;
+  semester?: string;
+  subject?: string;
+  questions?: any[];
+  duration?: number;
+  totalMarks?: number;
+}): Promise<{ id: string }> {
   return api('/api/exams', { method: 'POST', body: JSON.stringify(data) });
 }
 
-export async function submitExam(examId: string, userId: string, score: number, total: number, answers: Record<string, any>): Promise<{ resultId: string }> {
-  return api(`/api/exams/${examId}/submit`, { method: 'POST', body: JSON.stringify({ userId, score, total, answers }) });
+export async function submitExam(
+  examId: string,
+  userId: string,
+  score: number,
+  total: number,
+  answers: Record<string, any>
+): Promise<{ resultId: string }> {
+  return api(`/api/exams/${examId}/submit`, {
+    method: 'POST',
+    body: JSON.stringify({ userId, score, total, answers }),
+  });
 }
 
 // ── Faculty ────────────────────────────────────────────────────────────────────
@@ -429,7 +528,7 @@ export async function getFaculty(branch?: string): Promise<{ faculty: any[] }> {
 export async function uploadFile(file: File): Promise<{ url: string; filename: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  const baseUrl = getServerUrl() || await autoDetectServer() || '';
+  const baseUrl = getServerUrl() || (await autoDetectServer()) || '';
   const token = getAuthToken();
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -559,11 +658,18 @@ export interface AcademicProject {
   difficulty: string;
 }
 
-export async function getAcademicMeta(): Promise<{ branches: string[]; semesters: string[]; updated_at: string | null }> {
+export async function getAcademicMeta(): Promise<{
+  branches: string[];
+  semesters: string[];
+  updated_at: string | null;
+}> {
   return api('/api/academic/meta');
 }
 
-export async function getAcademicSubjects(branch?: string, semester?: string): Promise<{ subjects: AcademicSubject[] }> {
+export async function getAcademicSubjects(
+  branch?: string,
+  semester?: string
+): Promise<{ subjects: AcademicSubject[] }> {
   const params = new URLSearchParams();
   if (branch) params.set('branch', branch);
   if (semester) params.set('semester', semester);
@@ -571,15 +677,27 @@ export async function getAcademicSubjects(branch?: string, semester?: string): P
   return api(`/api/academic/subjects${qs ? '?' + qs : ''}`);
 }
 
-export async function getAcademicSubjectDetail(id: string): Promise<{ subject: AcademicSubject; units: AcademicUnit[] }> {
+export async function getAcademicSubjectDetail(
+  id: string
+): Promise<{ subject: AcademicSubject; units: AcademicUnit[] }> {
   return api(`/api/academic/subjects/${id}`);
 }
 
-export async function getAcademicUnit(id: string): Promise<{ unit: AcademicUnit; topics: SyllabusTopic[] }> {
+export async function getAcademicUnit(
+  id: string
+): Promise<{ unit: AcademicUnit; topics: SyllabusTopic[] }> {
   return api(`/api/academic/units/${id}`);
 }
 
-export async function getAcademicQuestions(opts: { subjectId?: string; unitId?: string; type?: string; difficulty?: string; limit?: number } = {}): Promise<{ questions: AcademicQuestion[] }> {
+export async function getAcademicQuestions(
+  opts: {
+    subjectId?: string;
+    unitId?: string;
+    type?: string;
+    difficulty?: string;
+    limit?: number;
+  } = {}
+): Promise<{ questions: AcademicQuestion[] }> {
   const params = new URLSearchParams();
   if (opts.subjectId) params.set('subjectId', opts.subjectId);
   if (opts.unitId) params.set('unitId', opts.unitId);
@@ -590,7 +708,9 @@ export async function getAcademicQuestions(opts: { subjectId?: string; unitId?: 
   return api(`/api/academic/questions${qs ? '?' + qs : ''}`);
 }
 
-export async function getAcademicPyqs(opts: { subjectId?: string; year?: number; examType?: string } = {}): Promise<{ pyqs: Pyq[] }> {
+export async function getAcademicPyqs(
+  opts: { subjectId?: string; year?: number; examType?: string } = {}
+): Promise<{ pyqs: Pyq[] }> {
   const params = new URLSearchParams();
   if (opts.subjectId) params.set('subjectId', opts.subjectId);
   if (opts.year) params.set('year', String(opts.year));
@@ -599,7 +719,9 @@ export async function getAcademicPyqs(opts: { subjectId?: string; year?: number;
   return api(`/api/academic/pyqs${qs ? '?' + qs : ''}`);
 }
 
-export async function getAcademicNotes(opts: { subjectId?: string; unitId?: string; contentType?: string } = {}): Promise<{ notes: AcademicNote[] }> {
+export async function getAcademicNotes(
+  opts: { subjectId?: string; unitId?: string; contentType?: string } = {}
+): Promise<{ notes: AcademicNote[] }> {
   const params = new URLSearchParams();
   if (opts.subjectId) params.set('subjectId', opts.subjectId);
   if (opts.unitId) params.set('unitId', opts.unitId);
@@ -613,7 +735,10 @@ export async function getAcademicLabs(subjectId?: string): Promise<{ labs: LabEx
   return api(`/api/academic/labs${qs}`);
 }
 
-export async function getAcademicProjects(branch?: string, semester?: string): Promise<{ projects: AcademicProject[] }> {
+export async function getAcademicProjects(
+  branch?: string,
+  semester?: string
+): Promise<{ projects: AcademicProject[] }> {
   const params = new URLSearchParams();
   if (branch) params.set('branch', branch);
   if (semester) params.set('semester', semester);
@@ -621,7 +746,18 @@ export async function getAcademicProjects(branch?: string, semester?: string): P
   return api(`/api/academic/projects${qs ? '?' + qs : ''}`);
 }
 
-export async function getAcademicDashboard(branch?: string, semester?: string): Promise<{ subjects: number; units: number; questions: number; pyqs: number; notes: number; labs: number; projects: number }> {
+export async function getAcademicDashboard(
+  branch?: string,
+  semester?: string
+): Promise<{
+  subjects: number;
+  units: number;
+  questions: number;
+  pyqs: number;
+  notes: number;
+  labs: number;
+  projects: number;
+}> {
   const params = new URLSearchParams();
   if (branch) params.set('branch', branch);
   if (semester) params.set('semester', semester);

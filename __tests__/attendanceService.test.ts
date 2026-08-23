@@ -82,8 +82,11 @@ describe('attendanceService (local mode)', () => {
     it('should mark attendance successfully', async () => {
       await expect(
         attendanceService.markAttendance(
-          'slot-001', 'DBMS', '2025-01-15',
-          ['STU-001', 'STU-002'], 40
+          'slot-001',
+          'DBMS',
+          '2025-01-15',
+          ['STU-001', 'STU-002'],
+          40
         )
       ).resolves.toBeUndefined();
     });
@@ -94,21 +97,15 @@ describe('attendanceService (local mode)', () => {
       const dateStr = futureDate.toISOString().split('T')[0]!;
 
       await expect(
-        attendanceService.markAttendance(
-          'slot-001', 'DBMS', dateStr,
-          ['STU-001'], 40
-        )
+        attendanceService.markAttendance('slot-001', 'DBMS', dateStr, ['STU-001'], 40)
       ).rejects.toThrow('Cannot mark attendance for future dates');
     });
 
-    it('should allow today\'s date', async () => {
+    it("should allow today's date", async () => {
       const now = new Date();
       const today = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
       await expect(
-        attendanceService.markAttendance(
-          'slot-001', 'DBMS', today,
-          ['STU-001'], 40
-        )
+        attendanceService.markAttendance('slot-001', 'DBMS', today, ['STU-001'], 40)
       ).resolves.toBeUndefined();
     });
 
@@ -116,13 +113,13 @@ describe('attendanceService (local mode)', () => {
       const now = new Date();
       const today = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
 
+      await attendanceService.markAttendance('slot-001', 'DBMS', today, ['STU-001'], 40);
       await attendanceService.markAttendance(
-        'slot-001', 'DBMS', today,
-        ['STU-001'], 40
-      );
-      await attendanceService.markAttendance(
-        'slot-001', 'DBMS', today,
-        ['STU-001', 'STU-002', 'STU-003'], 40
+        'slot-001',
+        'DBMS',
+        today,
+        ['STU-001', 'STU-002', 'STU-003'],
+        40
       );
 
       const stats = await attendanceService.getStudentStats('STU-001');
@@ -141,10 +138,7 @@ describe('attendanceService (local mode)', () => {
       const now = new Date();
       const today = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
 
-      await attendanceService.markAttendance(
-        'slot-001', 'DBMS', today,
-        ['STU-001', 'STU-002'], 40
-      );
+      await attendanceService.markAttendance('slot-001', 'DBMS', today, ['STU-001', 'STU-002'], 40);
 
       const stats = await attendanceService.getStudentStats('STU-001');
       expect(stats.totalClasses).toBe(1);
@@ -157,10 +151,7 @@ describe('attendanceService (local mode)', () => {
     it('should persist attendance to localStorage', async () => {
       const now = new Date();
       const today = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
-      await attendanceService.markAttendance(
-        'slot-001', 'DBMS', today,
-        ['STU-001'], 40
-      );
+      await attendanceService.markAttendance('slot-001', 'DBMS', today, ['STU-001'], 40);
 
       const saved = localStorage.getItem('GPA_HUB_ATTENDANCE_RECORDS');
       expect(saved).not.toBeNull();

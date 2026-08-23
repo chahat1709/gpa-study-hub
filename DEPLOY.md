@@ -62,21 +62,25 @@ College Server Room              Internet              Students
 ## Backup
 
 The database is a single file: `server/gpa_hub.db`
+
 - Copy this file daily to a USB drive
 - Or set up automatic backup to Google Drive
 
 ## Troubleshooting
 
 **Tunnel not starting?**
+
 - Make sure `cloudflared.exe` is in the project folder or PATH
 - Try: `cloudflared tunnel --url http://localhost:3000`
 
 **Students can't connect?**
+
 - Check if server is running (visit http://localhost:3000/api/health)
 - Check if tunnel is running (look for the URL in the terminal)
 - Try a different browser/device
 
 **Server slow?**
+
 - Check `http://localhost:3000/api/metrics` for response times
 - Restart server if needed
 - Check college PC RAM (minimum 4GB recommended)

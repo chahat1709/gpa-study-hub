@@ -25,10 +25,7 @@ function encrypt(plaintext, context = 'default') {
       authTagLength: TAG_LENGTH,
     });
 
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, 'utf8'),
-      cipher.final(),
-    ]);
+    const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
 
     const tag = cipher.getAuthTag();
 
@@ -61,10 +58,7 @@ function decrypt(ciphertext, context = 'default') {
     });
     decipher.setAuthTag(tag);
 
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final(),
-    ]);
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
     return decrypted.toString('utf8');
   } catch (e) {

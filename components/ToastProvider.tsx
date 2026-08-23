@@ -51,7 +51,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (pausedRef.current.has(id)) return;
       const elapsed = Date.now() - startTime;
       const progress = Math.min(100, (elapsed / TOAST_DURATION) * 100);
-      setToasts(prev => prev.map(t => t.id === id ? { ...t, progress } : t));
+      setToasts(prev => prev.map(t => (t.id === id ? { ...t, progress } : t)));
       if (progress >= 100) clearInterval(interval);
     }, 50);
     progressIntervalsRef.current.set(id, interval);
@@ -62,29 +62,35 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     timersRef.current.set(id, timer);
   }, []);
 
-  const removeToast = useCallback((id: string) => {
-    clearTimers(id);
-    // Start exit animation
-    setToasts(prev => prev.map(t => t.id === id ? { ...t, isExiting: true } : t));
-    // Remove after animation
-    setTimeout(() => {
-      setToasts(prev => prev.filter((toast) => toast.id !== id));
-    }, EXIT_ANIMATION_MS);
-  }, [clearTimers]);
+  const removeToast = useCallback(
+    (id: string) => {
+      clearTimers(id);
+      // Start exit animation
+      setToasts(prev => prev.map(t => (t.id === id ? { ...t, isExiting: true } : t)));
+      // Remove after animation
+      setTimeout(() => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+      }, EXIT_ANIMATION_MS);
+    },
+    [clearTimers]
+  );
 
-  const addToast = useCallback((message: string, type: ToastType) => {
-    const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    
-    setToasts((prev) => {
-      // Deduplicate: if same message exists, don't add
-      if (prev.some(t => t.message === message && !t.isExiting)) return prev;
-      // Enforce max visible limit
-      const newToasts = prev.length >= MAX_VISIBLE_TOASTS ? prev.slice(1) : prev;
-      return [...newToasts, { id, message, type, isExiting: false, progress: 0 }];
-    });
-    
-    startTimers(id);
-  }, [startTimers]);
+  const addToast = useCallback(
+    (message: string, type: ToastType) => {
+      const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      setToasts(prev => {
+        // Deduplicate: if same message exists, don't add
+        if (prev.some(t => t.message === message && !t.isExiting)) return prev;
+        // Enforce max visible limit
+        const newToasts = prev.length >= MAX_VISIBLE_TOASTS ? prev.slice(1) : prev;
+        return [...newToasts, { id, message, type, isExiting: false, progress: 0 }];
+      });
+
+      startTimers(id);
+    },
+    [startTimers]
+  );
 
   const handleMouseEnter = useCallback((id: string) => {
     pausedRef.current.add(id);
@@ -97,10 +103,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      timersRef.current.forEach((timer) => {
+      timersRef.current.forEach(timer => {
         if (typeof timer === 'number') clearTimeout(timer);
       });
-      progressIntervalsRef.current.forEach((interval) => clearInterval(interval));
+      progressIntervalsRef.current.forEach(interval => clearInterval(interval));
     };
   }, []);
 
@@ -110,22 +116,46 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const warning = (msg: string) => addToast(msg, 'warning');
 
   const typeConfig = {
-    success: { icon: CheckCircle, color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10', progress: 'bg-emerald-500' },
-    error: { icon: AlertCircle, color: 'text-rose-400', border: 'border-rose-500/30', bg: 'bg-rose-500/10', progress: 'bg-rose-500' },
-    info: { icon: Info, color: 'text-indigo-400', border: 'border-indigo-500/30', bg: 'bg-indigo-500/10', progress: 'bg-indigo-500' },
-    warning: { icon: AlertTriangle, color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/10', progress: 'bg-amber-500' },
+    success: {
+      icon: CheckCircle,
+      color: 'text-emerald-400',
+      border: 'border-emerald-500/30',
+      bg: 'bg-emerald-500/10',
+      progress: 'bg-emerald-500',
+    },
+    error: {
+      icon: AlertCircle,
+      color: 'text-rose-400',
+      border: 'border-rose-500/30',
+      bg: 'bg-rose-500/10',
+      progress: 'bg-rose-500',
+    },
+    info: {
+      icon: Info,
+      color: 'text-indigo-400',
+      border: 'border-indigo-500/30',
+      bg: 'bg-indigo-500/10',
+      progress: 'bg-indigo-500',
+    },
+    warning: {
+      icon: AlertTriangle,
+      color: 'text-amber-400',
+      border: 'border-amber-500/30',
+      bg: 'bg-amber-500/10',
+      progress: 'bg-amber-500',
+    },
   };
 
   return (
     <ToastContext.Provider value={{ addToast, success, error, info, warning }}>
       {children}
-      <div 
+      <div
         className="fixed bottom-6 right-6 z-[60] flex flex-col gap-3 pointer-events-none max-h-[calc(100dvh-48px)] overflow-hidden"
         aria-live="polite"
         aria-label="Notifications"
         role="status"
       >
-        {toasts.map((toast) => {
+        {toasts.map(toast => {
           const config = typeConfig[toast.type];
           const Icon = config.icon;
           return (
@@ -135,8 +165,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               onMouseEnter={() => handleMouseEnter(toast.id)}
               onMouseLeave={() => handleMouseLeave(toast.id)}
               className={`pointer-events-auto min-w-[320px] max-w-sm w-full rounded-xl shadow-2xl border overflow-hidden transition-all duration-300 ease-out ${
-                toast.isExiting 
-                  ? 'opacity-0 translate-x-full scale-95' 
+                toast.isExiting
+                  ? 'opacity-0 translate-x-full scale-95'
                   : 'opacity-100 translate-x-0 scale-100'
               } ${config.border}`}
               style={{ background: 'rgba(15,15,25,0.95)', backdropFilter: 'blur(20px)' }}
@@ -148,7 +178,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 <div className="flex-1 pt-0.5 min-w-0">
                   <p className="text-sm font-medium text-white leading-snug">{toast.message}</p>
                 </div>
-                <button 
+                <button
                   onClick={() => removeToast(toast.id)}
                   className="text-slate-400 hover:text-white transition-colors p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
                   aria-label="Dismiss notification"
@@ -158,7 +188,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               </div>
               {/* Progress bar */}
               <div className="h-0.5 w-full bg-white/5">
-                <div 
+                <div
                   className={`h-full transition-all duration-100 linear ${config.progress} opacity-60`}
                   style={{ width: `${toast.progress}%` }}
                 />

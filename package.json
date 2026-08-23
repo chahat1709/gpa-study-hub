@@ -1,13 +1,17 @@
 {
   "name": "gpa-study-hub",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run check && npm run format:check",
+    "prepare": "husky",
     "test": "vitest run --pool=forks --maxWorkers=1",
     "test:unit": "vitest run --pool=forks --maxWorkers=1",
     "test:ai": "vitest run __tests__/aiProviderService.test.ts __tests__/geminiService.test.ts --pool=forks --maxWorkers=1",
@@ -48,19 +52,32 @@
     "autoprefixer": "^10.5.4",
     "electron": "^38.8.6",
     "electron-builder": "^26.15.3",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lint-staged": "^16.4.0",
     "postcss": "^8.5.23",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^4.1.10"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   },
   "main": "desktop/main.cjs",
   "build": {
     "appId": "com.gpastudyhub.desktop",
     "productName": "GPA Study Hub",
     "artifactName": "GPA-Study-Hub-${version}-${arch}.${ext}",
-    "directories": { "output": "release" },
+    "directories": {
+      "output": "release"
+    },
     "files": [
       "desktop/**/*",
       "dist/**/*",

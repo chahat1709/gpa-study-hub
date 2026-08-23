@@ -24,7 +24,9 @@ test.describe('Deep feature audit', () => {
     await page.getByLabel('Confirm four digit PIN').fill('2468');
     await page.getByRole('button', { name: 'Create student account' }).click();
     await expect(page.locator('main')).toBeVisible({ timeout: 60000 });
-    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({ timeout: 60000 });
+    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({
+      timeout: 60000,
+    });
   }
 
   async function clickSidebar(page: Page, label: string) {
@@ -34,24 +36,46 @@ test.describe('Deep feature audit', () => {
   }
 
   function skipMobile(testInfo: TestInfo) {
-    test.skip(testInfo.project.name === 'mobile-chrome', 'This journey targets the desktop sidebar/header architecture.');
+    test.skip(
+      testInfo.project.name === 'mobile-chrome',
+      'This journey targets the desktop sidebar/header architecture.'
+    );
   }
 
   function skipDesktop(testInfo: TestInfo) {
-    test.skip(testInfo.project.name === 'chromium', 'This journey targets the mobile dock/header architecture.');
+    test.skip(
+      testInfo.project.name === 'chromium',
+      'This journey targets the mobile dock/header architecture.'
+    );
   }
 
-  test('authenticated shell exposes every desktop workspace and essential chrome', async ({ page }, testInfo) => {
+  test('authenticated shell exposes every desktop workspace and essential chrome', async ({
+    page,
+  }, testInfo) => {
     skipMobile(testInfo);
     await openApp(page);
-    for (const label of ['Overview', 'Attendance', 'Planner', 'Library', 'Exam Hub', 'AI Tutor', 'Scanner', 'Network', 'Identity']) {
-      await expect(page.locator('.ui-sidebar nav button').filter({ hasText: label }).first()).toBeVisible();
+    for (const label of [
+      'Overview',
+      'Attendance',
+      'Planner',
+      'Library',
+      'Exam Hub',
+      'AI Tutor',
+      'Scanner',
+      'Network',
+      'Identity',
+    ]) {
+      await expect(
+        page.locator('.ui-sidebar nav button').filter({ hasText: label }).first()
+      ).toBeVisible();
     }
     await expect(page.getByRole('button', { name: 'View notifications' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Search or jump to/ })).toBeVisible();
   });
 
-  test('desktop command palette searches and navigates to a workspace', async ({ page }, testInfo) => {
+  test('desktop command palette searches and navigates to a workspace', async ({
+    page,
+  }, testInfo) => {
     skipMobile(testInfo);
     await openApp(page);
     await page.getByRole('button', { name: /Search or jump to/ }).click();
@@ -63,12 +87,16 @@ test.describe('Deep feature audit', () => {
     await expect(page.getByRole('heading', { name: 'Examinations & Quiz Hub' })).toBeVisible();
   });
 
-  test('notifications popover opens and exposes an empty or populated state', async ({ page }, testInfo) => {
+  test('notifications popover opens and exposes an empty or populated state', async ({
+    page,
+  }, testInfo) => {
     skipMobile(testInfo);
     await openApp(page);
     await page.getByRole('button', { name: 'View notifications' }).click();
     await expect(page.getByText('Notifications', { exact: true })).toBeVisible();
-    await expect(page.locator('.ui-notification-popover')).toContainText(/No notifications yet|View all|Mark all/);
+    await expect(page.locator('.ui-notification-popover')).toContainText(
+      /No notifications yet|View all|Mark all/
+    );
   });
 
   test('desktop workspaces render distinct primary content', async ({ page }, testInfo) => {
@@ -91,7 +119,9 @@ test.describe('Deep feature audit', () => {
     }
   });
 
-  test('campus tabs switch between overview, faculty directory, and campus information', async ({ page }, testInfo) => {
+  test('campus tabs switch between overview, faculty directory, and campus information', async ({
+    page,
+  }, testInfo) => {
     skipMobile(testInfo);
     await openApp(page);
     await clickSidebar(page, 'Overview');
@@ -101,7 +131,9 @@ test.describe('Deep feature audit', () => {
     await campusTabs.nth(1).click();
     await expect(page.locator('main')).toContainText(/Faculty directory|Faculty|Message/);
     await campusTabs.nth(2).click();
-    await expect(page.locator('main')).toContainText(/Campus info|Secure campus node|Offline-first/);
+    await expect(page.locator('main')).toContainText(
+      /Campus info|Secure campus node|Offline-first/
+    );
   });
 
   test('attendance tabs switch between stats and schedule', async ({ page }, testInfo) => {
@@ -111,7 +143,10 @@ test.describe('Deep feature audit', () => {
     await expect(page.getByRole('tab', { name: 'Stats' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('main')).toContainText(/Aggregate|Total Sessions/);
     await page.getByRole('tab', { name: 'Schedule' }).click();
-    await expect(page.getByRole('tab', { name: 'Schedule' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: 'Schedule' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
     await expect(page.locator('main')).toContainText(/MON|TUE|No classes scheduled/);
   });
 
@@ -145,7 +180,9 @@ test.describe('Deep feature audit', () => {
     await expect(page.getByText(task, { exact: true })).toBeHidden();
   });
 
-  test('profile workspace exposes account information and settings controls', async ({ page }, testInfo) => {
+  test('profile workspace exposes account information and settings controls', async ({
+    page,
+  }, testInfo) => {
     skipMobile(testInfo);
     await openApp(page);
     await clickSidebar(page, 'Identity');
@@ -154,13 +191,19 @@ test.describe('Deep feature audit', () => {
     await expect(profileUpload).toHaveAttribute('accept', 'image/*');
   });
 
-  test('mobile dock navigates every available mobile workspace and preserves active semantics', async ({ page }) => {
+  test('mobile dock navigates every available mobile workspace and preserves active semantics', async ({
+    page,
+  }) => {
     await openApp(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
     await expect(page.locator('main')).toBeVisible({ timeout: 60000 });
-    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({ timeout: 60000 });
-    await expect(page.locator('.ui-mobile-dock nav[aria-label="Main navigation"]:visible')).toBeVisible();
+    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({
+      timeout: 60000,
+    });
+    await expect(
+      page.locator('.ui-mobile-dock nav[aria-label="Main navigation"]:visible')
+    ).toBeVisible();
     const mobileModes: Array<[string, RegExp]> = [
       ['Navigate to Campus Home', /Your academic command center/],
       ['Navigate to Exam Hub', /Examinations & Quiz Hub/],
@@ -180,9 +223,14 @@ test.describe('Deep feature audit', () => {
     await openApp(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
-    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({ timeout: 60000 });
+    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({
+      timeout: 60000,
+    });
     await page.getByRole('button', { name: /Ask the AI Tutor/ }).click();
-    await expect(page.locator('main')).toContainText(/AI Tutor Locked|Hello! I am your AI study assistant|Type your message/, { timeout: 15000 });
+    await expect(page.locator('main')).toContainText(
+      /AI Tutor Locked|Hello! I am your AI study assistant|Type your message/,
+      { timeout: 15000 }
+    );
     await expect(page.locator('.ui-mobile-dock')).toHaveCount(0);
     await page.getByRole('button', { name: 'Go back to Campus Home' }).click();
     await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible();
@@ -193,7 +241,9 @@ test.describe('Deep feature audit', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
     await expect(page.locator('main')).toBeVisible({ timeout: 60000 });
-    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({ timeout: 60000 });
+    await expect(page.getByText('Your academic command center', { exact: true })).toBeVisible({
+      timeout: 60000,
+    });
     await page.getByRole('button', { name: 'Open profile settings' }).click();
     await expect(page.locator('main')).toContainText(/Profile|Identity|Account/);
   });
@@ -202,6 +252,8 @@ test.describe('Deep feature audit', () => {
     skipMobile(testInfo);
     await openApp(page);
     await page.getByRole('button', { name: 'Log out' }).click();
-    await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible({
+      timeout: 15000,
+    });
   });
 });

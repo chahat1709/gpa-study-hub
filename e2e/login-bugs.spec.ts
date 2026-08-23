@@ -47,7 +47,9 @@ test.describe('Login page bug coverage', () => {
     expect(session).toBeTruthy();
   });
 
-  test('student login succeeds with enrollment and four individual PIN digits', async ({ page }) => {
+  test('student login succeeds with enrollment and four individual PIN digits', async ({
+    page,
+  }) => {
     const enrollment = `236080${uniqueId().slice(-6)}`;
     await registerStudentThroughUi(page, enrollment);
     await page.evaluate(() => localStorage.removeItem('gpa_rbac_session_v1'));
@@ -59,10 +61,14 @@ test.describe('Login page bug coverage', () => {
     await page.getByRole('button', { name: 'Enter campus' }).click();
 
     await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeHidden();
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('gpa_rbac_session_v1'))).toBeTruthy();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('gpa_rbac_session_v1')))
+      .toBeTruthy();
   });
 
-  test('empty student enrollment shows a validation message instead of silently blocking submit', async ({ page }) => {
+  test('empty student enrollment shows a validation message instead of silently blocking submit', async ({
+    page,
+  }) => {
     await fillStudentPin(page, '2468');
     await page.getByRole('button', { name: 'Enter campus' }).click();
     await expect(page.getByText('Enter enrollment number', { exact: true })).toBeVisible();
@@ -126,13 +132,17 @@ test.describe('Login page bug coverage', () => {
     await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeHidden();
   });
 
-  test('auth form remains usable without horizontal overflow on a mobile viewport', async ({ page }) => {
+  test('auth form remains usable without horizontal overflow on a mobile viewport', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible();
     await expect(page.getByLabel('Enrollment number')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Enter campus' })).toBeVisible();
-    const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1
+    );
     expect(hasHorizontalOverflow).toBeFalsy();
   });
 });
@@ -152,7 +162,9 @@ test.describe('Strict interaction audit', () => {
     await expect(digits.nth(3)).toBeFocused();
   });
 
-  test('student registration exposes matching PIN feedback and show/hide control', async ({ page }) => {
+  test('student registration exposes matching PIN feedback and show/hide control', async ({
+    page,
+  }) => {
     await page.getByRole('button', { name: 'Create account' }).click();
     await page.getByLabel('Full name').fill('Playwright Student');
     await page.getByLabel('Enrollment number').fill(`236080${uniqueId().slice(-6)}`);
@@ -187,10 +199,22 @@ test.describe('Strict interaction audit', () => {
   test('role tabs expose one selected workspace at a time', async ({ page }) => {
     const tabs = page.getByRole('tab');
     await expect(tabs).toHaveCount(3);
-    await expect(page.getByRole('tab', { name: 'Student' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('tab', { name: 'Faculty' })).toHaveAttribute('aria-selected', 'false');
+    await expect(page.getByRole('tab', { name: 'Student' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await expect(page.getByRole('tab', { name: 'Faculty' })).toHaveAttribute(
+      'aria-selected',
+      'false'
+    );
     await page.getByRole('tab', { name: 'Faculty' }).click();
-    await expect(page.getByRole('tab', { name: 'Student' })).toHaveAttribute('aria-selected', 'false');
-    await expect(page.getByRole('tab', { name: 'Faculty' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: 'Student' })).toHaveAttribute(
+      'aria-selected',
+      'false'
+    );
+    await expect(page.getByRole('tab', { name: 'Faculty' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
   });
 });

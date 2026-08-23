@@ -43,15 +43,22 @@ class ErrorTracker {
 
   private notify(error: ErrorReport) {
     this.listeners.forEach(l => {
-      try { l(error); } catch { /* listener error */ }
+      try {
+        l(error);
+      } catch {
+        /* listener error */
+      }
     });
   }
 
-  report(error: Error | string, options: {
-    component?: string;
-    severity?: ErrorReport['severity'];
-    metadata?: Record<string, unknown>;
-  } = {}) {
+  report(
+    error: Error | string,
+    options: {
+      component?: string;
+      severity?: ErrorReport['severity'];
+      metadata?: Record<string, unknown>;
+    } = {}
+  ) {
     if (!this.enabled) return;
 
     const errorObj = typeof error === 'string' ? new Error(error) : error;
@@ -89,14 +96,14 @@ class ErrorTracker {
   }
 
   installGlobalHandlers() {
-    window.addEventListener('error', (event) => {
+    window.addEventListener('error', event => {
       this.report(event.error || new Error(event.message), {
         severity: 'high',
         metadata: { filename: event.filename, lineno: event.lineno, colno: event.colno },
       });
     });
 
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener('unhandledrejection', event => {
       const reason = event.reason;
       const message = reason instanceof Error ? reason.message : String(reason);
       this.report(message, {

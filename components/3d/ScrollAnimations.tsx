@@ -19,10 +19,11 @@ export default function ScrollAnimations() {
     const timer = setTimeout(() => {
       // Glass card reveal with depth + scrub
       gsap.utils.toArray('.glass-card, .liquid-glass, .card-3d, .glass-tab').forEach((el: any) => {
-        gsap.fromTo(el, 
-          { 
-            opacity: 0, 
-            rotateX: 8, 
+        gsap.fromTo(
+          el,
+          {
+            opacity: 0,
+            rotateX: 8,
             y: 60,
             scale: 0.92,
             transformPerspective: 800,
@@ -75,9 +76,10 @@ export default function ScrollAnimations() {
       // Standard header animation (fallback for non-animated headings)
       gsap.utils.toArray('h2, h3').forEach((el: any) => {
         if (el.dataset.animate === 'chars') return; // Skip if using char animation
-        gsap.fromTo(el,
-          { 
-            opacity: 0, 
+        gsap.fromTo(
+          el,
+          {
+            opacity: 0,
             y: 40,
             skewY: 3,
           },
@@ -114,7 +116,8 @@ export default function ScrollAnimations() {
       // Scroll-linked continuous parallax for data-parallax elements
       gsap.utils.toArray('[data-parallax]').forEach((el: any) => {
         const speed = parseFloat(el.dataset.parallax) || 0.5;
-        gsap.fromTo(el,
+        gsap.fromTo(
+          el,
           { y: 100 * speed },
           {
             y: -100 * speed,
@@ -138,7 +141,7 @@ export default function ScrollAnimations() {
             ease: 'power2.out',
           });
         });
-        
+
         el.addEventListener('mouseleave', () => {
           gsap.to(el, {
             scale: 1,
@@ -174,7 +177,7 @@ export default function ScrollAnimations() {
             boxShadow: '0 0 20px rgba(128, 131, 255, 0.3)',
           });
         });
-        
+
         el.addEventListener('blur', () => {
           gsap.to(el, {
             scale: 1,
@@ -200,8 +203,9 @@ export default function ScrollAnimations() {
           text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
         `;
         document.body.appendChild(particle);
-        
-        gsap.fromTo(particle,
+
+        gsap.fromTo(
+          particle,
           { scale: 0, opacity: 1 },
           {
             scale: 1.5,
@@ -213,7 +217,6 @@ export default function ScrollAnimations() {
           }
         );
       }) as EventListener);
-
     }, 100);
 
     return () => {

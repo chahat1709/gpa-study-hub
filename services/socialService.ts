@@ -1,18 +1,17 @@
-
 import { db, storage, isConfigValid } from '../firebase';
-import { 
-  collection, 
-  query, 
-  where, 
-  onSnapshot, 
-  addDoc, 
-  setDoc, 
-  doc, 
-  orderBy, 
-  getDocs, 
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  setDoc,
+  doc,
+  orderBy,
+  getDocs,
   getDoc,
   updateDoc,
-  limit
+  limit,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ChatSession, SocialMessage, Participant } from '../types';
@@ -32,10 +31,10 @@ export const socialService = {
       where('participantIds', 'array-contains', userId),
       orderBy('lastTimestamp', 'desc')
     );
-    return onSnapshot(q, (snapshot) => {
+    return onSnapshot(q, snapshot => {
       const chats = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as ChatSession[];
       onUpdate(chats);
     });
@@ -43,14 +42,11 @@ export const socialService = {
 
   subscribeToChatMessages: (chatId: string, onUpdate: (msgs: SocialMessage[]) => void) => {
     if (!db) return () => {};
-    const q = query(
-      collection(db, 'chats', chatId, 'messages'),
-      orderBy('timestamp', 'asc')
-    );
-    return onSnapshot(q, (snapshot) => {
+    const q = query(collection(db, 'chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
+    return onSnapshot(q, snapshot => {
       const msgs = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as SocialMessage[];
       onUpdate(msgs);
     });
@@ -68,12 +64,14 @@ export const socialService = {
     return snapshot.docs.map(doc => ({
       id: doc.id,
       name: doc.data().name,
-      avatar: doc.data().photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.data().name)}`,
+      avatar:
+        doc.data().photoURL ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.data().name)}`,
     }));
   },
 
   startChatWithUser: async (currentUser: Participant, targetUser: Participant): Promise<string> => {
-    if (!db) throw new Error("Database disconnected");
+    if (!db) throw new Error('Database disconnected');
     const participants = [currentUser.id, targetUser.id].sort();
     const chatId = participants.join('_');
     const chatRef = doc(db, 'chats', chatId);
@@ -84,22 +82,29 @@ export const socialService = {
         participantIds: participants,
         participants: [
           { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
-          { id: targetUser.id, name: targetUser.name, avatar: targetUser.avatar }
+          { id: targetUser.id, name: targetUser.name, avatar: targetUser.avatar },
         ],
         lastMessage: 'Secure tunnel initialized',
         lastTimestamp: Date.now(),
         isGroup: false,
-        unreadCount: 0
+        unreadCount: 0,
       });
     }
     return chatId;
   },
 
-  sendMessage: async (chatId: string, senderId: string, senderName: string, content: string, type: 'text' | 'image' | 'pdf' = 'text', file?: File) => {
+  sendMessage: async (
+    chatId: string,
+    senderId: string,
+    senderName: string,
+    content: string,
+    type: 'text' | 'image' | 'pdf' = 'text',
+    file?: File
+  ) => {
     if (!db) return;
 
     let attachmentUrl = null;
-    
+
     if (file && storage) {
       const fileRef = ref(storage, `chats/${chatId}/${Date.now()}_${file.name}`);
       const uploadResult = await uploadBytes(fileRef, file);
@@ -107,8 +112,10 @@ export const socialService = {
     }
 
     const shouldEncrypt = type === 'text';
-    const finalContent = shouldEncrypt ? await encryptText(content, chatId) : (file?.name || 'File Transmission');
-    
+    const finalContent = shouldEncrypt
+      ? await encryptText(content, chatId)
+      : file?.name || 'File Transmission';
+
     const messageData = {
       senderId,
       senderName,
@@ -116,14 +123,14 @@ export const socialService = {
       timestamp: Date.now(),
       type,
       isEncrypted: shouldEncrypt,
-      attachmentUrl
+      attachmentUrl,
     };
 
     try {
       await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
       await updateDoc(doc(db, 'chats', chatId), {
         lastMessage: shouldEncrypt ? 'Encrypted Message' : `Sent a ${type}`,
-        lastTimestamp: Date.now()
+        lastTimestamp: Date.now(),
       });
     } catch {
       offlineStorageService.enqueue('CHAT_MESSAGE', { ...messageData, chatId });
@@ -138,13 +145,13 @@ export const socialService = {
         content: encryptedResponse,
         timestamp: Date.now() + 500,
         type: 'text',
-        isEncrypted: true
+        isEncrypted: true,
       });
     }
   },
 
   createGroup: async (name: string, desc: string, members: Participant[], creatorId: string) => {
-    if (!db) throw new Error("Database disconnected");
+    if (!db) throw new Error('Database disconnected');
     const groupId = `group_${Date.now()}`;
     const groupData = {
       participantIds: members.map(m => m.id),
@@ -155,9 +162,9 @@ export const socialService = {
       lastTimestamp: Date.now(),
       isGroup: true,
       admins: [creatorId],
-      unreadCount: 0
+      unreadCount: 0,
     };
     await setDoc(doc(db, 'chats', groupId), groupData);
     return { id: groupId, ...groupData };
-  }
+  },
 };

@@ -22,15 +22,15 @@ The frontend API base URL can be configured with `VITE_API_URL`. The application
 
 ## Verification commands
 
-| Command | Purpose |
-|---|---|
-| `npm run check` | TypeScript type checking without emitting files |
-| `npm run build` | Production frontend build |
-| `npm test` | Deterministic single-worker unit test suite |
-| `npm run test:unit` | Explicit unit-test command |
-| `npm run test:ai` | AI-provider storage tests in an isolated process |
-| `npm run test:e2e` | Playwright browser tests |
-| `npm run preview` | Serve the production frontend locally |
+| Command             | Purpose                                          |
+| ------------------- | ------------------------------------------------ |
+| `npm run check`     | TypeScript type checking without emitting files  |
+| `npm run build`     | Production frontend build                        |
+| `npm test`          | Deterministic single-worker unit test suite      |
+| `npm run test:unit` | Explicit unit-test command                       |
+| `npm run test:ai`   | AI-provider storage tests in an isolated process |
+| `npm run test:e2e`  | Playwright browser tests                         |
+| `npm run preview`   | Serve the production frontend locally            |
 
 AI network calls are not required for the unit suite. Provider credentials and network availability are required only for live AI behavior.
 

@@ -1,4 +1,3 @@
-
 import { Notice, DirectoryContact, LibraryResource } from '../types';
 import { db, isConfigValid } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
@@ -14,18 +13,20 @@ const NOTICES_KEY = 'GPA_HUB_CAMPUS_NOTICES';
 // --- Mock Implementation ---
 const loadMockNotices = (): Notice[] => {
   const saved = localStorage.getItem(NOTICES_KEY);
-  return saved ? JSON.parse(saved) : [
-    {
-      id: 'n1',
-      title: 'Welcome to GPA Hub',
-      content: 'Local Mode Active. Connect Firebase to see real notices.',
-      date: Date.now(),
-      priority: 'medium',
-      author: 'System Admin',
-      category: 'General',
-      scope: 'COLLEGE'
-    }
-  ];
+  return saved
+    ? JSON.parse(saved)
+    : [
+        {
+          id: 'n1',
+          title: 'Welcome to GPA Hub',
+          content: 'Local Mode Active. Connect Firebase to see real notices.',
+          date: Date.now(),
+          priority: 'medium',
+          author: 'System Admin',
+          category: 'General',
+          scope: 'COLLEGE',
+        },
+      ];
 };
 
 let mockNotices: Notice[] = loadMockNotices();
@@ -45,7 +46,7 @@ const MOCK_DIRECTORY: (DirectoryContact & { branch?: string; semester?: string }
     email: 'hod.cse@university.edu',
     phone: '+91 98765 43210',
     branch: 'CSE',
-    semester: 'All'
+    semester: 'All',
   },
   {
     id: 'f2',
@@ -55,8 +56,8 @@ const MOCK_DIRECTORY: (DirectoryContact & { branch?: string; semester?: string }
     email: 'arjun.m@university.edu',
     phone: '+91 99887 76655',
     branch: 'CSE',
-    semester: '4'
-  }
+    semester: '4',
+  },
 ];
 
 // --- Hybrid Service ---
@@ -64,8 +65,8 @@ let realTimeNotices: Notice[] = [];
 
 if (isConfigValid && db) {
   const q = query(collection(db, 'notices'), orderBy('date', 'desc'));
-  const unsubscribeNotices = onSnapshot(q, (snapshot) => {
-    realTimeNotices = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Notice));
+  const unsubscribeNotices = onSnapshot(q, snapshot => {
+    realTimeNotices = snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as Notice);
   });
 
   if (typeof window !== 'undefined') {
@@ -86,7 +87,7 @@ export const campusService = {
       const q = query(collection(db, 'campus_directory'));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as DirectoryContact));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }) as DirectoryContact);
       }
     }
     return MOCK_DIRECTORY;
@@ -98,7 +99,10 @@ export const campusService = {
       const q = query(collection(db, 'campus_directory'));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        directory = snap.docs.map(d => ({ id: d.id, ...d.data() } as DirectoryContact & { branch?: string; semester?: string }));
+        directory = snap.docs.map(
+          d =>
+            ({ id: d.id, ...d.data() }) as DirectoryContact & { branch?: string; semester?: string }
+        );
       }
     }
 
@@ -108,7 +112,8 @@ export const campusService = {
 
       const faculty = contact as DirectoryContact & { branch?: string; semester?: string };
       const branchMatch = faculty.branch === branch || faculty.branch === 'All';
-      const semMatch = faculty.semester === semester || faculty.semester === 'All' || !faculty.semester;
+      const semMatch =
+        faculty.semester === semester || faculty.semester === 'All' || !faculty.semester;
 
       return branchMatch && semMatch;
     });
@@ -129,7 +134,7 @@ export const campusService = {
   postNotice: async (notice: Omit<Notice, 'id' | 'date'>) => {
     const newNotice = {
       ...notice,
-      date: Date.now()
+      date: Date.now(),
     };
 
     if (isConfigValid && db) {
@@ -150,5 +155,5 @@ export const campusService = {
       .filter(r => r.branch === branch && r.semester === semester)
       .slice(-3)
       .reverse();
-  }
+  },
 };

@@ -15,7 +15,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -53,7 +53,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
 
-      particles.forEach((p) => {
+      particles.forEach(p => {
         // Orbital motion around center
         p.orbitAngle += p.orbitSpeed;
         const targetX = cx + Math.cos(p.orbitAngle) * p.orbitRadius;
@@ -106,7 +106,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       raf = requestAnimationFrame(animate);
     };
     animate();
-    
+
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
@@ -122,31 +122,37 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
           scale: 1.1,
           duration: 0.6,
           ease: 'power2.inOut',
-          onComplete: onComplete
+          onComplete: onComplete,
         });
-      }
+      },
     });
 
     // Logo entrance
-    tl.fromTo(logoRef.current, 
+    tl.fromTo(
+      logoRef.current,
       { scale: 0, rotation: -180, opacity: 0 },
       { scale: 1, rotation: 0, opacity: 1, duration: 1, ease: 'back.out(1.7)' }
     );
 
     // Text reveal
-    tl.fromTo(textRef.current,
+    tl.fromTo(
+      textRef.current,
       { y: 30, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' },
       '-=0.3'
     );
 
     // Progress bar animation
-    tl.to({}, {
-      duration: 1.5,
-      onUpdate: function() {
-        setProgress(Math.round(this.progress() * 100));
-      }
-    }, '-=0.3');
+    tl.to(
+      {},
+      {
+        duration: 1.5,
+        onUpdate: function () {
+          setProgress(Math.round(this.progress() * 100));
+        },
+      },
+      '-=0.3'
+    );
 
     // Particle burst
     tl.to(logoRef.current, {
@@ -154,7 +160,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       duration: 0.2,
       ease: 'power2.out',
       yoyo: true,
-      repeat: 1
+      repeat: 1,
     });
 
     return () => {
@@ -174,11 +180,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       <canvas ref={canvasRef} className="absolute inset-0" style={{ opacity: 0.7 }} />
 
       {/* Logo */}
-      <div
-        ref={logoRef}
-        className="relative mb-8 z-10"
-        style={{ opacity: 0 }}
-      >
+      <div ref={logoRef} className="relative mb-8 z-10" style={{ opacity: 0 }}>
         <div className="w-24 h-24 relative">
           {/* Outer ring */}
           <div
@@ -220,17 +222,9 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       </div>
 
       {/* Text */}
-      <div
-        ref={textRef}
-        className="text-center mb-8 z-10"
-        style={{ opacity: 0 }}
-      >
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Study Hub
-        </h1>
-        <p className="text-gray-400 text-sm">
-          Loading your experience...
-        </p>
+      <div ref={textRef} className="text-center mb-8 z-10" style={{ opacity: 0 }}>
+        <h1 className="text-3xl font-bold text-white mb-2">Study Hub</h1>
+        <p className="text-gray-400 text-sm">Loading your experience...</p>
       </div>
 
       {/* Progress bar */}
@@ -247,9 +241,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       </div>
 
       {/* Progress text */}
-      <div className="mt-4 text-gray-500 text-sm font-mono z-10">
-        {progress}%
-      </div>
+      <div className="mt-4 text-gray-500 text-sm font-mono z-10">{progress}%</div>
     </div>
   );
 }

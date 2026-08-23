@@ -1,7 +1,7 @@
 /**
  * RBAC Auth Service — GPA Study Hub
  * Role-Based Access Control using Web Crypto API (no external deps, 100% offline)
- * 
+ *
  * Roles:
  *  STUDENT    — view own data, study tools, exams, library
  *  FACULTY    — manage attendance, upload resources, post notices, view all students
@@ -14,31 +14,31 @@ import { checkRateLimit, recordFailedAttempt, clearRateLimit } from '../utils/ra
 // ─── Permission Matrix ─────────────────────────────────────────────────────────
 export const PERMISSIONS = {
   // Exam & Study
-  VIEW_EXAMS:           ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
-  VIEW_LIBRARY:         ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
-  UPLOAD_RESOURCES:     ['FACULTY', 'GTU_ADMIN'],
-  DELETE_RESOURCES:     ['GTU_ADMIN'],
+  VIEW_EXAMS: ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
+  VIEW_LIBRARY: ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
+  UPLOAD_RESOURCES: ['FACULTY', 'GTU_ADMIN'],
+  DELETE_RESOURCES: ['GTU_ADMIN'],
 
   // Attendance
-  MARK_ATTENDANCE:      ['FACULTY', 'GTU_ADMIN'],
-  VIEW_OWN_ATTENDANCE:  ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
-  VIEW_ALL_ATTENDANCE:  ['FACULTY', 'GTU_ADMIN'],
-  EDIT_ATTENDANCE:      ['FACULTY', 'GTU_ADMIN'],
+  MARK_ATTENDANCE: ['FACULTY', 'GTU_ADMIN'],
+  VIEW_OWN_ATTENDANCE: ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
+  VIEW_ALL_ATTENDANCE: ['FACULTY', 'GTU_ADMIN'],
+  EDIT_ATTENDANCE: ['FACULTY', 'GTU_ADMIN'],
 
   // Notices
-  POST_NOTICE:          ['FACULTY', 'GTU_ADMIN'],
-  VIEW_NOTICE:          ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
+  POST_NOTICE: ['FACULTY', 'GTU_ADMIN'],
+  VIEW_NOTICE: ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
 
   // Social
-  USE_SOCIAL:           ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
-  MODERATE_SOCIAL:      ['FACULTY', 'GTU_ADMIN'],
+  USE_SOCIAL: ['STUDENT', 'FACULTY', 'GTU_ADMIN'],
+  MODERATE_SOCIAL: ['FACULTY', 'GTU_ADMIN'],
 
   // Admin
   VIEW_ADMIN_DASHBOARD: ['FACULTY', 'GTU_ADMIN'],
-  MANAGE_USERS:         ['GTU_ADMIN'],
-  MANAGE_TIMETABLE:     ['FACULTY', 'GTU_ADMIN'],
-  VIEW_ALL_STUDENTS:    ['FACULTY', 'GTU_ADMIN'],
-  SYSTEM_CONFIG:        ['GTU_ADMIN'],
+  MANAGE_USERS: ['GTU_ADMIN'],
+  MANAGE_TIMETABLE: ['FACULTY', 'GTU_ADMIN'],
+  VIEW_ALL_STUDENTS: ['FACULTY', 'GTU_ADMIN'],
+  SYSTEM_CONFIG: ['GTU_ADMIN'],
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -75,7 +75,9 @@ function generateSalt(): Uint8Array {
 }
 
 function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function hexToBytes(hex: string): Uint8Array {
@@ -86,11 +88,14 @@ function hexToBytes(hex: string): Uint8Array {
   return bytes;
 }
 
-async function hashPassword(password: string, salt?: Uint8Array): Promise<{ hash: string; salt: string }> {
+async function hashPassword(
+  password: string,
+  salt?: Uint8Array
+): Promise<{ hash: string; salt: string }> {
   const userSalt = salt || generateSalt();
   const encoder = new TextEncoder();
   const passwordData = encoder.encode(password);
-  
+
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
     passwordData,
@@ -98,25 +103,29 @@ async function hashPassword(password: string, salt?: Uint8Array): Promise<{ hash
     false,
     ['deriveBits']
   );
-  
+
   const hashBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
       salt: userSalt,
       iterations: PBKDF2_ITERATIONS,
-      hash: 'SHA-256'
+      hash: 'SHA-256',
     },
     keyMaterial,
     256
   );
-  
+
   return {
     hash: bytesToHex(new Uint8Array(hashBits)),
-    salt: bytesToHex(userSalt)
+    salt: bytesToHex(userSalt),
   };
 }
 
-async function verifyPassword(password: string, storedHash: string, storedSalt: string): Promise<boolean> {
+async function verifyPassword(
+  password: string,
+  storedHash: string,
+  storedSalt: string
+): Promise<boolean> {
   const salt = hexToBytes(storedSalt);
   const result = await hashPassword(password, salt);
   return result.hash === storedHash;
@@ -128,7 +137,10 @@ const LEGACY_SALT = 'gpa_hub_salt_2025';
  * Verify password against stored hash, supporting both legacy SHA-256 and modern PBKDF2.
  * Returns { isValid, migratedHash?, migratedSalt? } — caller should persist migration if needed.
  */
-async function verifyWithMigration(password: string, stored: StoredUser): Promise<{ isValid: boolean; migratedHash?: string; migratedSalt?: string }> {
+async function verifyWithMigration(
+  password: string,
+  stored: StoredUser
+): Promise<{ isValid: boolean; migratedHash?: string; migratedSalt?: string }> {
   if (stored.passwordSalt) {
     const isValid = await verifyPassword(password, stored.passwordHash, stored.passwordSalt);
     return { isValid };
@@ -152,7 +164,9 @@ function loadDB(): Record<string, StoredUser> {
   try {
     const raw = localStorage.getItem(DB_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 }
 
 function saveDB(db: Record<string, StoredUser>) {
@@ -164,7 +178,9 @@ export function getSession(): User | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function saveSession(user: User) {
@@ -210,7 +226,9 @@ export async function registerStudent(params: {
   const id = `STU-${params.enrollmentNumber.toUpperCase()}`;
 
   if (db[id] && db[id].isActive) {
-    throw new Error(`Enrollment number ${params.enrollmentNumber} is already registered. Please login with your PIN.`);
+    throw new Error(
+      `Enrollment number ${params.enrollmentNumber} is already registered. Please login with your PIN.`
+    );
   }
 
   if (!/^\d{4}$/.test(params.pin)) {
@@ -251,9 +269,11 @@ export async function registerStudent(params: {
 export async function loginStudent(enrollmentNumber: string, pin: string): Promise<User> {
   const rateLimitKey = `login_student_${enrollmentNumber.toUpperCase()}`;
   const rateCheck = checkRateLimit(rateLimitKey);
-  
+
   if (!rateCheck.allowed) {
-    throw new Error(`Too many failed attempts. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.`);
+    throw new Error(
+      `Too many failed attempts. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.`
+    );
   }
 
   const db = loadDB();
@@ -348,9 +368,11 @@ export async function registerFacultyLocal(params: {
 export async function loginFacultyLocal(email: string, password: string): Promise<User> {
   const rateLimitKey = `login_faculty_${email.toLowerCase()}`;
   const rateCheck = checkRateLimit(rateLimitKey);
-  
+
   if (!rateCheck.allowed) {
-    throw new Error(`Too many failed attempts. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.`);
+    throw new Error(
+      `Too many failed attempts. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.`
+    );
   }
 
   const db = loadDB();
@@ -373,7 +395,9 @@ export async function loginFacultyLocal(email: string, password: string): Promis
     if (remaining > 0) {
       throw new Error(`Wrong password. ${remaining} attempts remaining.`);
     } else {
-      throw new Error('Wrong password. Account locked for 15 minutes due to too many failed attempts.');
+      throw new Error(
+        'Wrong password. Account locked for 15 minutes due to too many failed attempts.'
+      );
     }
   }
 
@@ -398,9 +422,11 @@ export async function loginFacultyLocal(email: string, password: string): Promis
 export async function loginAdmin(adminCode: string): Promise<User> {
   const rateLimitKey = 'login_admin';
   const rateCheck = checkRateLimit(rateLimitKey);
-  
+
   if (!rateCheck.allowed) {
-    throw new Error(`Too many failed attempts. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.`);
+    throw new Error(
+      `Too many failed attempts. Please try again in ${Math.ceil((rateCheck.retryAfter || 0) / 60)} minutes.`
+    );
   }
 
   const db = loadDB();
@@ -410,7 +436,9 @@ export async function loginAdmin(adminCode: string): Promise<User> {
   if (!db[ADMIN_ID]) {
     const defaultCode = import.meta.env.VITE_ADMIN_DEFAULT_CODE;
     if (!defaultCode) {
-      throw new Error('VITE_ADMIN_DEFAULT_CODE environment variable is required to initialize the admin account.');
+      throw new Error(
+        'VITE_ADMIN_DEFAULT_CODE environment variable is required to initialize the admin account.'
+      );
     }
     const { hash, salt } = await hashPassword(defaultCode);
     db[ADMIN_ID] = {
@@ -438,7 +466,9 @@ export async function loginAdmin(adminCode: string): Promise<User> {
     if (remaining > 0) {
       throw new Error(`Invalid admin code. ${remaining} attempts remaining.`);
     } else {
-      throw new Error('Invalid admin code. Account locked for 15 minutes due to too many failed attempts.');
+      throw new Error(
+        'Invalid admin code. Account locked for 15 minutes due to too many failed attempts.'
+      );
     }
   }
 
@@ -459,14 +489,18 @@ export async function loginAdmin(adminCode: string): Promise<User> {
 /**
  * Change student PIN
  */
-export async function changePin(enrollmentNumber: string, oldPin: string, newPin: string): Promise<void> {
+export async function changePin(
+  enrollmentNumber: string,
+  oldPin: string,
+  newPin: string
+): Promise<void> {
   const db = loadDB();
   const id = `STU-${enrollmentNumber.toUpperCase()}`;
   const stored = db[id];
   if (!stored) throw new Error('Account not found.');
 
   const { isValid, migratedHash, migratedSalt } = await verifyWithMigration(oldPin, stored);
-  
+
   if (!isValid) throw new Error('Old PIN is incorrect.');
   if (!/^\d{4}$/.test(newPin)) throw new Error('New PIN must be 4 digits.');
 

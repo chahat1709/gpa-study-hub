@@ -1,7 +1,6 @@
-
-import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
-import { AppMode } from "../types";
-import { getGeminiApiKey } from "./aiProviderService";
+import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
+import { AppMode } from '../types';
+import { getGeminiApiKey } from './aiProviderService';
 
 /**
  * AGENTIC TOOLS DEFINITIONS
@@ -15,7 +14,8 @@ const navigateTool: FunctionDeclaration = {
     properties: {
       target_mode: {
         type: Type.STRING,
-        description: 'The internal mode to switch to. Options: CAMPUS, TUTOR, HOMEWORK, NOTES, SOCIAL, LIBRARY, PLANNER',
+        description:
+          'The internal mode to switch to. Options: CAMPUS, TUTOR, HOMEWORK, NOTES, SOCIAL, LIBRARY, PLANNER',
       },
     },
     required: ['target_mode'],
@@ -55,7 +55,7 @@ export const runAgentCommand = async (userInput: string) => {
   // Use a fresh instance to catch the latest API key
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || getGeminiApiKey() });
   const model = 'gemini-3-pro-preview';
-  
+
   try {
     const response = await ai.models.generateContent({
       model,
@@ -68,24 +68,26 @@ export const runAgentCommand = async (userInput: string) => {
         - If they just want to chat, reply briefly and offer to help with a task.
         - ALWAYS explain what you are doing.`,
         tools: [{ functionDeclarations: [navigateTool, addTaskTool, searchLibraryTool] }],
-        thinkingConfig: { thinkingBudget: 4096 }
+        thinkingConfig: { thinkingBudget: 4096 },
       },
     });
 
     const calls = response.functionCalls;
-    const text = response.text || "Action acknowledged.";
+    const text = response.text || 'Action acknowledged.';
 
     // Emit event for the UI to catch
     if (calls && calls.length > 0) {
       calls.forEach(call => {
-        window.dispatchEvent(new CustomEvent('AGENT_ACTION', { 
-          detail: { name: call.name, args: call.args } 
-        }));
+        window.dispatchEvent(
+          new CustomEvent('AGENT_ACTION', {
+            detail: { name: call.name, args: call.args },
+          })
+        );
       });
     }
 
     return text;
   } catch {
-    return "The Nexus core is temporarily offline. Please ensure your API key is correctly synced in Profile.";
+    return 'The Nexus core is temporarily offline. Please ensure your API key is correctly synced in Profile.';
   }
 };

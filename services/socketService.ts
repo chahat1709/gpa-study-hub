@@ -26,11 +26,11 @@ export function getSocket(token: string, serverUrl?: string): Socket {
     if (import.meta.env.DEV) console.log('[WS] Connected');
   });
 
-  socket.on('disconnect', (reason) => {
+  socket.on('disconnect', reason => {
     if (import.meta.env.DEV) console.log('[WS] Disconnected:', reason);
   });
 
-  socket.on('connect_error', (err) => {
+  socket.on('connect_error', err => {
     if (import.meta.env.DEV) console.error('[WS] Connection error:', err.message);
   });
 

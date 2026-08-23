@@ -17,7 +17,10 @@ export interface UpdateInfo {
  */
 function isNativePlatform(): boolean {
   try {
-    const cap = Capacitor as unknown as { isNative?: () => boolean; isNativePlatform?: () => boolean };
+    const cap = Capacitor as unknown as {
+      isNative?: () => boolean;
+      isNativePlatform?: () => boolean;
+    };
     if (typeof cap.isNative === 'function') return cap.isNative();
     if (typeof cap.isNativePlatform === 'function') return cap.isNativePlatform();
     // Fallback: check platform string
@@ -30,7 +33,7 @@ function isNativePlatform(): boolean {
 export class UpdateService {
   private static instance: UpdateService;
 
-  private constructor() { }
+  private constructor() {}
 
   static getInstance(): UpdateService {
     if (!UpdateService.instance) {
@@ -75,8 +78,11 @@ export class UpdateService {
       // Use dynamic import with a string variable to avoid TS module resolution errors
       // when @capacitor/browser is not installed.
       const moduleName = '@capacitor/browser';
-      const mod: { Browser?: { open: (opts: { url: string; windowName?: string }) => Promise<void> } } =
-        await import(/* @vite-ignore */ moduleName).catch(() => ({} as Record<string, unknown>)) as never;
+      const mod: {
+        Browser?: { open: (opts: { url: string; windowName?: string }) => Promise<void> };
+      } = (await import(/* @vite-ignore */ moduleName).catch(
+        () => ({}) as Record<string, unknown>
+      )) as never;
 
       if (mod.Browser) {
         await mod.Browser.open({ url: apkUrl, windowName: '_self' });

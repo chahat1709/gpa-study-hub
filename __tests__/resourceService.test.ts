@@ -67,7 +67,12 @@ describe('resourceService (local mode)', () => {
     it('should upload a valid PDF file', async () => {
       const file = new File(['test content'], 'notes.pdf', { type: 'application/pdf' });
       const result = await resourceService.uploadResource(
-        'CSE', '4', 'A', 'DBMS', 'Lecture Notes', file
+        'CSE',
+        '4',
+        'A',
+        'DBMS',
+        'Lecture Notes',
+        file
       );
 
       expect(result.id).toBeDefined();
@@ -94,7 +99,12 @@ describe('resourceService (local mode)', () => {
     it('should accept valid image types', async () => {
       const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' });
       const result = await resourceService.uploadResource(
-        'CSE', '4', 'A', 'DBMS', 'Lecture Notes', file
+        'CSE',
+        '4',
+        'A',
+        'DBMS',
+        'Lecture Notes',
+        file
       );
       expect(result.id).toBeDefined();
     });
@@ -102,7 +112,12 @@ describe('resourceService (local mode)', () => {
     it('should store metadata in searchKeywords', async () => {
       const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
       const result = await resourceService.uploadResource(
-        'CSE', '4', 'A', 'DBMS', 'Lecture Notes', file
+        'CSE',
+        '4',
+        'A',
+        'DBMS',
+        'Lecture Notes',
+        file
       );
       expect(result.searchKeywords).toContain('test.pdf');
       expect(result.searchKeywords).toContain('dbms');
@@ -113,7 +128,12 @@ describe('resourceService (local mode)', () => {
     it('should delete a resource by id', async () => {
       const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
       const uploaded = await resourceService.uploadResource(
-        'CSE', '4', 'A', 'DBMS', 'Lecture Notes', file
+        'CSE',
+        '4',
+        'A',
+        'DBMS',
+        'Lecture Notes',
+        file
       );
 
       const before = resourceService.getResources('CSE', '4', 'A', 'All', 'All');

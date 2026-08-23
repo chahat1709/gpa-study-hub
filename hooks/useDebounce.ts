@@ -7,19 +7,19 @@ import { useState, useEffect } from 'react';
  * @param delay The delay in milliseconds
  */
 export function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
-    useEffect(() => {
-        // Set a timer to update the debounced value after the delay
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
+  useEffect(() => {
+    // Set a timer to update the debounced value after the delay
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
 
-        // Cancel the timer if value changes (cleanup)
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
+    // Cancel the timer if value changes (cleanup)
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
 
-    return debouncedValue;
+  return debouncedValue;
 }

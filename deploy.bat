@@ -1,66 +1,41 @@
 @echo off
-echo ============================================
-echo   GPA Study Hub - Production Deploy Script
-echo ============================================
+setlocal enabledelayedexpansion
+echo ==================================================
+echo   GPA Study Hub - Professional Deploy Pipeline
+echo ==================================================
 echo.
 
-:: Check Node.js
-where node >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [ERROR] Node.js not found. Install from https://nodejs.org
-    pause
-    exit /b 1
+where node >nul 2>nul || (echo [FAIL] Node.js not found & pause & exit /b 1)
+
+echo [1/6] Env validation...
+if exist "scripts\validate-env.js" (
+  node scripts\validate-env.js || (pause & exit /b 1)
 )
 
-echo [1/5] Installing dependencies...
-call npm ci --production=false
-if %errorlevel% neq 0 (
-    echo [ERROR] Frontend install failed
-    pause
-    exit /b 1
-)
+echo [2/6] Install frontend deps (ci)...
+call npm ci || (echo [FAIL] npm ci & pause & exit /b 1)
 
-echo [2/5] Running TypeScript check...
-call npx tsc --noEmit
-if %errorlevel% neq 0 (
-    echo [WARN] TypeScript errors found, continuing...
-)
+echo [3/6] Type check...
+call npm run check || (echo [FAIL] tsc & pause & exit /b 1)
 
-echo [3/5] Running tests...
-call npx vitest run
-if %errorlevel% neq 0 (
-    echo [ERROR] Tests failed
-    pause
-    exit /b 1
-)
+echo [4/6] Tests (155)...
+call npm test || (echo [FAIL] tests & pause & exit /b 1)
 
-echo [4/5] Building frontend...
-call npm run build
-if %errorlevel% neq 0 (
-    echo [ERROR] Build failed
-    pause
-    exit /b 1
-)
+echo [5/6] Build frontend...
+call npm run build || (echo [FAIL] build & pause & exit /b 1)
 
-echo [5/5] Installing server dependencies...
-cd server
-call npm ci --production
-cd ..
-if %errorlevel% neq 0 (
-    echo [ERROR] Server install failed
-    pause
-    exit /b 1
-)
+echo [6/6] Install server deps...
+pushd server
+call npm ci --omit=dev || (echo [FAIL] server ci & popd & pause & exit /b 1)
+popd
 
 echo.
-echo ============================================
-echo   Build complete!
-echo ============================================
-echo.
-echo To start the server:
-echo   cd server ^&^& npm start
-echo.
-echo To start in development mode:
-echo   cd server ^&^& npm run dev
-echo.
+echo ==================================================
+echo   Build complete! Artifacts: dist/
+echo ==================================================
+echo   Start locally:  start-server.bat
+echo   Or PM2:         pm2 start ecosystem.config.js --env production
+echo   Health:         http://localhost:3000/api/health
+echo   Backup:         node scripts/backup.js
+echo ==================================================
 pause
