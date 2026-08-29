@@ -255,6 +255,21 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const { requestId } = require('./src/middleware/requestId');
 app.use(requestId);
+const { tenantMiddleware } = require('./middleware/tenant');
+// Tenant routing: Host header or x-tenant-id → req.tenantId (default tenant for single-college)
+app.use((req, res, next) => {
+  // Extract tenant from Host subdomain or header; fallback to default
+  const host = req.headers.host || '';
+  const hostTenant = host.split('.')[0].split(':')[0];
+  const headerTenant = req.headers['x-tenant-id'];
+  const tenantId =
+    headerTenant ||
+    (hostTenant && hostTenant !== 'localhost' && hostTenant !== '127' ? hostTenant : null) ||
+    process.env.DEFAULT_TENANT ||
+    'default';
+  req.tenantId = tenantId;
+  next();
+});
 
 // ── Security Middleware ─────────────────────────────────────────────────────────
 app.use(
@@ -541,13 +556,38 @@ const upload = multer({
   },
 });
 
-// ── Database ────────────────────────────────────────────────────────────────────
-const db = new Database(path.join(__dirname, 'gpa_hub.db'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-db.pragma('synchronous = NORMAL');
-db.pragma('cache_size = -64000');
-db.pragma('busy_timeout = 5000');
+// ── Database (unified: SQLite default, Postgres when DATABASE_URL is set) ───────
+let db;
+let pgPool = null;
+try {
+  const { getDb } = require('./src/db');
+  const instance = getDb();
+  // getDb returns pg Pool when DATABASE_URL is postgres, else better-sqlite3 Database
+  if (instance && typeof instance.query === 'function' && !instance.prepare) {
+    pgPool = instance;
+    // For now, keep SQLite as primary for college PC; pgPool is available for SaaS middleware
+    const Database = require('better-sqlite3');
+    db = new Database(path.join(__dirname, 'gpa_hub.db'));
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+    db.pragma('synchronous = NORMAL');
+    db.pragma('cache_size = -64000');
+    db.pragma('busy_timeout = 5000');
+    log.warn(
+      'DATABASE_URL is set (Postgres) but server currently runs on SQLite — unified pg adapter is scaffolded in server/src/db/index.js; set SaaS profile to use pg for all queries'
+    );
+  } else {
+    db = instance;
+  }
+} catch (e) {
+  const Database = require('better-sqlite3');
+  db = new Database(path.join(__dirname, 'gpa_hub.db'));
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+  db.pragma('synchronous = NORMAL');
+  db.pragma('cache_size = -64000');
+  db.pragma('busy_timeout = 5000');
+}
 
 // ── Schema ──────────────────────────────────────────────────────────────────────
 db.exec(`
@@ -2010,6 +2050,59 @@ app.post('/api/ai/explain', authMiddleware, aiLimiter, (req, res) => {
   });
 });
 
+// RAG: retrieval-augmented ask on tenant corpus (question_banks + notes)
+app.post('/api/ai/ask', authMiddleware, aiLimiter, (req, res) => {
+  const { query, subjectId, limit } = req.body;
+  if (!query || query.trim().length < 2)
+    return jsonResponse(res, { error: 'query required (min 2 chars)' }, 400);
+  try {
+    const max = Math.min(parseInt(limit) || 5, 10);
+    const like = `%${query.trim()}%`;
+    let qSql =
+      'SELECT id, question_text, explanation, subject_id FROM question_banks WHERE is_active=1 AND (question_text LIKE ? OR explanation LIKE ?)';
+    const qParams = [like, like];
+    if (subjectId) {
+      qSql += ' AND subject_id=?';
+      qParams.push(subjectId);
+    }
+    qSql += ' ORDER BY rowid DESC LIMIT ?';
+    qParams.push(max);
+    const questions = db.prepare(qSql).all(...qParams);
+    let nSql =
+      'SELECT id, title, content, subject_id FROM notes WHERE (title LIKE ? OR content LIKE ?)';
+    const nParams = [like, like];
+    if (subjectId) {
+      nSql += ' AND subject_id=?';
+      nParams.push(subjectId);
+    }
+    nSql += ' ORDER BY rowid DESC LIMIT ?';
+    nParams.push(max);
+    const notes = db.prepare(nSql).all(...nParams);
+    // Simple tenant-aware context: filter by tenantId if academic tables had institution_id (scaffold)
+    const context = [
+      ...questions.map(q => `Q: ${q.question_text}\nA: ${q.explanation}`),
+      ...notes.map(n => `${n.title}: ${n.content.slice(0, 400)}`),
+    ]
+      .slice(0, max)
+      .join('\n\n---\n\n');
+    const answer = context
+      ? `Based on your corpus for "${query}":\n\n${context}\n\n---\n\n` +
+        getMockAIResponse('chat', query, 'retrieved corpus')
+      : getMockAIResponse('chat', query, 'no corpus hit');
+    jsonResponse(res, {
+      answer,
+      context,
+      questions,
+      notes,
+      fallback: !context,
+      tenantId: req.tenantId || 'default',
+    });
+  } catch (e) {
+    log.error({ err: e }, 'AI ask RAG error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
 app.get('/api/ai/usage', authMiddleware, (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
@@ -2298,6 +2391,136 @@ app.get('/api/academic/dashboard', (req, res) => {
   }
 });
 
+// ─── Academic Write API — faculty can create curriculum via API (not only CLI seed) ───
+const academicSubjectSchema = z.object({
+  code: z.string().trim().min(2).max(20),
+  name: z.string().trim().min(2).max(200),
+  branch: z.enum(['EC', 'ICT']),
+  semester: z.coerce.number().int().min(1).max(6),
+  credits: z.coerce.number().int().min(1).max(10).optional().default(3),
+  is_lab: z.coerce.number().int().min(0).max(1).optional().default(0),
+});
+app.post(
+  '/api/academic/subjects',
+  authMiddleware,
+  requireRole('FACULTY', 'GTU_ADMIN'),
+  (req, res) => {
+    const parsed = academicSubjectSchema.safeParse(req.body);
+    if (!parsed.success) return jsonResponse(res, { error: parsed.error.issues[0].message }, 400);
+    try {
+      const { code, name, branch, semester, credits, is_lab } = parsed.data;
+      const id = generateId();
+      db.prepare(
+        'INSERT INTO subjects (id, code, name, branch, semester, credits, is_lab) VALUES (?,?,?,?,?,?,?)'
+      ).run(id, code, name, branch, semester, credits, is_lab);
+      auditLog('ACADEMIC_SUBJECT_CREATE', req.user.id, `${code} ${name}`, req.ip);
+      jsonResponse(res, { success: true, id }, 201);
+    } catch (e) {
+      if (String(e.message).includes('UNIQUE'))
+        return jsonResponse(res, { error: 'Subject already exists for code/branch/semester' }, 409);
+      log.error({ err: e }, 'Academic subject create error');
+      jsonResponse(res, { error: 'Internal server error' }, 500);
+    }
+  }
+);
+
+const academicUnitSchema = z.object({
+  subject_id: z.string().min(1),
+  unit_number: z.coerce.number().int().min(1).max(20),
+  title: z.string().trim().min(2).max(200),
+  topics: z.string().optional().default('[]'),
+  weightage: z.coerce.number().int().min(0).max(100).optional().default(0),
+});
+app.post('/api/academic/units', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
+  const parsed = academicUnitSchema.safeParse(req.body);
+  if (!parsed.success) return jsonResponse(res, { error: parsed.error.issues[0].message }, 400);
+  try {
+    const { subject_id, unit_number, title, topics, weightage } = parsed.data;
+    const id = generateId();
+    db.prepare(
+      'INSERT INTO units (id, subject_id, unit_number, title, topics, weightage) VALUES (?,?,?,?,?,?)'
+    ).run(id, subject_id, unit_number, title, topics, weightage);
+    jsonResponse(res, { success: true, id }, 201);
+  } catch (e) {
+    log.error({ err: e }, 'Academic unit create error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+const academicNoteSchema = z.object({
+  subject_id: z.string().min(1),
+  unit_id: z.string().min(1),
+  title: z.string().trim().min(2).max(300),
+  content: z.string().min(1).max(100000),
+  content_type: z
+    .enum(['THEORY', 'FORMULA', 'DERIVATION', 'DIAGRAM', 'SUMMARY', 'MNEMONIC'])
+    .optional()
+    .default('THEORY'),
+  tags: z.string().optional().default('[]'),
+});
+app.post('/api/academic/notes', authMiddleware, requireRole('FACULTY', 'GTU_ADMIN'), (req, res) => {
+  const parsed = academicNoteSchema.safeParse(req.body);
+  if (!parsed.success) return jsonResponse(res, { error: parsed.error.issues[0].message }, 400);
+  try {
+    const { subject_id, unit_id, title, content, content_type, tags } = parsed.data;
+    const id = generateId();
+    db.prepare(
+      'INSERT INTO notes (id, subject_id, unit_id, title, content, content_type, tags, is_verified, created_by) VALUES (?,?,?,?,?,?,?,?,?)'
+    ).run(id, subject_id, unit_id, title, content, content_type, tags, 0, req.user.id);
+    jsonResponse(res, { success: true, id }, 201);
+  } catch (e) {
+    log.error({ err: e }, 'Academic note create error');
+    jsonResponse(res, { error: 'Internal server error' }, 500);
+  }
+});
+
+const academicQuestionSchema = z.object({
+  subject_id: z.string().min(1),
+  unit_id: z.string().optional(),
+  question_text: z.string().min(5).max(5000),
+  question_type: z
+    .enum(['MCQ', 'DESCRIPTIVE', 'NUMERICAL', 'TRUE_FALSE'])
+    .optional()
+    .default('MCQ'),
+  options: z.string().nullable().optional(),
+  correct_answer: z.string().min(1).max(2000),
+  explanation: z.string().max(5000).optional().default(''),
+  marks: z.coerce.number().int().min(1).max(20).optional().default(1),
+  difficulty: z.enum(['Easy', 'Medium', 'Hard']).optional().default('Medium'),
+});
+app.post(
+  '/api/academic/questions',
+  authMiddleware,
+  requireRole('FACULTY', 'GTU_ADMIN'),
+  (req, res) => {
+    const parsed = academicQuestionSchema.safeParse(req.body);
+    if (!parsed.success) return jsonResponse(res, { error: parsed.error.issues[0].message }, 400);
+    try {
+      const d = parsed.data;
+      const id = generateId();
+      db.prepare(
+        'INSERT INTO question_banks (id, subject_id, unit_id, question_text, question_type, options, correct_answer, explanation, marks, difficulty, is_active, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,1,?)'
+      ).run(
+        id,
+        d.subject_id,
+        d.unit_id || null,
+        d.question_text,
+        d.question_type,
+        d.options || null,
+        d.correct_answer,
+        d.explanation,
+        d.marks,
+        d.difficulty,
+        req.user.id
+      );
+      jsonResponse(res, { success: true, id }, 201);
+    } catch (e) {
+      log.error({ err: e }, 'Academic question create error');
+      jsonResponse(res, { error: 'Internal server error' }, 500);
+    }
+  }
+);
+
 // ─── Mock AI Response Generators ─────────────────────────────────────────────────
 function getMockAIResponse(type, message, context = '') {
   const responses = {
@@ -2414,6 +2637,16 @@ app.get('/api/audit-log', authMiddleware, requireRole('GTU_ADMIN'), (req, res) =
     jsonResponse(res, { error: 'Internal server error' }, 500);
   }
 });
+
+// ── Serve frontend dist (college PC without nginx) ──────────────────────────────
+const distPath = path.join(__dirname, '..', 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // SPA fallback for non-API routes
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // ── Global Error Handler ────────────────────────────────────────────────────────
 app.use((err, req, res, _next) => {
