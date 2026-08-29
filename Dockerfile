@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1.6
-FROM node:20-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:26-alpine
 WORKDIR /app
 # Non-root user
 RUN addgroup -S app && adduser -S app -G app
