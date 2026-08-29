@@ -34,8 +34,8 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Audit (high only, non-blocking)
-        run: npm audit --audit-level=high || true
+      - name: Audit (high must be 0 — fix before merge)
+        run: npm audit --audit-level=high
 
       - name: Upload dist artifact
         if: success()
@@ -72,4 +72,21 @@ jobs:
           timeout 10 bash -c 'node server.js & pid=$!; sleep 5; curl -f http://localhost:3000/api/health; curl -f http://localhost:3000/api/academic/meta; kill $pid; wait $pid || true'
 
       - name: Server audit
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Build + preview
+        run: |
+          npm run build
+          npm run preview -- --port 5173 &
+          npx wait-on http://localhost:5173 --timeout 30000
+      - name: Playwright (tenant isolation + health)
+        run: npx playwright test e2e/tenant-isolation.spec.ts --reporter=list
