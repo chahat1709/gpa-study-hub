@@ -2,6 +2,37 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-08-29
+
+### Added
+
+- `POST /api/academic/subjects|units|notes|questions` (FACULTY/GTU_ADMIN + zod validation)
+- DB unification: `DATABASE_URL` → pg Pool else SQLite (single source `server/src/db/index.js:1` + migrations `server/src/db/migrate.js:1`)
+- Static SPA serve: `express.static(dist)` + SPA fallback (`server.js:2534`) — no nginx required
+- Tenant scoping: `Host`/`x-tenant-id` → `req.tenantId` middleware (`server.js:256` + `middleware/tenant.js:42`)
+- AI RAG: `POST /api/ai/ask` retrieval-augmented on `question_banks`+`notes` with tenant awareness
+- Backup/restore verified (`scripts/backup.js:1` VACUUM INTO, 24 tables, 3193 questions)
+- npm audit clean: 0 vulnerabilities (fixed 9 high `websocket-driver`, 1 moderate `uuid`)
+
+### Changed
+
+- Audit gate in CI: `npm audit --audit-level=high` now required (blocks merge on high)
+- `playwright` tenant isolation job in CI
+- `dependabot.yml` weekly for npm/docker/actions
+- `k8s/secrets.yaml` header → example only + sealed-secrets instructions
+
+### Fixed
+
+- `health` endpoint working post-server restart
+- `POST /api/academic/*` 403 on non-FACULTY, 201 on success
+- `req.tenantId` populated from `Host`/`x-tenant-id` header
+
+## [1.0.1] - 2026-08-29
+
+### Added
+
+- Process hardening: branch protection (verify+server required, 1 review), CODEOWNERS, PR template, CONTRIBUTING, dependabot weekly, sealed-secrets docs, k8s example
+
 ## [1.0.0] - 2026-08-22
 
 ### Added
